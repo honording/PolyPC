@@ -11,13 +11,68 @@ static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
 
+//static void *mmio;
+
+static void list_insert()
+{
+
+}
+
+static void list_delete()
+{
+
+}
+
+static void list_search()
+{
+
+}
+
+static int register_open(struct inode *inode, struct file *filp)
+{
+    filp->private_data = hapara_registerp;
+    return 0;
+}
+
+static int register_release(struct inode *inode, struct file *filp)
+{
+    return 0;
+}
+
+static ssize_t register_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
+{
+    struct hapara_register *dev = filp->private_data;
+    if (copy_to_user(buf, dev->mmio + p, count))
+        
+}
+
+static ssize_t register_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
+{
+    unsigned long p = *ppos;
+    unsigned int count = size;
+    int ret = 0;
+    struct hapara_register *dev = filp->private_data;
+    if (copy_from_user(dev->mmio + p, buf, count)) 
+        return -EFAULT;
+    else {
+        *ppos += count;
+        ret = count;
+    }
+    return ret;
+}
+
+static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+
+}
+
 static const struct file_operations register_fops = {
     .owner = THIS_MODULE,
-    .open = 
-    .release = 
-    .read = 
-    .write = 
-    .unlocked_ioctl = 
+    .open = register_open,
+    .release = register_release,
+    .read = register_read,
+    .write = register_write,
+    .unlocked_ioctl = register_ioctl,
 };
 
 static int __init register_init(void)
@@ -44,6 +99,9 @@ static int __init register_init(void)
     if (cdev_add(&hapara_registerp->cdev, dev_num, 1) == -1) {
         goto failure_alloc;
     }
+
+    hapara_registerp->mmio = ioremap(SCHE_BASE_ADDR, SCHE_SIZE);
+
     return 0;
 
     failure_alloc:
@@ -58,14 +116,17 @@ static int __init register_init(void)
     failure_dev_reg:
     return -1;   
 }
+
 static int __exit register_exit(void)
 {
     cdev_del(&hapara_registerp->cdev);
     device_destroy(cl, dev_num);
     class_destroy(cl);
     kfree(hapara_registerp);
+    iounmap(hapara_registerp->mmio);
     unregister_chrdev_region(dev_num, 1);
 }
+
 module_init(register_init);
 module_exit(register_exit);
 MODULE_LICENSE("GPL v2");
