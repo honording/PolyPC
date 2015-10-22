@@ -4,8 +4,8 @@
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"
 
-#define SCHE_BASE_ADDR  0x
-#define SCHE_SIZE       0x
+#define SCHE_BASE_ADDR  0x0
+#define SCHE_SIZE       0x1
 
 struct hapara_id_pair {
     u32 id0;

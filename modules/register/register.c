@@ -11,23 +11,6 @@ static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
 
-//static void *mmio;
-
-static void list_insert()
-{
-
-}
-
-static void list_delete()
-{
-
-}
-
-static void list_search()
-{
-
-}
-
 static int register_open(struct inode *inode, struct file *filp)
 {
     filp->private_data = hapara_registerp;
@@ -41,9 +24,17 @@ static int register_release(struct inode *inode, struct file *filp)
 
 static ssize_t register_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
 {
+    unsigned long p = *ppos;
+    unsigned int count = size;
+    int ret = 0;
     struct hapara_register *dev = filp->private_data;
     if (copy_to_user(buf, dev->mmio + p, count))
-        
+        return -EFAULT;
+    else {
+        *ppos += count;
+        ret = count;
+    }
+    return ret;
 }
 
 static ssize_t register_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
@@ -63,7 +54,7 @@ static ssize_t register_write(struct file *filp, const char __user *buf, size_t 
 
 static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-
+    return 0;
 }
 
 static const struct file_operations register_fops = {
