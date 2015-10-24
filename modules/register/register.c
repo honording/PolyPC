@@ -4,6 +4,9 @@
 #include <linux/cdev.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+#include <linux/device.h>
+
+#include <asm/io.h>
 
 #include "register.h"
 
@@ -74,7 +77,7 @@ static int __init register_init(void)
         goto failure_dev_reg;
     }
 
-    cl = class_create(cl, NULL, dev_num, NULL, MODULE_NAME);
+    cl = class_create(THIS_MODULE, MODULE_NAME);
     if (cl == NULL) {
         goto failure_cl_cr;
     }
