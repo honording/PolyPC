@@ -1,4 +1,6 @@
 #include <stdint.h>
+
+/*
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+*/
 
 #define FILEPATH    "/dev/hapara_reg"
 #define u8 uint8_t
@@ -28,7 +30,10 @@ struct hapara_thread_struct {
     struct hapara_id_pair group_id;
 }; // 1+1+1+1+4+4+4=16 bytes
 
+void libregister_test(void);
+void print_struct(struct hapara_thread_struct *sp);
 
+/*
 void libregister_test(void) 
 {
     int fd;
@@ -80,3 +85,4 @@ void print_struct(struct hapara_thread_struct *sp)
     printf("group_id 0 = %d\n", sp->group_id.id0);
     printf("group_id 1 = %d\n", sp->group_id.id1);
 }
+*/

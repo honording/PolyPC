@@ -66,7 +66,7 @@ static loff_t register_llseek(struct file *filp, loff_t offset, int orig)
         }
         filp->f_pos = (unsigned int)offset;
         ret = filp->f_pos;
-        beak;
+        break;
     case 1:
         if ((filp->f_pos + offset) < 0) {
             ret = -EINVAL;

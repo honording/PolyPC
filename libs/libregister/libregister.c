@@ -1,4 +1,3 @@
-/*
 #include "libregister.h"
 
 #include <unistd.h>
@@ -33,5 +32,30 @@ void libregister_test(void)
     }
     free(sp);
     close(fd);
+
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1) {
+        printf("Open Error 2\n");
+    }
+    sp = malloc(sizeof(struct hapara_thread_struct));
+    if (sp == NULL) {
+        printf("malloc error 2\n");
+    }
+    if (read(fd, sp, sizeof(struct hapara_thread_struct)) == -1) {
+        printf("Read error\n");
+    }
+    print_struct(sp);
+    free(sp);
+    close(fd);
 }
-*/
+
+void print_struct(struct hapara_thread_struct *sp) 
+{
+    printf("valid = %d\n", sp->valid);
+    printf("priority = %d\n", sp->priority);
+    printf("type_num = %d\n", sp->type_num);
+    printf("next = %d\n", sp->next);
+    printf("tid = %d\n", sp->tid);
+    printf("group_id 0 = %d\n", sp->group_id.id0);
+    printf("group_id 1 = %d\n", sp->group_id.id1);
+}
