@@ -55,6 +55,33 @@ static ssize_t register_write(struct file *filp, const char __user *buf, size_t 
     return ret;
 }
 
+static loff_t register_llseek(struct file *filp, loff_t offset, int orig)
+{   //0: set, 1: cur, 2: end
+    loff_t ret = 0;
+    switch (orig) {
+    case 0:
+        if (offset < 0) {
+            ret = -EINVAL;
+            break;
+        }
+        filp->f_pos = (unsigned int)offset;
+        ret = filp->f_pos;
+        beak;
+    case 1:
+        if ((filp->f_pos + offset) < 0) {
+            ret = -EINVAL;
+            break;
+        }
+        filp->f_pos += offset;
+        ret = filp->f_pos;
+        break;
+    default:
+        ret = -EINVAL;
+        break;
+    }
+    return ret;
+}
+
 static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     return 0;
@@ -64,6 +91,7 @@ static const struct file_operations register_fops = {
     .owner = THIS_MODULE,
     .open = register_open,
     .release = register_release,
+    .llseek = register_llseek,
     .read = register_read,
     .write = register_write,
     .unlocked_ioctl = register_ioctl,

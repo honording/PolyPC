@@ -1,10 +1,15 @@
+/*
 #include "libregister.h"
 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-void libregister_test() 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+void libregister_test(void) 
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);
@@ -12,7 +17,7 @@ void libregister_test()
         printf("Open error.\n");
     }
     struct hapara_thread_struct *sp;
-    sp = malloc(sizeof(struct hapara_thread_struct))
+    sp = malloc(sizeof(struct hapara_thread_struct));
     if (sp == NULL) {
         printf("malloc error\n");
     }
@@ -21,11 +26,12 @@ void libregister_test()
     sp->type_num = 6;
     sp->next = 1;
     sp->tid = 100;
-    sp->hapara_id_pair group_id.id0 = 2;
-    sp->hapara_id_pair group_id.id1 = 12;
+    sp->group_id.id0 = 2;
+    sp->group_id.id1 = 12;
     if (write(fd, sp, sizeof(struct hapara_thread_struct)) == -1) {
         printf("Write error\n");
     }
-    free(sp)
+    free(sp);
     close(fd);
 }
+*/

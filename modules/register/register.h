@@ -5,7 +5,7 @@
 #define MODULE_NAME     "hapara_reg"
 
 #define SCHE_BASE_ADDR  0x40000000
-//#define SCHE_SIZE       0x1
+#define SCHE_SIZE       0x2000
 
 struct hapara_id_pair {
     u32 id0;
