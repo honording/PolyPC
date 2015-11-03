@@ -14,6 +14,81 @@ static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
 
+static loff_t search(loff_t offset, char target, loff_t *pre)
+{
+    struct hapara_register *dev = filp->private_data;
+    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+    struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
+    *pre = 0;
+    int i = 0;
+    while ((i < MAX_SLOT) && 
+           !((thread_info->valid == INVALID) && 
+             (thread_info->next == INVALID))) {
+        switch (offset) {
+        case OFF_VALID:
+            if (thread_info->valid == target)
+                return i;
+            break;
+        case OFF_PRIORITY:
+            if (thread_info->priority == target)
+                return i;
+            break;
+        case OFF_TYPE:
+            if (thread_info->type == target)
+                return i;
+        case OFF_NEXT:
+            if (thread_info->next == target)
+                return i;
+        case OFF_TID:
+            if (thread_info->tid == target)
+        default: 
+            return -EINVAL;
+        }
+        *pre = i;
+        if (thread_info->next != INVALID)
+            i = thread_info->next;
+        else
+            i++;
+        thread_info = thread_head + i;
+    }
+    return -EINVAL;
+}
+
+static loff_t find_slot()
+{
+    struct hapara_register *dev = filp->private_data;
+    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+    int i = 0;
+    while (i < MAX_SLOT) {
+        if (thread_info->valid == INVALID)
+            return i;
+        else {
+            i++;
+            thread_info++;
+        }
+    }
+    return -EINVAL;
+}
+
+static loff_t add(char *buf)
+{
+    struct hapara_register *dev = filp->private_data;
+    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+    loff_t off = find_slot();
+    if (off == -EINVAL)
+        return -EINVAL;
+    if (copy_from_user(thread_info + off, buf, sizeof(struct hapara_thread_struct)))
+        return -EINVAL;
+    //FIXME handle next
+    
+    return off;
+}
+
+static del()
+{
+
+}
+
 static int register_open(struct inode *inode, struct file *filp)
 {
     filp->private_data = hapara_registerp;
