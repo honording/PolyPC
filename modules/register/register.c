@@ -14,16 +14,16 @@ static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
 
-static loff_t search(loff_t offset, char target, loff_t *pre)
+static loff_t search(struct hapara_register *dev, loff_t offset, char target, loff_t *pre)
 {
-    struct hapara_register *dev = filp->private_data;
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
-    *pre = 0;
+    *pre = -EINVAL;
     int i = 0;
-    while ((i < MAX_SLOT) && 
-           !((thread_info->valid == INVALID) && 
-             (thread_info->next == INVALID))) {
+    int isBegin = VALID;
+    while (!((i >= MAX_SLOT) || 
+           ((thread_info->valid == INVALID) && 
+            (isBegin == INVALID)))) { 
         switch (offset) {
         case OFF_VALID:
             if (thread_info->valid == target)
@@ -44,7 +44,10 @@ static loff_t search(loff_t offset, char target, loff_t *pre)
         default: 
             return -EINVAL;
         }
-        *pre = i;
+        if (thread_info->valid == VALID) {
+            *pre = i;
+            isBegin = INVALID;
+        }
         if (thread_info->next != INVALID)
             i = thread_info->next;
         else
@@ -54,9 +57,8 @@ static loff_t search(loff_t offset, char target, loff_t *pre)
     return -EINVAL;
 }
 
-static loff_t find_slot()
+static loff_t find_slot(struct hapara_register *dev)
 {
-    struct hapara_register *dev = filp->private_data;
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     int i = 0;
     while (i < MAX_SLOT) {
@@ -70,23 +72,40 @@ static loff_t find_slot()
     return -EINVAL;
 }
 
-static loff_t add(char *buf)
+static loff_t add(struct hapara_register *dev, struct hapara_thread_struct *buf)
 {
-    struct hapara_register *dev = filp->private_data;
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
-    loff_t off = find_slot();
+    loff_t off = find_slot(dev);
     if (off == -EINVAL)
         return -EINVAL;
-    if (copy_from_user(thread_info + off, buf, sizeof(struct hapara_thread_struct)))
+    if (copy_from_user(thread_info + off, (char *)buf, sizeof(struct hapara_thread_struct)))
         return -EINVAL;
-    //FIXME handle next
-    
+    if (off != 0) {
+        (thread_info + off)->next = (thread_info + off - 1)->next;
+        (thread_info + off - 1)->next = INVALID;
+        if ((thread_info + off)->next == off + 1)
+            (thread_info + off)->next = INVALID;
+    }
     return off;
 }
 
-static del()
+static loff_t del(struct hapara_register *dev, loff_t offset, char target)
 {
-
+    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+    loff_t pre;
+    loff_t off = search(dev, offset, target, &pre);
+    if (off == -EINVAL) 
+        return -EINVAL;
+    if (pre == -EINVAL)
+        (thread_info + off)->valid = INVALID;
+    else if ((thread_info + off)->next == INVALID) {
+        (thread_info + off)->valid = INVALID;
+        (thread_info + pre)->next = off + 1;
+    } else {
+        (thread_info + off)->valid = INVALID;
+        (thread_info + pre)->next = (thread_info + off)->next;
+    }
+    return off;
 }
 
 static int register_open(struct inode *inode, struct file *filp)
