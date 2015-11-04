@@ -185,8 +185,9 @@ static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
     uint8_t pair_target = 0;
 
     struct hapara_register *dev = filp->private_data;
-    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+    //struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
 
+/*    
     if (_IO_TYPE(cmd) != REG_MAGIC)
         return -EINVAL;
     if (_IO_NR(cmd) > REG_MAX)
@@ -198,6 +199,7 @@ static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
         err = !access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd));
     if (err) 
         return -EINVAL;
+*/
 
     switch (cmd) {
     case REG_ADD:

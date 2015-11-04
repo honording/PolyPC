@@ -26,7 +26,7 @@ void libregister_test(void)
     }
     sp->valid = 1;                       //1: valid; 0: invalid
     sp->priority = 10;
-    sp->type_num = 6;
+    sp->type = 6;
     sp->next = 1;
     sp->tid = 100;
     sp->group_id.id0 = 2;
@@ -57,7 +57,7 @@ void print_struct(struct hapara_thread_struct *sp)
 {
     printf("valid = %d\n", sp->valid);
     printf("priority = %d\n", sp->priority);
-    printf("type_num = %d\n", sp->type_num);
+    printf("type = %d\n", sp->type);
     printf("next = %d\n", sp->next);
     printf("tid = %d\n", sp->tid);
     printf("group_id 0 = %d\n", sp->group_id.id0);
