@@ -1,3 +1,7 @@
+#ifndef __USER_PROGRAMS__
+#define __USER_PROGRAMS__
+#endif
+
 #include "../../libs/libregister/libregister.h"
 #include <stdio.h>
 

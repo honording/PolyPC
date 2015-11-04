@@ -23,3 +23,9 @@ struct hapara_register {
     struct cdev cdev;
     void *mmio;
 };
+
+
+#define REG_MAGIC       'r'
+#define REG_MAX         4
+#define REG_ADD         _IOW(REG_MAGIC, 0, struct hapara_thread_struct)
+#define REG_DEL         _IOW(REG_MAGIC, 1, struct hapara_reg_pair)

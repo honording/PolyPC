@@ -9,6 +9,11 @@ struct hapara_id_pair {
     uint32_t id1;
 };
 
+struct hapara_reg_pair {
+    uint8_t off;
+    uint8_t target;
+};
+
 struct hapara_thread_struct {
     uint8_t valid;                       //1: valid; 0: invalid
     uint8_t priority;

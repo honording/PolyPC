@@ -14,7 +14,7 @@ static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
 
-static loff_t search(struct hapara_register *dev, loff_t offset, char target, loff_t *pre)
+static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target, loff_t *pre)
 {
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
@@ -89,7 +89,7 @@ static loff_t add(struct hapara_register *dev, struct hapara_thread_struct *buf)
     return off;
 }
 
-static loff_t del(struct hapara_register *dev, loff_t offset, char target)
+static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
 {
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     loff_t pre;
@@ -178,7 +178,53 @@ static loff_t register_llseek(struct file *filp, loff_t offset, int orig)
 
 static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-    return 0;
+    int err = 0;
+    int ret = 0;
+    loff_t off = 0;
+    loff_t pair_off = 0;
+    uint8_t pair_target = 0;
+
+    struct hapara_register *dev = filp->private_data;
+    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+
+    if (_IO_TYPE(cmd) != REG_MAGIC)
+        return -EINVAL;
+    if (_IO_NR(cmd) > REG_MAX)
+        return -EINVAL;
+
+    if (_IOC_DIR(cmd) & _IOC_READ)
+        err = !access_ok(VERIFY_WRITE, (void *)arg, _IOC_SIZE(cmd));
+    else if (_IOC_DIR(cmd) & _IOC_WRITE)
+        err = !access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd));
+    if (err) 
+        return -EINVAL;
+
+    switch (cmd) {
+    case REG_ADD:
+        off = add(dev, (struct hapara_thread_struct __user *)arg);
+        if (off == -EINVAL)
+            ret = -EINVAL;
+        else
+            ret = off;
+        break;
+    case REG_DEL:
+        ret = get_user(pair_off, &(((struct hapara_reg_pair *)arg)->off));
+        if (ret == -EFAULT)
+            return -EINVAL;
+        ret = get_user(pair_target, &(((struct hapara_reg_pair *)arg)->target));
+        if (ret == -EFAULT)
+            return -EINVAL;
+        off = del(dev, pair_off, pair_target);
+        if (off == -EINVAL)
+            ret = -EINVAL;
+        else
+            ret = off;
+        break;
+    default:
+        ret = -EINVAL;
+        break;
+    }
+    return ret;
 }
 
 static const struct file_operations register_fops = {
