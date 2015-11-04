@@ -1,3 +1,7 @@
+#ifndef __USER_PROGRAMS__
+#define __USER_PROGRAMS__
+#endif
+
 #include "libregister.h"
 
 #include <unistd.h>

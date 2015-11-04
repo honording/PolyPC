@@ -1,19 +1,6 @@
-#include <stdint.h>
-
-/*
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-*/
+#include "../../include/thread_struct.h"
 
 #define FILEPATH    "/dev/hapara_reg"
-#define u8 uint8_t
-#define u32 uint32_t
-
 
 struct hapara_id_pair {
     u32 id0;
