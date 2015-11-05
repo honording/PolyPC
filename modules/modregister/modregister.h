@@ -1,5 +1,7 @@
+#ifndef _REGISTER_H_
+#define _REGISTER_H_
+
 #include "../../include/thread_struct.h"
-#include <linux/cdev.h>
 
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"
@@ -24,8 +26,4 @@ struct hapara_register {
     void *mmio;
 };
 
-
-#define REG_MAGIC       'r'
-#define REG_MAX         4
-#define REG_ADD         _IOW(REG_MAGIC, 0, struct hapara_thread_struct)
-#define REG_DEL         _IOW(REG_MAGIC, 1, struct hapara_reg_pair)
+#endif

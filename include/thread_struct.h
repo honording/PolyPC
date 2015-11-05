@@ -1,3 +1,6 @@
+#ifndef _THREAD_STRUCT_H_
+#define _THREAD_STRUCT_H_
+
 #ifdef __USER_PROGRAMS__
 #include <stdint.h>
 #else
@@ -22,3 +25,10 @@ struct hapara_thread_struct {
     uint8_t tid;
     struct hapara_id_pair group_id;
 }__attribute__((aligned(4)));
+
+#define REG_MAGIC       'r'
+#define REG_MAX         4
+#define REG_ADD         _IOW(REG_MAGIC, 0, struct hapara_thread_struct)
+#define REG_DEL         _IOW(REG_MAGIC, 1, struct hapara_reg_pair)
+
+#endif

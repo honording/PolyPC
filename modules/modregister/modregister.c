@@ -5,7 +5,11 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
+#include <linux/kernel.h> 
+#include <linux/ioctl.h>
+ 
 
+#include <asm/uaccess.h> 
 #include <asm/io.h>
 
 #include "register.h"
@@ -187,7 +191,7 @@ static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
     struct hapara_register *dev = filp->private_data;
     //struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
 
-/*    
+/*   
     if (_IO_TYPE(cmd) != REG_MAGIC)
         return -EINVAL;
     if (_IO_NR(cmd) > REG_MAX)
