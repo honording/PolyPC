@@ -12,7 +12,7 @@
 #include <asm/uaccess.h> 
 #include <asm/io.h>
 
-#include "register.h"
+#include "modregister.h"
 
 static dev_t dev_num;
 static struct class *cl;
@@ -293,6 +293,7 @@ static int __exit register_exit(void)
     kfree(hapara_registerp);
     iounmap(hapara_registerp->mmio);
     unregister_chrdev_region(dev_num, 1);
+    return 0;
 }
 
 module_init(register_init);

@@ -1,8 +1,8 @@
 #ifndef _LIBREGISTER_H_
 #define _LIBREGISTER_H_
 
-#include "../../generic/include/thread_struct.h"
-#include "../../generic/include/register.h"
+#include "../../../generic/include/thread_struct.h"
+#include "../../../generic/include/register.h"
 
 #define FILEPATH    "/dev/hapara_reg"
 

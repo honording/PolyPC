@@ -1,8 +1,8 @@
 #ifndef _MODREGISTER_H_
 #define _MODREGISTER_H_
 
-#include "../../generic/include/thread_struct.h"
-#include "../../generic/include/register.h"
+#include "../../../generic/include/thread_struct.h"
+#include "../../../generic/include/register.h"
 
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"

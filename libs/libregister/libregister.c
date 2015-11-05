@@ -30,7 +30,7 @@ int reg_add(struct hapara_thread_struct *thread_info)
     return ret;
 }
 
-int reg_del(unsigned int off, unsigned int target);
+int reg_del(unsigned int off, unsigned int target)
 {
     int fd;
     int ioctl_ret = 0;
