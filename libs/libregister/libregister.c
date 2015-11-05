@@ -53,6 +53,59 @@ int reg_del(unsigned int off, unsigned int target)
     return ret;    
 }
 
+int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset)
+{
+    int fd;
+    int ret = 0;
+    if (offset > 255) {
+        printf("Invalid offset.@read_struct\n");
+        return -1;
+    }
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1) {
+        printf("Open Error.@read_struct\n");
+        return -1;
+    }
+    ret = lseek(fd, offset * sizeof(struct hapara_thread_struct), SEEK_SET);
+    if (ret < 0) {
+        printf("lseek error.@read_struct\n");
+        close(fd);
+        return -1;
+    }
+    ret = read(fd, thread_info, sizeof(struct hapara_thread_struct));
+    if (ret < 0) {
+        printf("Read error.@read_struct\n");
+        ret = -1;
+    }
+    close(fd);  
+    return ret;  
+}
+
+void set_struct(struct hapara_thread_struct *thread_info,
+                unsigned int valid,
+                unsigned int priority,
+                unsigned int type,
+                unsigned int next,
+                unsigned int tid,
+                unsigned int id0,
+                unsigned int id1)
+{
+    if (valid > 255 ||
+        priority > 255 ||
+        type > 255 ||
+        next > 255 ||
+        tid > 255) {
+        printf("invalid input.@set_struct\n");
+        return;
+    }
+    thread_info->valid = valid;
+    thread_info->priority = priority;
+    thread_info->type = type;
+    thread_info->next = next;
+    thread_info->tid = tid;
+    thread_info->group_id.id0 = id0;
+    thread_info->group_id.id1 = id1;   
+}
 
 void libregister_test(void) 
 {
@@ -95,13 +148,13 @@ void libregister_test(void)
     close(fd);
 }
 
-void print_struct(struct hapara_thread_struct *sp) 
+void print_struct(struct hapara_thread_struct *thread_info) 
 {
-    printf("valid = %d\n", sp->valid);
-    printf("priority = %d\n", sp->priority);
-    printf("type = %d\n", sp->type);
-    printf("next = %d\n", sp->next);
-    printf("tid = %d\n", sp->tid);
-    printf("group_id 0 = %d\n", sp->group_id.id0);
-    printf("group_id 1 = %d\n", sp->group_id.id1);
+    printf("valid = %d\n", thread_info->valid);
+    printf("priority = %d\n", thread_info->priority);
+    printf("type = %d\n", thread_info->type);
+    printf("next = %d\n", thread_info->next);
+    printf("tid = %d\n", thread_info->tid);
+    printf("group_id 0 = %d\n", thread_info->group_id.id0);
+    printf("group_id 1 = %d\n", thread_info->group_id.id1);
 }
