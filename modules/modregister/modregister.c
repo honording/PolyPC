@@ -180,7 +180,7 @@ static loff_t register_llseek(struct file *filp, loff_t offset, int orig)
     return ret;
 }
 
-static long register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     int err = 0;
     int ret = 0;

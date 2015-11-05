@@ -13,6 +13,47 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
+int reg_add(struct hapara_thread_struct *thread_info)
+{
+    int fd;
+    int ioctl_ret = 0;
+    int ret = 0;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    ioctl_ret = ioctl(fd, REG_ADD, thread_info);
+    if (ret < 0) 
+        ret = -1;
+    else
+        ret = ioctl_ret;
+    close(fd);
+    return ret;
+}
+
+int reg_del(unsigned int off, unsigned int target);
+{
+    int fd;
+    int ioctl_ret = 0;
+    int ret = 0;
+    if (off > 255 || target > 255) 
+        return -1;
+    struct hapara_reg_pair pair = {
+        .off = (uint8_t)off,
+        .target = (uint8_t)target,
+    };
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    ioctl_ret = ioctl(fd, REG_DEL, &pair);
+    if (ret < 0) 
+        ret = -1;
+    else
+        ret = ioctl_ret;
+    close(fd);
+    return ret;    
+}
+
+
 void libregister_test(void) 
 {
     int fd;
