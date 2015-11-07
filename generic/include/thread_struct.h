@@ -19,8 +19,8 @@ struct hapara_reg_pair {
 
 struct hapara_thread_struct {
     uint8_t valid;                       //1: valid; 0: invalid
-    uint8_t priority;
     uint8_t type;
+    uint8_t priority;
     uint8_t next;
     uint8_t tid;
     struct hapara_id_pair group_id;

@@ -8,9 +8,11 @@
 #define REG_DEL         _IOW(REG_MAGIC, 2, struct hapara_reg_pair)
 
 #define OFF_VALID       0
-#define OFF_PRIORITY    1
-#define OFF_TYPE        2
+#define OFF_TYPE        1
+#define OFF_PRIORITY    2
 #define OFF_NEXT        3
 #define OFF_TID         4
+
+#define RESERVED_TYPE   0
 
 #endif

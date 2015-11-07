@@ -39,12 +39,12 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
             if (thread_info->valid == target)
                 return i;
             break;
-        case OFF_PRIORITY:
-            if (thread_info->priority == target)
-                return i;
-            break;
         case OFF_TYPE:
             if (thread_info->type == target)
+                return i;
+            break;
+        case OFF_PRIORITY:
+            if (thread_info->priority == target)
                 return i;
             break;
         case OFF_NEXT:
@@ -283,10 +283,14 @@ static int __init register_init(void)
 #ifdef __REGISTER_DDR_MEM__
     hapara_registerp->mmio = kzalloc(SCHE_SIZE, GFP_KERNEL);
     if (!hapara_registerp->mmio) 
-        return -1;
+        goto failure_alloc;
 #else
     hapara_registerp->mmio = ioremap(SCHE_BASE_ADDR, SCHE_SIZE);
 #endif
+
+    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->valid = VALID;
+    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->type = RESERVED_TYPE;
+    //initialize dommy head
 
     return 0;
 
@@ -309,6 +313,9 @@ static int __exit register_exit(void)
     device_destroy(cl, dev_num);
     class_destroy(cl);
     kfree(hapara_registerp);
+#ifdef __REGISTER_DDR_MEM__
+    kfree(hapara_registerp->mmio);
+#endif
     iounmap(hapara_registerp->mmio);
     unregister_chrdev_region(dev_num, 1);
     return 0;
