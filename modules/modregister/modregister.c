@@ -21,6 +21,11 @@ static struct hapara_register *hapara_registerp;
 
 static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target, loff_t *pre)
 {
+#ifdef __REGISTER_DEBUG__
+    printk(KERN_DEBUG "%s@%s: Enter.\n", __func__, MODULE_NAME);
+    printk(KERN_DEBUG "%s@%s: offset = %d, target = %d.\n", __func__, MODULE_NAME, 
+           (int)offset, (int)target);
+#endif
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
     *pre = -EINVAL;
@@ -41,11 +46,15 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
         case OFF_TYPE:
             if (thread_info->type == target)
                 return i;
+            break;
         case OFF_NEXT:
             if (thread_info->next == target)
                 return i;
+            break;
         case OFF_TID:
             if (thread_info->tid == target)
+                return i;
+            break;
         default: 
             return -EINVAL;
         }
@@ -57,6 +66,9 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
             i = thread_info->next;
         else
             i++;
+#ifdef __REGISTER_DEBUG__
+        printk(KERN_DEBUG "%s@%s: Curr i = %d.\n", __func__, MODULE_NAME, i);
+#endif
         thread_info = thread_head + i;
     }
     return -EINVAL;
@@ -100,9 +112,8 @@ static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
     loff_t pre;
     loff_t off = search(dev, offset, target, &pre);
 #ifdef __REGISTER_DEBUG__
-    int a = 9;
-    printk(KERN_DEBUG "Search ret: %d @register_del.\n", a);
-    printk(KERN_DEBUG "Search pre: %d @register_del.\n", pre);
+    printk(KERN_DEBUG "%s@%s: Search ret: %d.\n", __func__, MODULE_NAME, (int)off);
+    printk(KERN_DEBUG "%s@%s: Search pre: %d.\n", __func__, MODULE_NAME, (int)pre);
 #endif
     if (off == -EINVAL) 
         return -EINVAL;
@@ -213,9 +224,6 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
     switch (cmd) {
     case REG_CLR:
         memset(dev->mmio, 0, SCHE_SIZE);
-#ifdef __REGISTER_DEBUG__
-        printk(KERN_DEBUG "Mem reset.@register_ioctl.\n");
-#endif
         break;
     case REG_ADD:
         off = add(dev, (struct hapara_thread_struct __user *)arg);

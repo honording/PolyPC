@@ -24,5 +24,6 @@ void set_struct(struct hapara_thread_struct *thread_info,
 
 int reg_add(struct hapara_thread_struct *thread_info);
 int reg_del(unsigned int off, unsigned int target);
+void reg_clr();
 
 #endif
