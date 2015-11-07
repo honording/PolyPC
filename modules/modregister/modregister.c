@@ -14,6 +14,7 @@
 
 #include "modregister.h"
 
+
 static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
@@ -98,6 +99,11 @@ static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     loff_t pre;
     loff_t off = search(dev, offset, target, &pre);
+#ifdef __REGISTER_DEBUG__
+    int a = 9;
+    printk(KERN_DEBUG "Search ret: %d @register_del.\n", a);
+    printk(KERN_DEBUG "Search pre: %d @register_del.\n", pre);
+#endif
     if (off == -EINVAL) 
         return -EINVAL;
     if (pre == -EINVAL)
@@ -205,6 +211,12 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 */
 
     switch (cmd) {
+    case REG_CLR:
+        memset(dev->mmio, 0, SCHE_SIZE);
+#ifdef __REGISTER_DEBUG__
+        printk(KERN_DEBUG "Mem reset.@register_ioctl.\n");
+#endif
+        break;
     case REG_ADD:
         off = add(dev, (struct hapara_thread_struct __user *)arg);
         if (off == -EINVAL)
@@ -246,28 +258,27 @@ static int __init register_init(void)
 {
     int ret;
     ret = alloc_chrdev_region(&dev_num, 0, 1, MODULE_NAME);
-    if (ret < 0) {
+    if (ret < 0)
         goto failure_dev_reg;
-    }
-
     cl = class_create(THIS_MODULE, MODULE_NAME);
-    if (cl == NULL) {
+    if (cl == NULL) 
         goto failure_cl_cr;
-    }
-    if (device_create(cl, NULL, dev_num, NULL, MODULE_NAME) == NULL) {
+    if (device_create(cl, NULL, dev_num, NULL, MODULE_NAME) == NULL)
         goto failure_dev_cr;
-    }
     hapara_registerp = kzalloc(sizeof(struct hapara_register), GFP_KERNEL);
-    if (!hapara_registerp) {
+    if (!hapara_registerp)
         goto failure_alloc;       
-    }
     cdev_init(&hapara_registerp->cdev, &register_fops);
     hapara_registerp->cdev.owner = THIS_MODULE;
-    if (cdev_add(&hapara_registerp->cdev, dev_num, 1) == -1) {
+    if (cdev_add(&hapara_registerp->cdev, dev_num, 1) == -1)
         goto failure_alloc;
-    }
-
+#ifdef __REGISTER_DDR_MEM__
+    hapara_registerp->mmio = kzalloc(SCHE_SIZE, GFP_KERNEL);
+    if (!hapara_registerp->mmio) 
+        return -1;
+#else
     hapara_registerp->mmio = ioremap(SCHE_BASE_ADDR, SCHE_SIZE);
+#endif
 
     return 0;
 

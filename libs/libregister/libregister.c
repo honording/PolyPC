@@ -13,6 +13,17 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
+void reg_clr()
+{
+    int fd;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    ioctl(fd, REG_CLR);
+    printf("reg_clr@reg_clr.\n");
+    close(fd);
+}
+
 int reg_add(struct hapara_thread_struct *thread_info)
 {
     int fd;
@@ -150,6 +161,7 @@ void libregister_test(void)
 
 void print_struct(struct hapara_thread_struct *thread_info) 
 {
+    printf("-----------------------------------\n");
     printf("valid = %d\n", thread_info->valid);
     printf("priority = %d\n", thread_info->priority);
     printf("type = %d\n", thread_info->type);
@@ -157,4 +169,5 @@ void print_struct(struct hapara_thread_struct *thread_info)
     printf("tid = %d\n", thread_info->tid);
     printf("group_id 0 = %d\n", thread_info->group_id.id0);
     printf("group_id 1 = %d\n", thread_info->group_id.id1);
+    printf("-----------------------------------\n");
 }

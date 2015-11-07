@@ -3,6 +3,7 @@
 
 #include "../../../generic/include/thread_struct.h"
 #include "../../../generic/include/register.h"
+#include "../../../generic/include/debug.h"
 
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"
