@@ -290,7 +290,7 @@ static int __init register_init(void)
 
     ((struct hapara_thread_struct *)(hapara_registerp->mmio))->valid = VALID;
     ((struct hapara_thread_struct *)(hapara_registerp->mmio))->type = RESERVED_TYPE;
-    //initialize dommy head
+    //initialize dusmmy head
 
     return 0;
 
