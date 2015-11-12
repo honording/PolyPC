@@ -47,12 +47,12 @@ void hapara_rel_lock(unsigned int num)
 static int __init hapara_mutex_init(void)
 {
     mutex_managerp = kzalloc(sizeof(struct hapara_mutex_manager), GFP_KERNEL);
-    if (!hapara_registerp)
+    if (!mutex_managerp)
         return -1;
 #ifdef  __MUTEX_DDR_MEM__
     mutex_managerp->mmio = kzalloc(sizeof(MUTEX_SIZE * MUTEX_NUM), GFP_KERNEL);
     if (!mutex_managerp->mmio) {
-        kfree(hapara_registerp);
+        kfree(mutex_managerp);
         return -1;
     }
 #else

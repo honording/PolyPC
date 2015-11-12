@@ -24,7 +24,7 @@ struct hapara_mutex_pair
 struct hapara_mutex_manager
 {
     void *mmio;
-    static struct mutex mutex_internal;
+    struct mutex mutex_internal;
 };
 
 #endif
