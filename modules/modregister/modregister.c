@@ -312,10 +312,10 @@ static int __exit register_exit(void)
     cdev_del(&hapara_registerp->cdev);
     device_destroy(cl, dev_num);
     class_destroy(cl);
-    kfree(hapara_registerp);
 #ifdef __REGISTER_DDR_MEM__
     kfree(hapara_registerp->mmio);
 #endif
+    kfree(hapara_registerp);
     iounmap(hapara_registerp->mmio);
     unregister_chrdev_region(dev_num, 1);
     return 0;
