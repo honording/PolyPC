@@ -23,8 +23,8 @@ void hapara_req_lock(unsigned int num)
     Once approved, continue to run.
 */
     mutex_lock(&mutex_managerp->mutex_internal);
-    ((struct hapara_mutex_pair *)mutex_managerp->mmio)->reg1 = SET;
-    while (((struct hapara_mutex_pair *)mutex_managerp->mmio)->reg2 != SET)
+    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 = SET;
+    while (((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg2 != SET)
         ;
 }
 
@@ -38,8 +38,8 @@ void hapara_rel_lock(unsigned int num)
     Keep polling R_t to check if it has been reset.
     Once approved, continue to run.
 */
-    ((struct hapara_mutex_pair *)mutex_managerp->mmio)->reg1 = UNSET;
-    while (((struct hapara_mutex_pair *)mutex_managerp->mmio)->reg2 != UNSET)
+    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 = UNSET;
+    while (((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg2 != UNSET)
         ;    
     mutex_unlock(&mutex_managerp->mutex_internal);
 }
@@ -70,6 +70,7 @@ static int __exit hapara_mutex_exit(void)
     kfree(mutex_managerp);
     return 0;
 }
+
 EXPORT_SYMBOL(hapara_req_lock);
 EXPORT_SYMBOL(hapara_rel_lock);
 module_init(hapara_mutex_init);

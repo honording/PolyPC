@@ -14,6 +14,8 @@
 
 #include "modregister.h"
 
+extern void hapara_req_lock(unsigned int num);
+extern void hapara_rel_lock(unsigned int num);
 
 static dev_t dev_num;
 static struct class *cl;
@@ -132,11 +134,13 @@ static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
 static int register_open(struct inode *inode, struct file *filp)
 {
     filp->private_data = hapara_registerp;
+    hapara_req_lock(REG_MUTEX);
     return 0;
 }
 
 static int register_release(struct inode *inode, struct file *filp)
 {
+    hapara_rel_lock(REG_MUTEX);
     return 0;
 }
 

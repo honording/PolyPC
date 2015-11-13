@@ -27,4 +27,7 @@ struct hapara_mutex_manager
     struct mutex mutex_internal;
 };
 
+extern void hapara_req_lock(unsigned int num);
+extern void hapara_rel_lock(unsigned int num);
+
 #endif
