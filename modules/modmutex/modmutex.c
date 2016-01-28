@@ -4,6 +4,7 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/kernel.h> 
+#include <linux/sched.h>
 
 #include <asm/uaccess.h> 
 #include <asm/io.h>
@@ -19,14 +20,17 @@ void hapara_req_lock(unsigned int num)
             R_t: reg1;
             WR_t:reg2;
 
-    Set W_t to its ID.
-    Keep polling R_t to check if it equals to its ID.
-    Once approved, continue to run.
+    1.Set W_t to its ID.
+    2.Check R_t see if it equals to its ID. if not goto 1.
+    3.Once approved, Reset W_t.
 */
+    printk(KERN_NOTICE "Enter hapara_req_lock\n");
     mutex_lock(&mutex_managerp->mutex_internal);
-    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 = SET;
-    while (((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg2 != SET)
-        ;
+    int pid = current->pid;
+    printk(KERN_NOTICE "Current name:%s, PID:%d\n", current->comm, pid);
+    while (((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 != pid)
+        ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg0 = pid;
+    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg0 = UNSET;
 }
 
 void hapara_rel_lock(unsigned int num)
@@ -36,11 +40,11 @@ void hapara_rel_lock(unsigned int num)
             R_t: reg1;
             WR_t:reg2;
 
-    Set WR_t to its ID.
-    Keep polling WR_t to check if it has been reset.
-    Once approved, continue to run.
+    1.Set WR_t to its ID.
+    2.Keep polling WR_t to check if it has been reset.
+    3.Once approved, continue to run.
 */
-    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 = UNSET;
+    ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg2 = current->pid;
     while (((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg2 != UNSET)
         ;    
     mutex_unlock(&mutex_managerp->mutex_internal);

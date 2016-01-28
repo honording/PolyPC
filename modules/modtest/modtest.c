@@ -11,6 +11,14 @@
 
 #include <asm/uaccess.h> 
 #include <asm/io.h>
+
+static struct cdev cdev;
+static dev_t dev_num;
+static struct class *cl;
+
+#define MODULE_NAME     "hapara_test"
+
+
 static int hapara_test_open(struct inode *inode, struct file *filp)
 {
     printk(KERN_DEBUG "Current name:%s, PID:%d", current->comm, current->pid);
@@ -37,11 +45,6 @@ static loff_t hapara_test_llseek(struct file *filp, loff_t offset, int orig)
     return 0;
 }
 
-static int hapara_test_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-    return 0;
-}
-
 static const struct file_operations hapara_test_fops = {
     .owner = THIS_MODULE,
     .open = hapara_test_open,
@@ -49,16 +52,46 @@ static const struct file_operations hapara_test_fops = {
     .llseek = hapara_test_llseek,
     .read = hapara_test_read,
     .write = hapara_test_write,
-    .unlocked_ioctl = hapara_test_ioctl,
 };
 
 static int __init hapara_test_init(void)
 {
-    return 0;   
+    int ret;
+    ret = alloc_chrdev_region(&dev_num, 0, 1, MODULE_NAME);
+    if (ret < 0)
+        goto failure_dev_reg;
+    cl = class_create(THIS_MODULE, MODULE_NAME);
+    if (cl == NULL) 
+        goto failure_cl_cr;
+    if (device_create(cl, NULL, dev_num, NULL, MODULE_NAME) == NULL)
+        goto failure_dev_cr;     
+    cdev_init(&cdev, &hapara_test_fops);
+    cdev.owner = THIS_MODULE;
+    if (cdev_add(&cdev, dev_num, 1) == -1)
+        goto failure_alloc;
+
+
+    return 0;
+
+    failure_alloc:
+    device_destroy(cl, dev_num);
+
+    failure_dev_cr:
+    class_destroy(cl);
+
+    failure_cl_cr:
+    unregister_chrdev_region(dev_num, 1);
+
+    failure_dev_reg:
+    return -1;  
 }
 
 static int __exit hapara_test_exit(void)
 {
+    cdev_del(&cdev);
+    device_destroy(cl, dev_num);
+    class_destroy(cl);
+    unregister_chrdev_region(dev_num, 1);
     return 0;
 }
 

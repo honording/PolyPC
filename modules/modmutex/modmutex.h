@@ -9,7 +9,7 @@
 
 #define MUTEX_BASE_ADDR 0x40000000
 #define MUTEX_MEM_SIZE  0x1000
-//#define MUTEX_SIZE      8
+#define MUTEX_SIZE      sizeof(struct hapara_mutex_pair)
 #define MUTEX_NUM       16
 
 #define SET             1
