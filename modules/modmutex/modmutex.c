@@ -15,11 +15,12 @@ static struct hapara_mutex_manager *mutex_managerp;
 void hapara_req_lock(unsigned int num)
 {
 /*
-    note:   W_t: reg1;
-            R_t: reg2;
+    note:   W_t: reg0;
+            R_t: reg1;
+            WR_t:reg2;
 
-    Set W_t.
-    Keep polling R_t to check if it has been set.
+    Set W_t to its ID.
+    Keep polling R_t to check if it equals to its ID.
     Once approved, continue to run.
 */
     mutex_lock(&mutex_managerp->mutex_internal);
@@ -31,11 +32,12 @@ void hapara_req_lock(unsigned int num)
 void hapara_rel_lock(unsigned int num)
 {
 /*
-    note:   W_t: reg1;
-            R_t: reg2;
+    note:   W_t: reg0;
+            R_t: reg1;
+            WR_t:reg2;
 
-    Reset W_t.
-    Keep polling R_t to check if it has been reset.
+    Set WR_t to its ID.
+    Keep polling WR_t to check if it has been reset.
     Once approved, continue to run.
 */
     ((struct hapara_mutex_pair *)mutex_managerp->mmio + num)->reg1 = UNSET;
