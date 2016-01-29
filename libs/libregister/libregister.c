@@ -15,13 +15,14 @@
 
 void reg_clr()
 {
+    printf("reg_clr@libregister, in.\n");
     int fd;
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
         return -1;
     ioctl(fd, REG_CLR);
-    printf("reg_clr@reg_clr.\n");
     close(fd);
+    printf("reg_clr@libregister, out.\n");
 }
 
 int reg_add(struct hapara_thread_struct *thread_info)

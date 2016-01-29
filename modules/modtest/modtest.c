@@ -16,6 +16,8 @@ static struct cdev cdev;
 static dev_t dev_num;
 static struct class *cl;
 
+static void *mmio;
+
 #define MODULE_NAME     "hapara_test"
 
 
@@ -56,6 +58,9 @@ static const struct file_operations hapara_test_fops = {
 
 static int __init hapara_test_init(void)
 {
+    mmio = ioremap(0x40000000, 0x1000);
+    printk(KERN_NOTICE "mmio addr:%x\n", mmio);
+    *((int *)mmio) = 0xbabeface;
     int ret;
     ret = alloc_chrdev_region(&dev_num, 0, 1, MODULE_NAME);
     if (ret < 0)

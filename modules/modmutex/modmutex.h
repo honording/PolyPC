@@ -17,14 +17,14 @@
 
 struct hapara_mutex_pair
 {
-    uint32_t    reg0;
-    uint32_t    reg1;
-    uint32_t    reg2;
+    volatile uint32_t    reg0;
+    volatile uint32_t    reg1;
+    volatile uint32_t    reg2;
 };
 
 struct hapara_mutex_manager
 {
-    void *mmio;
+    volatile void *mmio;
     struct mutex mutex_internal;
 };
 
