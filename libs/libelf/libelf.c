@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "libelf.h"
 
@@ -96,7 +100,7 @@ unsigned int get_main_entry(char *file_name)
         return 0;
     }
     FILE *stream;
-    stream = fopen("/home/hding/mb.elf", "r");
+    stream = fopen(file_name, "r");
     int ret;
     int read_num;
 
@@ -144,4 +148,44 @@ unsigned int get_main_entry(char *file_name)
 
 
     return sym->st_value;
+}
+//Compiler options for off_t over 2G
+//-D_FILE_OFFSET_BITS=64
+int load_elf(char *file_name, unsigned int addr)
+{
+    FILE *elf_stream;
+    int outfd;
+    void *ptr; 
+    int file_size = -1;
+    struct stat statbuff;
+    if (stat(file_name, &statbuff) < 0) {
+        perror("Got file size error.");
+        return -1;
+    }
+    file_size = statbuff.st_size;
+    elf_stream = fopen(file_name, "r");
+    outfd = open(DEVMEM, O_RDWR);
+    if (outfd < 1) {
+        fclose(elf_stream);
+        perror("devmem open failed.");
+        return -1;
+    }
+    ptr = mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, outfd, addr);
+    //addr is off_t and has to be aligned with page size;
+    if (ptr == (void *)-1) {
+        fclose(elf_stream);
+        perror("mmap failed.");
+        return -1;
+    }
+    int read_num = -1;
+    read_num = fread(ptr, sizeof(char), file_size, elf_stream);
+    if (read_num != file_size) {
+        munmap(ptr, file_size);
+        fclose(elf_stream);
+        perror("read elf failed.");
+        return -1;
+    }
+    munmap(ptr, file_size);
+    fclose(elf_stream);
+    return file_size;
 }
