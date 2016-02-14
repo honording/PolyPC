@@ -235,13 +235,13 @@ int match_name(char *name, Elf32_Sym *syms, char *strings, int num)
 int elf_loader(char *file_name, unsigned int addr) 
 {
     Elf32_Ehdr *ehdr    =   NULL;
-    printf("Begin to read elf size\n");
+    // printf("Begin to read elf size\n");
     struct stat statbuff;
     if (stat(file_name, &statbuff) < 0) {
         perror("elf_loader: elf file size got error.");
         return -1;
     }
-    printf("Begin to open elf file.\n");
+    // printf("Begin to open elf file.\n");
     int file_size = statbuff.st_size;
     FILE *elf_stream    =   NULL;
     elf_stream = fopen(file_name, "r");
@@ -249,16 +249,17 @@ int elf_loader(char *file_name, unsigned int addr)
         perror("elf_loader: elf file open error.");
         return -1;
     }
-    printf("Begin to allocate buf\n");
-    char *buf = (char *)malloc(sizeof(file_size));
+    // printf("elf_stream %x\n", elf_stream);
+    // printf("Begin to allocate buf\n");
+    char *buf = (char *)malloc(sizeof(char) * file_size);
     if (buf == NULL) {
         perror("elf_loader: buf memory allocate error.");
         fclose(elf_stream);
         return -1;
     }
-    printf("Begin to read elf to buf:%d\n", file_size);
+    // printf("Begin to read elf to buf:%d\n", file_size);
     int read_num = fread(buf, sizeof(char), file_size, elf_stream);
-    printf("After read elf to buf:%d\n", read_num);
+    // printf("After read elf to buf:%d\n", read_num);
     if (read_num != file_size) {
         printf("read error.\n");
         perror("elf_loader: elf file read error.");
@@ -266,22 +267,23 @@ int elf_loader(char *file_name, unsigned int addr)
         free(buf);
         return -1;
     }
-    //fclose(elf_stream);
-    printf("Begin to check elf\n");
+    // printf("elf_stream %x\n", elf_stream);
+    fclose(elf_stream); //right place
+    // printf("Begin to check elf\n");
     ehdr = (Elf32_Ehdr *)buf;
     if (!elf_valid(ehdr)) {
         perror("elf_loader: invalid elf format.");
         free(buf);
         return -1;
     }
-    printf("Begin to open devmem\n");
+    // printf("Begin to open devmem\n");
     int devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
         perror("elf_loader: devmem open failed.");
         free(buf);
         return -1;
     }
-    printf("Begin to mmap\n");
+    // printf("Begin to mmap\n");
     char *exec = mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, addr);
     if (!exec) {
         perror("elf_loader: mmap devmem failed.");
@@ -296,7 +298,7 @@ int elf_loader(char *file_name, unsigned int addr)
     char *ram_offset    =   NULL;
     int i;
     phdr = (Elf32_Phdr *)(buf + ehdr->e_phoff);
-    printf("Begin to load elf\n");
+    // printf("Begin to load elf\n");
     for(i = 0; i < ehdr->e_phnum; i++) {
             if(phdr[i].p_type != PT_LOAD) {
                     continue;
@@ -335,7 +337,7 @@ int elf_loader(char *file_name, unsigned int addr)
     }
     munmap(exec, file_size);
     close(devmemfd);
-    printf("Begin to locate main\n");
+    // printf("Begin to locate main\n");
     // find "main" entry address;
     Elf32_Shdr *shdr    =   NULL;
     Elf32_Sym  *syms    =   NULL;
@@ -343,7 +345,7 @@ int elf_loader(char *file_name, unsigned int addr)
     int main_entry      =   -1;
     shdr = (Elf32_Shdr *)(buf + ehdr->e_shoff);
     for (i = 0; i < ehdr->e_shnum; i++) {
-        printf("i:%d\n", i);
+        // printf("i:%d\n", i);
         if (shdr[i].sh_type == SHT_SYMTAB) {
             syms = (Elf32_Sym *)(buf + shdr[i].sh_offset);
             strings = (char *)(buf + shdr[shdr[i].sh_link].sh_offset);
@@ -351,12 +353,11 @@ int elf_loader(char *file_name, unsigned int addr)
             break;
         }
     }
-    //free(buf);
+    free(buf);
     if (main_entry == -1) {
         perror("elf_loader: main entry get error.");
         return -1;
     }
-    printf("before return from elf_loader:%X\n", main_entry);
-    fclose(elf_stream);
+    // printf("before return from elf_loader:%X\n", main_entry);
     return main_entry;
 }
