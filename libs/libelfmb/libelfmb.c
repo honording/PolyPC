@@ -229,10 +229,10 @@ int match_name(char *name, Elf32_Sym *syms, char *strings, int num)
             return syms[i].st_value;
         }
     }
-    return -1;
+    return 0;
 }
 
-int elf_loader(char *file_name, unsigned int addr) 
+int elf_loader(char *file_name, unsigned int addr, elf_info_t *elf_info) 
 {
     Elf32_Ehdr *ehdr    =   NULL;
     // printf("Begin to read elf size\n");
@@ -299,6 +299,7 @@ int elf_loader(char *file_name, unsigned int addr)
     int i;
     phdr = (Elf32_Phdr *)(buf + ehdr->e_phoff);
     // printf("Begin to load elf\n");
+    unsigned int max_ram_range = 0;
     for(i = 0; i < ehdr->e_phnum; i++) {
             if(phdr[i].p_type != PT_LOAD) {
                     continue;
@@ -319,6 +320,9 @@ int elf_loader(char *file_name, unsigned int addr)
             // each program segment is consecutieve.
             elf_offset = buf + phdr[i].p_offset;
             ram_offset = exec + phdr[i].p_vaddr;
+            if (phdr[i].p_vaddr + phdr[i].p_memsz > max_ram_range) {
+                max_ram_range = phdr[i].p_vaddr + phdr[i].p_memsz;
+            }
             memmove(ram_offset, elf_offset, phdr[i].p_filesz);
 
             // if(!(phdr[i].p_flags & PF_W)) {
@@ -339,10 +343,11 @@ int elf_loader(char *file_name, unsigned int addr)
     close(devmemfd);
     // printf("Begin to locate main\n");
     // find "main" entry address;
-    Elf32_Shdr *shdr    =   NULL;
-    Elf32_Sym  *syms    =   NULL;
-    char *strings       =   NULL;
-    int main_entry      =   -1;
+    Elf32_Shdr *shdr            =   NULL;
+    Elf32_Sym  *syms            =   NULL;
+    char *strings               =   NULL;
+    unsigned int main_entry     =   0;
+    unsigned int stack_addr     =   0;
     shdr = (Elf32_Shdr *)(buf + ehdr->e_shoff);
     for (i = 0; i < ehdr->e_shnum; i++) {
         // printf("i:%d\n", i);
@@ -350,14 +355,21 @@ int elf_loader(char *file_name, unsigned int addr)
             syms = (Elf32_Sym *)(buf + shdr[i].sh_offset);
             strings = (char *)(buf + shdr[shdr[i].sh_link].sh_offset);
             main_entry = match_name("main", syms, strings, shdr[i].sh_size / sizeof(Elf32_Sym));
+            stack_addr = match_name("_stack", syms, strings, shdr[i].sh_size / sizeof(Elf32_Sym));
+            if (stack_addr == 0) {
+                stack_addr = match_name("__stack", syms, strings, shdr[i].sh_size / sizeof(Elf32_Sym));
+            }
             break;
         }
     }
     free(buf);
-    if (main_entry == -1) {
+    if (main_entry == 0) {
         perror("elf_loader: main entry get error.");
         return -1;
     }
     // printf("before return from elf_loader:%X\n", main_entry);
-    return main_entry;
+    elf_info->main_addr     = main_entry;
+    elf_info->stack_addr    = stack_addr;
+    elf_info->thread_size   = max_ram_range;
+    return 1;
 }
