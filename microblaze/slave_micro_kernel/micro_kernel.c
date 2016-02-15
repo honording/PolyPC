@@ -160,7 +160,7 @@ int main()
 
 	while (1) {
 		if (thread_control->trigger == 1) {
-			thread_control->trigger = 1;
+			thread_control->trigger = 0;
 			elf_info.main_addr		= elf_info_p->main_addr;
 			elf_info.stack_addr		= elf_info_p->stack_addr;
 			elf_info.thread_size	= elf_info_p->thread_size;
