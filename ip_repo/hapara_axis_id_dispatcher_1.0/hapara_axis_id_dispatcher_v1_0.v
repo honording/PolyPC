@@ -212,8 +212,8 @@
     end
     endgenerate
 
-    generate if (NUM_SLAVES == 6)
-    begin: NUM_SLAVES_6
+    generate if (NUM_SLAVES == 7)
+    begin: NUM_SLAVES_7
         assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready | m05_axis_tready | m06_axis_tready;
 
 		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
@@ -246,8 +246,8 @@
     end
     endgenerate
 
-    generate if (NUM_SLAVES == 6)
-    begin: NUM_SLAVES_6
+    generate if (NUM_SLAVES == 8)
+    begin: NUM_SLAVES_8
         assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready | m05_axis_tready | m06_axis_tready | m07_axis_tready;
 
 		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
