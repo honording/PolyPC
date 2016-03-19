@@ -18,10 +18,14 @@
         input wire Finish,
         output wire En,
 
-        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] orgX,
-        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] orgY,
-        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] lengthX,
-        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] lengthY,
+        // output wire [C_S_AXI_DATA_WIDTH - 1 : 0] orgX,
+        // output wire [C_S_AXI_DATA_WIDTH - 1 : 0] orgY,
+        // output wire [C_S_AXI_DATA_WIDTH - 1 : 0] lengthX,
+        // output wire [C_S_AXI_DATA_WIDTH - 1 : 0] lengthY,
+
+        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] org,
+        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] len,
+        output wire [C_S_AXI_DATA_WIDTH - 1 : 0] numOfSlv,
 
         // User ports ends
         // Do not modify the ports beyond this line
@@ -222,7 +226,7 @@
           slv_reg0 <= 0;
           slv_reg1 <= 0;
           slv_reg2 <= 0;
-          slv_reg3 <= 0;
+          // slv_reg3 <= 0;
         end
       else begin
         if (slv_reg_wren)
@@ -249,21 +253,31 @@
                     // Slave register 2
                     slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
                   end
-              2'h3:
-                for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-                  if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+              // 2'h3:
+                // for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+                  // if ( S_AXI_WSTRB[byte_index] == 1 ) begin
                     // Respective byte enables are asserted as per write strobes
                     // Slave register 3
-                    slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-                  end
+                    // slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+                  // end
               default : begin
                           slv_reg0 <= slv_reg0;
                           slv_reg1 <= slv_reg1;
                           slv_reg2 <= slv_reg2;
-                          slv_reg3 <= slv_reg3;
+                          // slv_reg3 <= slv_reg3;
                         end
             endcase
           end
+      end
+    end
+
+    //logic for writing slv_reg3;
+    always @(posedge S_AXI_ACLK) begin
+      if (!S_AXI_ARESETN || curr_state == reset || curr_state == counting) begin
+        slv_reg3 <= 0;
+      end
+      else if (curr_state == finish) begin
+        slv_reg3 <= 1;
       end
     end
 
@@ -397,39 +411,49 @@
     end
 
     // Add user logic here
-    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_orgX;      //slv_reg0
-    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_orgY;      //slv_reg1
-    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_lengthX;   //slv_reg2
-    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_lengthY;   //slv_reg3
 
+    // X: vertical
+    // Y: horizontal
 
+    // slv_reg0: orgX, orgY
+    // slv_reg1: lenX, lenY
+    // slv_reg2: num of slaves
+    // slv_reg3: isFinish?
+    // reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_orgX;      //slv_reg0
+    // reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_orgY;      //slv_reg1
+    // reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_lengthX;   //slv_reg2
+    // reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_lengthY;   //slv_reg3
 
-    localparam reset    = 2'b01;
-    localparam counting = 2'b10;
+    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_org;
+    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_len;
+    reg [C_S_AXI_DATA_WIDTH - 1 : 0] reg_numOfSlv;
 
-    reg [1 : 0] next_state;
-    reg [1 : 0] curr_state;
-    
+    localparam LENGTH   = C_S_AXI_DATA_WIDTH / 2;
+
+    localparam reset    = 3'b001;
+    localparam counting = 3'b010;
+    localparam finish   = 3'b100;
+
+    reg [2 : 0] next_state;
+    reg [2 : 0] curr_state;
+
     // logic for reg_*
     always @(posedge S_AXI_ACLK or negedge S_AXI_ARESETN) begin
         if (!S_AXI_ARESETN) begin
-            reg_orgX    <= 0;
-            reg_orgY    <= 0;
-            reg_lengthX <= 0;
-            reg_lengthY <= 0;
+            reg_org       <= 0;
+            reg_len       <= 0;
+            reg_numOfSlv  <= 0;
         end
         else begin
             if (curr_state == reset) begin
-                reg_orgX    <= slv_reg0;
-                reg_orgY    <= slv_reg1;
-                reg_lengthX <= slv_reg2;
-                reg_lengthY <= slv_reg3;
-            end 
+                reg_org       <= slv_reg0;
+                reg_len       <= slv_reg1;
+                reg_numOfSlv  <= slv_reg2;
+            end
             else begin
-                reg_orgX    <= reg_orgX;
-                reg_orgY    <= reg_orgY;
-                reg_lengthX <= reg_lengthX;
-                reg_lengthY <= reg_lengthY;
+                reg_org       <= reg_org;
+                reg_len       <= reg_len;
+                reg_numOfSlv  <= reg_numOfSlv;
             end
         end
     end
@@ -446,34 +470,49 @@
     end
 
     wire data_ready;
-    assign data_ready = (slv_reg2 != 0) && 
-                        (slv_reg3 != 0);
+    assign data_ready = 
+              (slv_reg1[C_S_AXI_DATA_WIDTH - 1 : LENGTH] != {LENGTH{1'b0}}) &&
+              (slv_reg1[LENGTH - 1 : 0] != {LENGTH{1'b0}});
 
     always @(curr_state or data_ready or Finish) begin
-        case(curr_state) 
+        case(curr_state)
             reset:
                 if (data_ready) begin
                     next_state = counting;
-                end 
+                end
                 else begin
                     next_state = reset;
-                end 
+                end
             counting:
                 if (Finish) begin
-                    next_state = reset;
+                    next_state = finish;
                 end
                 else begin
                     next_state = counting;
                 end
+            finish:
+                if (data_ready) begin
+                    next_state = reset;
+                end
+                else begin
+                    next_state = finish;
+                end
+            default :
+                next_state = 3'bxxx;
         endcase
     end
 
     assign En = curr_state == counting;
 
-    assign orgX     = reg_orgX;
-    assign orgY     = reg_orgY;
-    assign lengthX  = reg_lengthX;
-    assign lengthY  = reg_lengthY;
+    // assign orgX     = reg_orgX;
+    // assign orgY     = reg_orgY;
+    // assign lengthX  = reg_lengthX;
+    // assign lengthY  = reg_lengthY;
+
+    assign org      = reg_org;
+    assign len      = reg_len;
+    assign numOfSlv = reg_numOfSlv;
+
 
     // User logic ends
 

@@ -58,10 +58,13 @@
 	);
 	wire En;
 	wire Finish;
-	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] orgX;
-	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] orgY;
-	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] lengthX;
-	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] lengthY;
+	// wire [C_S00_AXI_DATA_WIDTH - 1 : 0] orgX;
+	// wire [C_S00_AXI_DATA_WIDTH - 1 : 0] orgY;
+	// wire [C_S00_AXI_DATA_WIDTH - 1 : 0] lengthX;
+	// wire [C_S00_AXI_DATA_WIDTH - 1 : 0] lengthY;
+	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] org;
+	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] len;
+	wire [C_S00_AXI_DATA_WIDTH - 1 : 0] numOfSlv;
 
 // Instantiation of Axi Bus Interface S00_AXI
 	hapara_axis_id_generator_v1_0_S00_AXI # ( 
@@ -70,10 +73,9 @@
 	) hapara_axis_id_generator_v1_0_S00_AXI_inst (
 		.En(En),
 		.Finish(Finish),
-		.orgX(orgX),
-		.orgY(orgY),
-		.lengthX(lengthX),
-		.lengthY(lengthY),
+		.org(org),
+		.len(len),
+		.numOfSlv(numOfSlv),
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),
 		.S_AXI_AWADDR(s00_axi_awaddr),
@@ -104,10 +106,9 @@
 	) hapara_axis_id_generator_v1_0_M00_AXIS_inst (
 		.En(En), 
 		.Finish(Finish),
-		.orgX(orgX),
-		.orgY(orgY),
-		.lengthX(lengthX),
-		.lengthY(lengthY),
+		.org(org),
+		.len(len),
+		.numOfSlv(numOfSlv),
 		.M_AXIS_ACLK(m00_axis_aclk),
 		.M_AXIS_ARESETN(m00_axis_aresetn),
 		.M_AXIS_TVALID(m00_axis_tvalid),
