@@ -19,7 +19,10 @@ void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int next,
                 unsigned int tid,
                 unsigned int id0,
-                unsigned int id1);
+                unsigned int id1,
+                unsigned int main_addr,
+                unsigned int stack_addr,
+                unsigned int thread_size);
 
 
 int reg_add(struct hapara_thread_struct *thread_info);

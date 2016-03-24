@@ -7,6 +7,8 @@
 #include <linux/types.h>
 #endif
 
+#include "elf_loader.h"
+
 struct hapara_id_pair {
     uint32_t id0;
     uint32_t id1;
@@ -24,6 +26,7 @@ struct hapara_thread_struct {
     uint8_t next;
     uint8_t tid;
     struct hapara_id_pair group_id;
+    elf_info_t elf_info;
 }__attribute__((aligned(4)));
 
 #endif

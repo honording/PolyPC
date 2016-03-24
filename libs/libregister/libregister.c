@@ -34,7 +34,7 @@ int reg_add(struct hapara_thread_struct *thread_info)
     if (fd == -1)
         return -1;
     ioctl_ret = ioctl(fd, REG_ADD, thread_info);
-    if (ret < 0) 
+    if (ret < 0)
         ret = -1;
     else
         ret = ioctl_ret;
@@ -47,7 +47,7 @@ int reg_del(unsigned int off, unsigned int target)
     int fd;
     int ioctl_ret = 0;
     int ret = 0;
-    if (off > 255 || target > 255) 
+    if (off > 255 || target > 255)
         return -1;
     struct hapara_reg_pair pair = {
         .off = (uint8_t)off,
@@ -57,12 +57,12 @@ int reg_del(unsigned int off, unsigned int target)
     if (fd == -1)
         return -1;
     ioctl_ret = ioctl(fd, REG_DEL, &pair);
-    if (ret < 0) 
+    if (ret < 0)
         ret = -1;
     else
         ret = ioctl_ret;
     close(fd);
-    return ret;    
+    return ret;
 }
 
 int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset)
@@ -89,8 +89,8 @@ int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset)
         printf("Read error.@read_struct\n");
         ret = -1;
     }
-    close(fd);  
-    return ret;  
+    close(fd);
+    return ret;
 }
 
 void set_struct(struct hapara_thread_struct *thread_info,
@@ -100,7 +100,10 @@ void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int next,
                 unsigned int tid,
                 unsigned int id0,
-                unsigned int id1)
+                unsigned int id1,
+                unsigned int main_addr,
+                unsigned int stack_addr,
+                unsigned int thread_size)
 {
     if (valid > 255 ||
         priority > 255 ||
@@ -116,10 +119,13 @@ void set_struct(struct hapara_thread_struct *thread_info,
     thread_info->next = next;
     thread_info->tid = tid;
     thread_info->group_id.id0 = id0;
-    thread_info->group_id.id1 = id1;   
+    thread_info->group_id.id1 = id1;
+    thread_info->elf_info.main_addr = main_addr;
+    thread_info->elf_info.stack_addr = stack_addr;
+    thread_info->elf_info.thread_size = thread_size;
 }
 
-void libregister_test(void) 
+void libregister_test(void)
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);
@@ -160,9 +166,9 @@ void libregister_test(void)
     close(fd);
 }
 
-void print_struct(struct hapara_thread_struct *thread_info) 
+void print_struct(struct hapara_thread_struct *thread_info)
 {
-    printf("-----------------------------------\n");
+    printf("----------------------------------------\n");
     printf("valid = %d\n", thread_info->valid);
     printf("priority = %d\n", thread_info->priority);
     printf("type = %d\n", thread_info->type);
@@ -170,5 +176,8 @@ void print_struct(struct hapara_thread_struct *thread_info)
     printf("tid = %d\n", thread_info->tid);
     printf("group_id 0 = %d\n", thread_info->group_id.id0);
     printf("group_id 1 = %d\n", thread_info->group_id.id1);
-    printf("-----------------------------------\n");
+    printf("elf_info main_addr = 0x%8X\n", thread_info->elf_info.main_addr);
+    printf("elf_info stack_addr = 0x%8X\n", thread_info->elf_info.stack_addr);
+    printf("elf_info thread_size = 0x%8X\n", thread_info->elf_info.thread_size);
+    printf("---------------------------------------\n");
 }

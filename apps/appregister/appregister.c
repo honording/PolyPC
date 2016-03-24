@@ -19,7 +19,7 @@ int main()
     }
 
     for (i = 0; i < 5; i++) {
-        set_struct(sp, 1, 10, i, 0, 100, 2, 12);
+        set_struct(sp, 1, 10, i, 0, 100, 2, 12, 0, 0, 0);
         ret = reg_add(sp);
         if (ret == -1) {
             printf("Reg add error 0.@main\n");
@@ -58,7 +58,7 @@ int main()
     }
     printf("Del location: %d\n", ret); 
 
-    set_struct(sp, 1, 10, 1, 0, 100, 2, 12);
+    set_struct(sp, 1, 10, 1, 0, 100, 2, 12, 0, 0, 0);
     ret = reg_add(sp);
     if (ret == -1) {
         printf("Reg add error 0.@main\n");
