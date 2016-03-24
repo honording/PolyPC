@@ -5,6 +5,7 @@
 #include "../../../generic/include/register.h"
 #include "../../../generic/include/debug.h"
 #include "../../../generic/include/mutex_manager.h"
+#include "../../../generic/include/base_addr.h"
 
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"
@@ -12,10 +13,10 @@
 #define VALID           1
 #define INVALID         0
 
-#define SCHE_BASE_ADDR  0x40000000
-#define SCHE_SIZE       0x1000
-#define SLOT_SIZE       16
-#define MAX_SLOT        256         //0x1000 / 16 = 256
+#define SCHE_BASE_ADDR  ARM_HTDT_BASE
+#define SCHE_SIZE       0x8000          //32KByte
+#define SLOT_SIZE       28
+#define MAX_SLOT        1024         //0x8000 / 28
 
 
 struct hapara_register {

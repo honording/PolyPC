@@ -7,10 +7,14 @@
 #include <sys/mman.h>
 
 #include "../../libs/libelfmb/libelfmb.h"
-#define ELF_FILE_NAME	"/mnt/kernel_thread.elf"
+#include "../../libs/libregister/libregister.h"
 
-#define	SIG_ADDR		0x40000000
-#define	ELF_LOAD_ADDR	0x42000000
+#include "../../../generic/include/elf_loader.h"
+#include "../../../generic/include/base_addr.h"
+
+#define ELF_FILE_NAME	"/mnt/slave_kernel_thread.elf"
+
+#define	ELF_LOAD_ADDR	ARM_DDR_BASE
 
 int main(int argc, char *argv[])
 {
@@ -18,10 +22,13 @@ int main(int argc, char *argv[])
 	elf_info.main_addr 		= 0;
 	elf_info.stack_addr 	= 0;
 	elf_info.thread_size 	= 0;
-	printf("return from elf_loader:%x\n", elf_loader(ELF_FILE_NAME, ELF_LOAD_ADDR, &elf_info));
+	printf("return from elf_loader:%x\n", elf_loader(ELF_FILE_NAME, 
+                                                     ELF_LOAD_ADDR + 3072 * 4, 
+                                                     &elf_info));
 	printf("main_addr:  %8X\n", elf_info.main_addr);
 	printf("stack_addr: %8X\n", elf_info.stack_addr);
 	printf("thread_size:%8X\n", elf_info.thread_size);
+
 	return 0;
 }
 

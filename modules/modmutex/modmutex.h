@@ -6,8 +6,9 @@
 
 #include "../../../generic/include/debug.h"
 #include "../../../generic/include/mutex_manager.h"
+#include "../../../generic/include/base_addr.h"
 
-#define MUTEX_BASE_ADDR 0x40000000
+#define MUTEX_BASE_ADDR ARM_MUTEX_MANAGER_BASE
 #define MUTEX_MEM_SIZE  0x1000
 #define MUTEX_SIZE      sizeof(struct hapara_mutex_pair)
 #define MUTEX_NUM       16

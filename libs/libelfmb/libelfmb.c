@@ -16,6 +16,8 @@
 
 #include "libelfmb.h"
 
+#define ELFMB_DEBUG
+
 /*
 int read_elf_header(FILE *file,
 					 Elf32_Ehdr *ehdr)
@@ -218,6 +220,12 @@ int elf_valid(Elf32_Ehdr *ehdr)
         ehdr->e_ident[EI_MAG3] == 'F') {
         return 1;
     }
+#ifndef ELFMB_DEBUG
+    printf("0x%2X, %c, %c, %c.\n", ehdr->e_ident[EI_MAG0],
+                                   ehdr->e_ident[EI_MAG1],
+                                   ehdr->e_ident[EI_MAG2],
+                                   ehdr->e_ident[EI_MAG3]);
+#endif
     return 0;
 }
 
@@ -236,6 +244,7 @@ int elf_loader(char *file_name, unsigned int addr, elf_info_t *elf_info)
 {
     Elf32_Ehdr *ehdr    =   NULL;
     // printf("Begin to read elf size\n");
+    /*
     struct stat statbuff;
     if (stat(file_name, &statbuff) < 0) {
         perror("elf_loader: elf file size got error.");
@@ -243,12 +252,26 @@ int elf_loader(char *file_name, unsigned int addr, elf_info_t *elf_info)
     }
     // printf("Begin to open elf file.\n");
     int file_size = statbuff.st_size;
+    if (file_size <= 0) {
+        perror("elf_loader: file_size is wrong.");
+        return -1;
+    }
+    */
+    // printf("elf_loader: file path: %s\n", file_name);
+    int file_size = 0;
     FILE *elf_stream    =   NULL;
     elf_stream = fopen(file_name, "r");
     if (elf_stream == NULL) {
         perror("elf_loader: elf file open error.");
         return -1;
     }
+    fseek(elf_stream, 0L, SEEK_END);
+    file_size = ftell(elf_stream);
+    fseek(elf_stream, 0L, SEEK_SET);
+    if (file_size <= 0) {
+        perror("elf_loader: file_size is wrong.");
+        return -1;
+    }    
     // printf("elf_stream %x\n", elf_stream);
     // printf("Begin to allocate buf\n");
     char *buf = (char *)malloc(sizeof(char) * file_size);
