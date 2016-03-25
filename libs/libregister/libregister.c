@@ -27,6 +27,7 @@ void reg_clr()
 
 int reg_add(struct hapara_thread_struct *thread_info)
 {
+    printf("reg_add@libregister. in.\n");
     int fd;
     int ioctl_ret = 0;
     int ret = 0;
@@ -39,6 +40,7 @@ int reg_add(struct hapara_thread_struct *thread_info)
     else
         ret = ioctl_ret;
     close(fd);
+    printf("reg_add@libregister. out\n");
     return ret;
 }
 

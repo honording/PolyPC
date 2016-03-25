@@ -1,3 +1,7 @@
+#ifndef __USER_PROGRAMS__
+#define __USER_PROGRAMS__
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -27,8 +31,22 @@ int main(int argc, char *argv[])
                                                      &elf_info));
 	printf("main_addr:  %8X\n", elf_info.main_addr);
 	printf("stack_addr: %8X\n", elf_info.stack_addr);
-	printf("thread_size:%8X\n", elf_info.thread_size);
+	printf("thread_size:%d\n", elf_info.thread_size);
 
+    reg_clr();
+    int ret = 0;
+    struct hapara_thread_struct *sp;
+    sp = malloc(sizeof(struct hapara_thread_struct));
+    if (sp == NULL) {
+        printf("Malloc error.@main\n");
+        return 0;
+    }
+
+    set_struct(sp, 1, 10, 1, 0, 100, 0, 0, elf_info.main_addr + SLAVE_INST_MEM_BASE, 
+                                           elf_info.stack_addr + SLAVE_INST_MEM_BASE, 
+                                           elf_info.thread_size);
+    
+    ret = reg_add(sp);
 	return 0;
 }
 
