@@ -213,7 +213,11 @@
         end
     end
 
-
-    assign M_AXIS_TDATA = {counterX, counterY};
+    wire [X_LENGTH - 1 : 0] resultX;
+    wire [Y_LENGTH - 1 : 0] resultY;
+    assign resultX = (counterX == {X_LENGTH{1'b1}})?{X_LENGTH{1'b1}}:counterX + orgX;
+    assign resultY = (counterY == {Y_LENGTH{1'b1}})?{Y_LENGTH{1'b1}}:counterY + orgY;
+    assign M_AXIS_TDATA = {resultX, resultY};
+    
     assign M_AXIS_TLAST = 1'b0;
     endmodule
