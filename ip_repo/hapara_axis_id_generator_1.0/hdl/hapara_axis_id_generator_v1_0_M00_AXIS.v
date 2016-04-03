@@ -106,7 +106,7 @@
         endcase
     end
     */
-    always @(curr_state or En or slave_counter) begin
+    always @(curr_state or En or slave_counter or numOfSlv) begin
         case (curr_state)
             reset:
                 if (En) begin
@@ -131,7 +131,7 @@
     assign M_AXIS_TVALID = (curr_state == counting);
 
     // logic for current state
-    always @(posedge M_AXIS_ACLK or negedge M_AXIS_ARESETN) begin
+    always @(posedge M_AXIS_ACLK) begin
         if (!M_AXIS_ARESETN) begin
             // reset
             curr_state <= reset;
@@ -169,7 +169,7 @@
         end
     end
     */
-    always @(posedge M_AXIS_ACLK or negedge M_AXIS_ARESETN) begin
+    always @(posedge M_AXIS_ACLK) begin
         if (!M_AXIS_ARESETN || curr_state == reset) begin
             counterX <= {X_LENGTH{1'b0}};
             counterY <= {Y_LENGTH{1'b0}};
@@ -198,7 +198,7 @@
     //logic to count how many slaves reveived the termination
     reg [C_M_AXIS_TDATA_WIDTH - 1 : 0] slave_counter;
 
-    always @(posedge M_AXIS_ACLK or negedge M_AXIS_ARESETN) begin
+    always @(posedge M_AXIS_ACLK) begin
         if (!M_AXIS_ARESETN || curr_state == reset) begin
             // reset
             slave_counter <= 0;
