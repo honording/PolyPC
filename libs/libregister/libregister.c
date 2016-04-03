@@ -106,6 +106,10 @@ void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int main_addr,
                 unsigned int stack_addr,
                 unsigned int thread_size)
+//set_struct(sp, 1, 10, 1, 0, 100, 0, 0,     elf_info.main_addr, 
+//                                           elf_info.stack_addr, 
+//                                           elf_info.thread_size);
+
 {
     if (valid > 255 ||
         priority > 255 ||

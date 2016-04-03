@@ -14,6 +14,9 @@
 
 //unsigned int get_main_entry(char *file_name);
 //int load_elf(char *file_name, unsigned int addr);
-int elf_loader(char *file_name, unsigned int addr, elf_info_t *elf_info);
+int elf_loader(char *file_name, 
+               unsigned int addr, 
+               unsigned int elf_start_addr, 
+               elf_info_t *elf_info);
 
 #endif
