@@ -1087,7 +1087,7 @@ proc hapara_generate_mmi {numOfGroup numOfSlave} {
     puts $fileout "<MemInfo Version=\"1\" Minor=\"0\">"
 
     # Create AddressSpace for mutex_manager
-    set inst_path "${bd_design_nm}_i/mutex_manager"
+    set inst_path "/mutex_manager"
     set cell_name "${bd_design_nm}_i/mutex_manager_local_memory/lmb_bram"
     puts $fileout "  <Processor Endianness=\"Little\" InstPath=\"$inst_path\">"
     hapara_generate_mmi_addspace $fileout $brams $cell_name 0
@@ -1097,7 +1097,7 @@ proc hapara_generate_mmi {numOfGroup numOfSlave} {
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         # Create AddressSpace for schedulers
-        set inst_path "${bd_design_nm}_i/$group_name/scheduler"
+        set inst_path "/$group_name/scheduler"
         set cell_name "${bd_design_nm}_i/$group_name/scheduler_local_memory/lmb_bram"
         puts $fileout "  <Processor Endianness=\"Little\" InstPath=\"$inst_path\">"
         hapara_generate_mmi_addspace $fileout $brams $cell_name 0
@@ -1105,7 +1105,7 @@ proc hapara_generate_mmi {numOfGroup numOfSlave} {
         for {set j 0} {$j < $numOfSlave} {incr j} {
             set slave_name "slave_s$j"
             # Create AddressSpace for slaves
-            set inst_path "${bd_design_nm}_i/$group_name/$slave_name"
+            set inst_path "/$group_name/$slave_name"
             puts $fileout "  <Processor Endianness=\"Little\" InstPath=\"$inst_path\">"
             # FIXME here a "/" is used to make sure that bram will not contain bram1
             set cell_name "${bd_design_nm}_i/$group_name/${slave_name}_local_memory/lmb_bram/"
