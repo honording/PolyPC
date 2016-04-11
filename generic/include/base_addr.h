@@ -19,4 +19,6 @@
 #define SLAVE_INST_MEM_BASE                 0x00008000
 #define SLAVE_DDR_BASE                      0x60000000
 
+#define FPGA_DDR_MAX_SIZE                   0x1F000000  //496MB
+
 #endif

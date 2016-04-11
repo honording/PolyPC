@@ -2,12 +2,14 @@
 #define _MODDDRMALLOC_H_
 
 #include "../../../generic/include/base_addr.h"
+#include "../../../generic/include/ddrmalloc.h"
 
 #include <linux/mutex.h>
+#include <linux/list.h>
 
 #define MODULE_NAME     "hapara_ddr_malloc"
-#define BEGEIN_ADDR     SLAVE_DDR_BASE
-#define MAX_SIZE        0x1F000000          //496MB
+#define BEGIN_ADDR      SLAVE_DDR_BASE
+#define MAX_SIZE        FPGA_DDR_MAX_SIZE          //496MB
 /*
  * This boundary is for DMA transferring
  * which means the size to allocate has to be integer multiples of boundary size
@@ -16,9 +18,20 @@
 
  struct hapara_ddr_malloc
  {
-    int curr_max_size;
+    int max_available_slot;
+    int cur_usage;
     struct cdev cdev;
     struct mutex list_mutex;
  };
+
+ struct hapara_ddr_malloc_list
+ {
+    int is_free;
+    int begin_addr;
+    int size;
+    struct list_head list;
+ };
+
+ LIST_HEAD(dummy);
 
 #endif
