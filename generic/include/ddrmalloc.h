@@ -9,8 +9,9 @@
 // };
 
 #define DDRMALLOC_MAGIG     'd'
-#define DDRMALLOC_MAX       2
+#define DDRMALLOC_MAX       3
 #define DDRMALLOC_ALLOC     _IOW(DDRMALLOC_MAGIG, 0, unsigned int)
 #define DDRMALLOC_FREE      _IOW(DDRMALLOC_MAGIG, 1, unsigned int)
+#define DDRMALLOC_PRINT     _IO(DDRMALLOC_MAGIG, 3)
 
 #endif

@@ -33,7 +33,7 @@ static int ddr_malloc_release(struct inode *inode, struct file *filp)
     return 0;
 }
 
-static int ddr_allocate(struct hapara_ddr_malloc *dev, unsigned int size)
+static int ddr_allocate(struct hapara_ddr_malloc *dev, int size)
 {
     int ret = -1;
     if (dev->max_available_slot < size)
@@ -70,7 +70,7 @@ static int ddr_allocate(struct hapara_ddr_malloc *dev, unsigned int size)
     return ret;
 }
 
-static void print_list(struct hapara_ddr_malloc_list *head)
+static void print_list(void)
 {
     struct hapara_ddr_malloc_list *curr;
     list_for_each_entry(curr, &dummy, list)
@@ -83,7 +83,7 @@ static void print_list(struct hapara_ddr_malloc_list *head)
     }
 }
 
-static int ddr_free(struct hapara_ddr_malloc *dev, unsigned int addr) 
+static int ddr_free(struct hapara_ddr_malloc *dev, int addr) 
 {
     return 0;
 }
@@ -92,14 +92,17 @@ static int ddr_malloc_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 {
     int ret = -1;
     struct hapara_ddr_malloc *dev = filp->private_data;
-    unsigned int kernel_arg;
-    if (get_user(kernel_arg, (unsigned int *)arg))
+    int kernel_arg;
+    if (get_user(kernel_arg, (int *)arg))
         return ret;
     switch (cmd) {
     case DDRMALLOC_ALLOC:
         ret = ddr_allocate(dev, kernel_arg);
         break;
     case DDRMALLOC_FREE:
+        break;
+    case DDRMALLOC_PRINT:
+        print_list();
         break;
     default:
         break;
