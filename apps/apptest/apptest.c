@@ -12,6 +12,7 @@
 
 #include "../../libs/libelfmb/libelfmb.h"
 #include "../../libs/libregister/libregister.h"
+#include "../../libs/libddrmalloc/libddrmalloc.h"
 
 #include "../../../generic/include/elf_loader.h"
 #include "../../../generic/include/base_addr.h"
@@ -23,6 +24,7 @@
 
 int main(int argc, char *argv[])
 {
+    /*
 	elf_info_t elf_info;
 	elf_info.main_addr 		= 0;
 	elf_info.stack_addr 	= 0;
@@ -49,6 +51,26 @@ int main(int argc, char *argv[])
                                            elf_info.thread_size);
     
     ret = reg_add(sp);
+    */
+    // ddr_list_print();
+    int a0 = ddr_malloc(34);
+    printf("a0 = 0x%8X\n", a0);
+    int a1 = ddr_malloc(8987);
+    printf("a1 = 0x%8X\n", a1);
+    int a2 = ddr_malloc(343);
+    printf("a2 = 0x%8X\n", a2);
+    int a3 = ddr_malloc(1203);
+    printf("a3 = 0x%8X\n", a3);
+    ddr_list_print();
+    int f0 = ddr_free(a0);
+    // printf("f0 = %d\n", f0);
+    int f1 = ddr_free(a1);
+    // printf("f1 = %d\n", f1);
+    // ddr_list_print();
+    int f2 = ddr_free(a2);
+    // printf("f2 = %d\n", f2);
+    int f3 = ddr_free(a3);
+    ddr_list_print();
 	return 0;
 }
 
