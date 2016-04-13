@@ -406,7 +406,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave {dma_burst_length 25
             CONFIG.C_FSL_LINKS {2} \
             CONFIG.C_PVR {2} \
             CONFIG.C_PVR_USER1 {0x00} \
-            CONFIG.C_PVR_USER2 {$i} \
+            CONFIG.C_PVR_USER2 [format "0x%08X" $i] \
             CONFIG.C_I_AXI {0} \
             CONFIG.C_I_LMB {1} \
         ] $slave
