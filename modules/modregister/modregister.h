@@ -15,8 +15,8 @@
 
 #define SCHE_BASE_ADDR  ARM_HTDT_BASE
 #define SCHE_SIZE       0x8000          //32KByte
-#define SLOT_SIZE       28
-#define MAX_SLOT        1024         //0x8000 / 28
+// #define SLOT_SIZE       28
+#define MAX_SLOT        256         //0x8000 / 28
 
 
 struct hapara_register {

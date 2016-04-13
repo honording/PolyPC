@@ -44,16 +44,17 @@ int reg_add(struct hapara_thread_struct *thread_info)
     return ret;
 }
 
-int reg_del(unsigned int off, unsigned int target)
+int reg_del(unsigned int target)
 {
     int fd;
     int ioctl_ret = 0;
     int ret = 0;
-    if (off > 255 || target > 255)
-        return -1;
+    int off = OFF_TID;
+    // if (off > 255 || target > 255)
+    //     return -1;
     struct hapara_reg_pair pair = {
         .off = (uint8_t)off,
-        .target = (uint8_t)target,
+        .target = (uint32_t)target,
     };
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
@@ -94,6 +95,8 @@ int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset)
     close(fd);
     return ret;
 }
+
+/*
 
 void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int valid,
@@ -187,3 +190,4 @@ void print_struct(struct hapara_thread_struct *thread_info)
     printf("elf_info thread_size = 0x%8X\n", thread_info->elf_info.thread_size);
     printf("---------------------------------------\n");
 }
+*/

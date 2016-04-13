@@ -20,8 +20,10 @@ extern void hapara_rel_lock(unsigned int num);
 static dev_t dev_num;
 static struct class *cl;
 static struct hapara_register *hapara_registerp;
-
+/* Only tid need to be matched
 static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target, loff_t *pre)
+*/
+static loff_t search(struct hapara_register *dev, loff_t offset, uint32_t target, loff_t *pre)
 {
 #ifdef __REGISTER_DEBUG__
     printk(KERN_DEBUG "%s@%s: Enter.\n", __func__, MODULE_NAME);
@@ -34,9 +36,10 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
     int i = 0;
     int isBegin = VALID;
     while (!((i >= MAX_SLOT) || 
-           ((thread_info->valid == INVALID) && 
+           ((thread_info->isValid == INVALID) && 
             (isBegin == INVALID)))) { 
         switch (offset) {
+        /*
         case OFF_VALID:
             if (thread_info->valid == target)
                 return i;
@@ -53,6 +56,7 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
             if (thread_info->next == target)
                 return i;
             break;
+        */
         case OFF_TID:
             if (thread_info->tid == target)
                 return i;
@@ -60,7 +64,7 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
         default: 
             return -EINVAL;
         }
-        if (thread_info->valid == VALID) {
+        if (thread_info->isValid == VALID) {
             *pre = i;
             isBegin = INVALID;
         }
@@ -81,7 +85,7 @@ static loff_t find_slot(struct hapara_register *dev)
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     int i = 0;
     while (i < MAX_SLOT) {
-        if (thread_info->valid == INVALID)
+        if (thread_info->isValid == INVALID)
             return i;
         else {
             i++;
@@ -108,7 +112,7 @@ static loff_t add(struct hapara_register *dev, struct hapara_thread_struct *buf)
     return off;
 }
 
-static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
+static loff_t del(struct hapara_register *dev, loff_t offset, uint32_t target)
 {
     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
     loff_t pre;
@@ -120,16 +124,17 @@ static loff_t del(struct hapara_register *dev, loff_t offset, uint8_t target)
     if (off == -EINVAL) 
         return -EINVAL;
     if (pre == -EINVAL)
-        (thread_info + off)->valid = INVALID;
+        (thread_info + off)->isValid = INVALID;
     else if ((thread_info + off)->next == INVALID) {
-        (thread_info + off)->valid = INVALID;
+        (thread_info + off)->isValid = INVALID;
         (thread_info + pre)->next = off + 1;
     } else {
-        (thread_info + off)->valid = INVALID;
+        (thread_info + off)->isValid = INVALID;
         (thread_info + pre)->next = (thread_info + off)->next;
     }
     return off;
 }
+
 
 static int register_open(struct inode *inode, struct file *filp)
 {
@@ -292,8 +297,8 @@ static int __init register_init(void)
     hapara_registerp->mmio = ioremap(SCHE_BASE_ADDR, SCHE_SIZE);
 #endif
 
-    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->valid = VALID;
-    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->type = RESERVED_TYPE;
+    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->isValid = VALID;
+    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->tid = RESERVED_TID;
     //initialize dusmmy head
 
     return 0;

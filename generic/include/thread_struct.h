@@ -18,7 +18,7 @@ struct hapara_id_pair {
 
 struct hapara_reg_pair {
     uint8_t off;
-    uint8_t target;
+    uint32_t target;
 };
 
 // struct hapara_thread_struct {
