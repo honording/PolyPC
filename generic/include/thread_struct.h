@@ -9,6 +9,8 @@
 
 #include "elf_loader.h"
 
+#define ARGC    16
+
 struct hapara_id_pair {
     uint32_t id0;
     uint32_t id1;
@@ -19,14 +21,26 @@ struct hapara_reg_pair {
     uint8_t target;
 };
 
+// struct hapara_thread_struct {
+//     uint8_t valid;                       //1: valid; 0: invalid
+//     uint8_t type;
+//     uint8_t priority;
+//     uint8_t next;
+//     uint8_t tid;
+//     struct hapara_id_pair group_id;
+//     elf_info_t elf_info;
+// }__attribute__((aligned(4)));
+
 struct hapara_thread_struct {
-    uint8_t valid;                       //1: valid; 0: invalid
-    uint8_t type;
+    uint8_t isValid;
     uint8_t priority;
     uint8_t next;
-    uint8_t tid;
-    struct hapara_id_pair group_id;
+    uint32_t tid;
+    struct hapara_id_pair group_size;
+    struct hapara_id_pair group_num;
+    struct hapara_id_pair cur_group_id;
     elf_info_t elf_info;
+    uint32_t argv[ARGC];
 }__attribute__((aligned(4)));
 
 #endif
