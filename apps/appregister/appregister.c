@@ -7,6 +7,7 @@
 
 int main() 
 {
+    /*
     printf("Enter main\n");
     reg_clr();
     int ret = 0;
@@ -77,5 +78,6 @@ int main()
 
     printf("Exit main\n");
     free(sp);
+    */
     return 0;  
 }

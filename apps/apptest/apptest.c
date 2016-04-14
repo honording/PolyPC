@@ -53,24 +53,59 @@ int main(int argc, char *argv[])
     ret = reg_add(sp);
     */
     // ddr_list_print();
-    int a0 = ddr_malloc(34);
-    printf("a0 = 0x%8X\n", a0);
-    int a1 = ddr_malloc(8987);
-    printf("a1 = 0x%8X\n", a1);
-    int a2 = ddr_malloc(343);
-    printf("a2 = 0x%8X\n", a2);
-    int a3 = ddr_malloc(1203);
-    printf("a3 = 0x%8X\n", a3);
-    ddr_list_print();
-    int f0 = ddr_free(a0);
-    // printf("f0 = %d\n", f0);
-    int f1 = ddr_free(a1);
-    // printf("f1 = %d\n", f1);
+    // int a0 = ddr_malloc(34);
+    // printf("a0 = 0x%8X\n", a0);
+    // int a1 = ddr_malloc(8987);
+    // printf("a1 = 0x%8X\n", a1);
+    // int a2 = ddr_malloc(343);
+    // printf("a2 = 0x%8X\n", a2);
+    // int a3 = ddr_malloc(1203);
+    // printf("a3 = 0x%8X\n", a3);
     // ddr_list_print();
-    int f2 = ddr_free(a2);
-    // printf("f2 = %d\n", f2);
-    int f3 = ddr_free(a3);
-    ddr_list_print();
+    // int f0 = ddr_free(a0);
+    // // printf("f0 = %d\n", f0);
+    // int f1 = ddr_free(a1);
+    // // printf("f1 = %d\n", f1);
+    // // ddr_list_print();
+    // int f2 = ddr_free(a2);
+    // // printf("f2 = %d\n", f2);
+    // int f3 = ddr_free(a3);
+    // ddr_list_print();
+    reg_clr();
+    struct hapara_thread_struct sp = {
+        .isValid = 1,
+        .priority = 1,
+        .next = 0,
+        .tid = 334,
+    };
+
+    int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
+    if (ret < 0) {
+        printf("apptest: elf_loader error\n");
+        return 0;
+    }
+    print_struct(&sp);
+    ret = reg_add(&sp);
+    if (ret == -1) {
+        printf("apptest: Reg add error 0.\n");
+        return 0;
+    }
+    printf("apptest: add location:%d\n", ret);
+    struct hapara_thread_struct scp;
+    int i;
+    for (i = 0; i < 2; i++) {
+        ret = read_struct(&scp, i);
+        if (ret < 0) {
+            printf("apptest: read error %d.\n", i);
+            return 0;
+        }
+        print_struct(&scp);          
+    }
+    ret = ddr_free(sp.elf_info.ddr_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_addr error.\n");
+        return 0;
+    }
 	return 0;
 }
 

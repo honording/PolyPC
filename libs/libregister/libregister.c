@@ -19,7 +19,7 @@ void reg_clr()
     int fd;
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
-        return -1;
+        return;
     ioctl(fd, REG_CLR);
     close(fd);
     printf("reg_clr@libregister, out.\n");
@@ -174,20 +174,45 @@ void libregister_test(void)
     free(sp);
     close(fd);
 }
+*/
+
+// struct hapara_thread_struct {
+//     uint8_t isValid;
+//     uint8_t priority;
+//     uint8_t next;
+//     uint32_t tid;
+//     struct hapara_id_pair group_size;
+//     struct hapara_id_pair group_num;
+//     struct hapara_id_pair cur_group_id;
+//     elf_info_t elf_info;
+//     uint32_t argv[ARGC];
+// }__attribute__((aligned(4)));
+
+// struct elf_info_struct {
+//     unsigned int main_addr;
+//     unsigned int stack_addr;
+//     unsigned int thread_size;
+//     unsigned int ddr_addr;
+//     unsigned int DMA_size;
+// };
 
 void print_struct(struct hapara_thread_struct *thread_info)
 {
     printf("----------------------------------------\n");
-    printf("valid = %d\n", thread_info->valid);
+    printf("isValid  = %d\n", thread_info->isValid);
     printf("priority = %d\n", thread_info->priority);
-    printf("type = %d\n", thread_info->type);
-    printf("next = %d\n", thread_info->next);
-    printf("tid = %d\n", thread_info->tid);
-    printf("group_id 0 = %d\n", thread_info->group_id.id0);
-    printf("group_id 1 = %d\n", thread_info->group_id.id1);
-    printf("elf_info main_addr = 0x%8X\n", thread_info->elf_info.main_addr);
-    printf("elf_info stack_addr = 0x%8X\n", thread_info->elf_info.stack_addr);
-    printf("elf_info thread_size = 0x%8X\n", thread_info->elf_info.thread_size);
+    printf("next     = %d\n", thread_info->next);
+    printf("tid      = %d\n", thread_info->tid);
+    printf("cur_group_id 0 = %d\n", thread_info->cur_group_id.id0);
+    printf("cur_group_id 1 = %d\n", thread_info->cur_group_id.id1);
+    printf("group_size 0   = %d\n", thread_info->group_size.id0);
+    printf("group_size 1   = %d\n", thread_info->group_size.id1);
+    printf("group_num 0    = %d\n", thread_info->group_num.id0);
+    printf("group_num 1    = %d\n", thread_info->group_num.id1);
+    printf("elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
+    printf("elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
+    printf("elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
+    printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
+    printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
     printf("---------------------------------------\n");
 }
-*/

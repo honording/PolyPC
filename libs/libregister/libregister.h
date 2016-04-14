@@ -9,7 +9,7 @@
 
 /*
 void libregister_test(void);
-void print_struct(struct hapara_thread_struct *sp);
+
 
 
 
@@ -25,9 +25,10 @@ void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int stack_addr,
                 unsigned int thread_size);
 */
+void print_struct(struct hapara_thread_struct *sp);
 
 int reg_add(struct hapara_thread_struct *thread_info);
-int reg_del(unsigned int off, unsigned int target);
+int reg_del(unsigned int target);
 void reg_clr();
 int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset);
 //do not implenment minus offset.
