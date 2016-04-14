@@ -44,7 +44,7 @@ int reg_add(struct hapara_thread_struct *thread_info)
     return ret;
 }
 
-int reg_del(unsigned int target)
+int reg_del(int location)
 {
     int fd;
     int ioctl_ret = 0;
@@ -52,14 +52,30 @@ int reg_del(unsigned int target)
     int off = OFF_TID;
     // if (off > 255 || target > 255)
     //     return -1;
-    struct hapara_reg_pair pair = {
-        .off = (uint8_t)off,
-        .target = (uint32_t)target,
-    };
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
         return -1;
-    ioctl_ret = ioctl(fd, REG_DEL, &pair);
+    ioctl_ret = ioctl(fd, REG_DEL, location);
+    if (ret < 0)
+        ret = -1;
+    else
+        ret = ioctl_ret;
+    close(fd);
+    return ret;
+}
+
+int reg_search_del(int tid)
+{
+    int fd;
+    int ioctl_ret = 0;
+    int ret = 0;
+    int off = OFF_TID;
+    // if (off > 255 || target > 255)
+    //     return -1;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    ioctl_ret = ioctl(fd, REG_SEARCH_DEL, tid);
     if (ret < 0)
         ret = -1;
     else

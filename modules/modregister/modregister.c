@@ -7,6 +7,7 @@
 #include <linux/device.h>
 #include <linux/kernel.h> 
 #include <linux/ioctl.h>
+#include <linux/sched.h>
  
 
 #include <asm/uaccess.h> 
@@ -23,118 +24,179 @@ static struct hapara_register *hapara_registerp;
 /* Only tid need to be matched
 static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target, loff_t *pre)
 */
-static loff_t search(struct hapara_register *dev, loff_t offset, uint32_t target, loff_t *pre)
+// Workable codes for singly linked list
+
+// static loff_t search(struct hapara_register *dev, loff_t offset, uint32_t target, loff_t *pre)
+// {
+// #ifdef __REGISTER_DEBUG__
+//     printk(KERN_DEBUG "%s@%s: Enter.\n", __func__, MODULE_NAME);
+//     printk(KERN_DEBUG "%s@%s: offset = %d, target = %d.\n", __func__, MODULE_NAME, 
+//            (int)offset, (int)target);
+// #endif
+//     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+//     struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
+//     *pre = -EINVAL;
+//     int i = 0;
+//     int isBegin = VALID;
+//     while (!((i >= MAX_SLOT) || 
+//            ((thread_info->isValid == INVALID) && 
+//             (isBegin == INVALID)))) { 
+//         switch (offset) {
+//         /*
+//         case OFF_VALID:
+//             if (thread_info->valid == target)
+//                 return i;
+//             break;
+//         case OFF_TYPE:
+//             if (thread_info->type == target)
+//                 return i;
+//             break;
+//         case OFF_PRIORITY:
+//             if (thread_info->priority == target)
+//                 return i;
+//             break;
+//         case OFF_NEXT:
+//             if (thread_info->next == target)
+//                 return i;
+//             break;
+//         */
+//         case OFF_TID:
+//             if (thread_info->tid == target)
+//                 return i;
+//             break;
+//         default: 
+//             return -EINVAL;
+//         }
+//         if (thread_info->isValid == VALID) {
+//             *pre = i;
+//             isBegin = INVALID;
+//         }
+//         if (thread_info->next != INVALID)
+//             i = thread_info->next;
+//         else
+//             i++;
+// #ifdef __REGISTER_DEBUG__
+//         printk(KERN_DEBUG "%s@%s: Curr i = %d.\n", __func__, MODULE_NAME, i);
+// #endif
+//         thread_info = thread_head + i;
+//     }
+//     return -EINVAL;
+// }
+
+// static loff_t find_slot(struct hapara_register *dev)
+// {
+//     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+//     int i = 0;
+//     while (i < MAX_SLOT) {
+//         if (thread_info->isValid == INVALID)
+//             return i;
+//         else {
+//             i++;
+//             thread_info++;
+//         }
+//     }
+//     return -EINVAL;
+// }
+
+// static loff_t add(struct hapara_register *dev, struct hapara_thread_struct *buf)
+// {
+//     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+//     loff_t off = find_slot(dev);
+//     if (off == -EINVAL)
+//         return -EINVAL;
+//     if (copy_from_user(thread_info + off, (char *)buf, sizeof(struct hapara_thread_struct)))
+//         return -EINVAL;
+//     if (off != 0) {
+//         (thread_info + off)->next = (thread_info + off - 1)->next;
+//         (thread_info + off - 1)->next = INVALID;
+//         if ((thread_info + off)->next == off + 1)
+//             (thread_info + off)->next = INVALID;
+//     }
+//     return off;
+// }
+
+// static loff_t del(struct hapara_register *dev, loff_t offset, uint32_t target)
+// {
+//     struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
+//     loff_t pre;
+//     loff_t off = search(dev, offset, target, &pre);
+// #ifdef __REGISTER_DEBUG__
+//     printk(KERN_DEBUG "%s@%s: Search ret: %d.\n", __func__, MODULE_NAME, (int)off);
+//     printk(KERN_DEBUG "%s@%s: Search pre: %d.\n", __func__, MODULE_NAME, (int)pre);
+// #endif
+//     if (off == -EINVAL) 
+//         return -EINVAL;
+//     if (pre == -EINVAL)
+//         (thread_info + off)->isValid = INVALID;
+//     else if ((thread_info + off)->next == INVALID) {
+//         (thread_info + off)->isValid = INVALID;
+//         (thread_info + pre)->next = off + 1;
+//     } else {
+//         (thread_info + off)->isValid = INVALID;
+//         (thread_info + pre)->next = (thread_info + off)->next;
+//     }
+//     return off;
+// }
+
+/* Doubly linked codes
+ */
+static int add(struct hapara_register *dev, struct hapara_thread_struct *new_node)
 {
-#ifdef __REGISTER_DEBUG__
-    printk(KERN_DEBUG "%s@%s: Enter.\n", __func__, MODULE_NAME);
-    printk(KERN_DEBUG "%s@%s: offset = %d, target = %d.\n", __func__, MODULE_NAME, 
-           (int)offset, (int)target);
-#endif
-    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
-    struct hapara_thread_struct *thread_head = (struct hapara_thread_struct *)dev->mmio;
-    *pre = -EINVAL;
-    int i = 0;
-    int isBegin = VALID;
-    while (!((i >= MAX_SLOT) || 
-           ((thread_info->isValid == INVALID) && 
-            (isBegin == INVALID)))) { 
-        switch (offset) {
-        /*
-        case OFF_VALID:
-            if (thread_info->valid == target)
-                return i;
+    struct hapara_thread_struct *curr;
+    struct hapara_thread_struct *base = 
+        (struct hapara_thread_struct *)dev->mmio;
+
+    int ret = -1;
+    for_each_slot(curr, dev->mmio)
+    {
+        if (curr->isValid == INVALID) {
+            if (copy_from_user(curr, 
+                               (char *)buf, 
+                               sizeof(struct hapara_thread_struct)))
+                return -EINVAL;            
+            curr->isValid = VALID;
+            curr->next = (curr - 1)->next;
+            curr->prev = curr - base - 1;
+            (curr - 1)->next = curr - base;
+            curr->tid = current->pid;
+            ret = curr - base;
             break;
-        case OFF_TYPE:
-            if (thread_info->type == target)
-                return i;
-            break;
-        case OFF_PRIORITY:
-            if (thread_info->priority == target)
-                return i;
-            break;
-        case OFF_NEXT:
-            if (thread_info->next == target)
-                return i;
-            break;
-        */
-        case OFF_TID:
-            if (thread_info->tid == target)
-                return i;
-            break;
-        default: 
-            return -EINVAL;
         }
-        if (thread_info->isValid == VALID) {
-            *pre = i;
-            isBegin = INVALID;
-        }
-        if (thread_info->next != INVALID)
-            i = thread_info->next;
-        else
-            i++;
-#ifdef __REGISTER_DEBUG__
-        printk(KERN_DEBUG "%s@%s: Curr i = %d.\n", __func__, MODULE_NAME, i);
-#endif
-        thread_info = thread_head + i;
     }
-    return -EINVAL;
+    return ret;
 }
 
-static loff_t find_slot(struct hapara_register *dev)
+static int del(struct hapara_register *dev, int off)
 {
-    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
-    int i = 0;
-    while (i < MAX_SLOT) {
-        if (thread_info->isValid == INVALID)
-            return i;
-        else {
-            i++;
-            thread_info++;
-        }
-    }
-    return -EINVAL;
-}
-
-static loff_t add(struct hapara_register *dev, struct hapara_thread_struct *buf)
-{
-    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
-    loff_t off = find_slot(dev);
-    if (off == -EINVAL)
-        return -EINVAL;
-    if (copy_from_user(thread_info + off, (char *)buf, sizeof(struct hapara_thread_struct)))
-        return -EINVAL;
-    if (off != 0) {
-        (thread_info + off)->next = (thread_info + off - 1)->next;
-        (thread_info + off - 1)->next = INVALID;
-        if ((thread_info + off)->next == off + 1)
-            (thread_info + off)->next = INVALID;
-    }
+    struct hapara_thread_struct *curr = 
+        (struct hapara_thread_struct *)dev->mmio + off;
+    struct hapara_thread_struct *base = 
+        (struct hapara_thread_struct *)dev->mmio;
+    (base + curr->prev)->next = curr->next;
+    (base + curr->next)->prev = curr->prev;
+    curr->isValid = INVALID;
     return off;
 }
 
-static loff_t del(struct hapara_register *dev, loff_t offset, uint32_t target)
+static int search_del(struct hapara_register *dev, pid_t tid)
 {
-    struct hapara_thread_struct *thread_info = (struct hapara_thread_struct *)dev->mmio;
-    loff_t pre;
-    loff_t off = search(dev, offset, target, &pre);
-#ifdef __REGISTER_DEBUG__
-    printk(KERN_DEBUG "%s@%s: Search ret: %d.\n", __func__, MODULE_NAME, (int)off);
-    printk(KERN_DEBUG "%s@%s: Search pre: %d.\n", __func__, MODULE_NAME, (int)pre);
-#endif
-    if (off == -EINVAL) 
-        return -EINVAL;
-    if (pre == -EINVAL)
-        (thread_info + off)->isValid = INVALID;
-    else if ((thread_info + off)->next == INVALID) {
-        (thread_info + off)->isValid = INVALID;
-        (thread_info + pre)->next = off + 1;
-    } else {
-        (thread_info + off)->isValid = INVALID;
-        (thread_info + pre)->next = (thread_info + off)->next;
-    }
-    return off;
-}
+    struct hapara_thread_struct *curr;
+    struct hapara_thread_struct *base = 
+        (struct hapara_thread_struct *)dev->mmio;
 
+    int ret = -1;
+    for_each_valid(curr, dev->mmio)
+    {
+        if (curr->tid == pid) {
+            (base + curr->prev)->next = curr->next;
+            (base + curr->next)->prev = curr->prev;
+            curr->isValid = INVALID;
+            ret = curr - base;
+            break;
+        }
+    }
+    return ret;
+}
 
 static int register_open(struct inode *inode, struct file *filp)
 {
@@ -209,10 +271,9 @@ static loff_t register_llseek(struct file *filp, loff_t offset, int orig)
 static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
     int err = 0;
-    int ret = 0;
-    loff_t off = 0;
-    loff_t pair_off = 0;
-    uint8_t pair_target = 0;
+    int ret = -1;
+    int location = 0;
+    int off = 0;
 
     struct hapara_register *dev = filp->private_data;
 
@@ -235,24 +296,29 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
         memset(dev->mmio, 0, SCHE_SIZE);
         break;
     case REG_ADD:
-        off = add(dev, (struct hapara_thread_struct __user *)arg);
-        if (off == -EINVAL)
+        location = add(dev, (struct hapara_thread_struct __user *)arg);
+        if (location == -EINVAL)
             ret = -EINVAL;
         else
-            ret = off;
+            ret = location;
         break;
     case REG_DEL:
-        ret = get_user(pair_off, &(((struct hapara_reg_pair *)arg)->off));
-        if (ret == -EFAULT)
+        if (get_user(off, (int *)arg))
             return -EINVAL;
-        ret = get_user(pair_target, &(((struct hapara_reg_pair *)arg)->target));
-        if (ret == -EFAULT)
-            return -EINVAL;
-        off = del(dev, pair_off, pair_target);
-        if (off == -EINVAL)
+        location = del(dev, off);
+        if (location == -EINVAL)
             ret = -EINVAL;
         else
-            ret = off;
+            ret = location;
+        break;
+    case REG_SEARCH_DEL:
+        if (get_user(off, (int *)arg))
+            return -EINVAL;
+        location = search_del(dev, off);
+        if (location == -EINVAL)
+            ret = -EINVAL;
+        else
+            ret = location;
         break;
     default:
         ret = -EINVAL;
@@ -297,9 +363,24 @@ static int __init register_init(void)
     hapara_registerp->mmio = ioremap(SCHE_BASE_ADDR, SCHE_SIZE);
 #endif
 
-    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->isValid = VALID;
-    ((struct hapara_thread_struct *)(hapara_registerp->mmio))->tid = RESERVED_TID;
+
+    struct hapara_thread_struct * sb = 
+                (struct hapara_thread_struct *)(hapara_registerp->mmio);
+
     //initialize dusmmy head
+    //next, prev, priority, isValid
+    uint32_t val = 0x0000001;
+    (sb + DUMMY)->zero = val;
+    // //initialize the HTDT list
+    // uint32_t i;
+    // val = 0x02000000;
+    // for (i = 1; i < MAX_SLOT - 1; i++) {
+    //     (sb + i)->zero = val;
+    //     val += 0x01010000;
+    // }
+    // val = 0x00FE0000;
+    // (sb + MAX_SLOT - 1)->zero = val;
+    // (sb + DUMMY)->isValid = VALID;
 
     return 0;
 

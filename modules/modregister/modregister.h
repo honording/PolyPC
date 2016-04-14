@@ -7,6 +7,7 @@
 #include "../../../generic/include/mutex_manager.h"
 #include "../../../generic/include/base_addr.h"
 
+
 #define MAX_NAME_LENGTH 8
 #define MODULE_NAME     "hapara_reg"
 
@@ -18,10 +19,21 @@
 // #define SLOT_SIZE       28
 #define MAX_SLOT        256         //0x8000 / 28
 
+#define DUMMY           0
 
 struct hapara_register {
     struct cdev cdev;
     void *mmio;
 };
+
+#define for_each_valid(curr, base) \
+        for (curr = (typeof(* curr) *)(base) + ((typeof(* curr) *)(base))->next; \
+             curr != 0; \
+             curr = (typeof(* curr) *)(base) + curr->next)
+
+#define for_each_slot(curr, base) \
+        for (curr = (typeof(* curr) *)(base) + ((typeof(* curr) *)(base))->next; \
+             curr != 0; \
+             curr++)
 
 #endif

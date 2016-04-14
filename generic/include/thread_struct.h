@@ -16,10 +16,10 @@ struct hapara_id_pair {
     uint32_t id1;
 };
 
-struct hapara_reg_pair {
-    uint8_t off;
-    uint32_t target;
-};
+// struct hapara_reg_pair {
+//     uint8_t off;
+//     uint32_t target;
+// };
 
 // struct hapara_thread_struct {
 //     uint8_t valid;                       //1: valid; 0: invalid
@@ -32,10 +32,12 @@ struct hapara_reg_pair {
 // }__attribute__((aligned(4)));
 
 struct hapara_thread_struct {
+    uint32_t zero[0];
     uint8_t isValid;
     uint8_t priority;
+    uint8_t prev;
     uint8_t next;
-    uint32_t tid;
+    int tid;
     struct hapara_id_pair group_size;
     struct hapara_id_pair group_num;
     struct hapara_id_pair cur_group_id;

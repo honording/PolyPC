@@ -28,7 +28,10 @@ void set_struct(struct hapara_thread_struct *thread_info,
 void print_struct(struct hapara_thread_struct *sp);
 
 int reg_add(struct hapara_thread_struct *thread_info);
-int reg_del(unsigned int target);
+//del based on location
+int reg_del(int location);
+//del based on tid
+int reg_search_del(int tid);
 void reg_clr();
 int read_struct(struct hapara_thread_struct *thread_info, unsigned int offset);
 //do not implenment minus offset.
