@@ -28,12 +28,12 @@ struct hapara_register {
 
 #define for_each_valid(curr, base) \
         for (curr = (typeof(* curr) *)(base) + ((typeof(* curr) *)(base))->next; \
-             curr != 0; \
+             curr - (typeof(* curr) *)(base) != 0; \
              curr = (typeof(* curr) *)(base) + curr->next)
 
 #define for_each_slot(curr, base) \
-        for (curr = (typeof(* curr) *)(base) + ((typeof(* curr) *)(base))->next; \
-             curr != 0; \
+        for (curr = (typeof(* curr) *)(base) + 1; \
+             curr - (typeof(* curr) *)(base) < MAX_SLOT; \
              curr++)
 
 #endif

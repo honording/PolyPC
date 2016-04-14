@@ -143,7 +143,7 @@ static loff_t search(struct hapara_register *dev, loff_t offset, uint8_t target,
 static int add(struct hapara_register *dev, struct hapara_thread_struct *new_node)
 {
     struct hapara_thread_struct *curr;
-    struct hapara_thread_struct *base = 
+    struct hapara_thread_struct *sbase = 
         (struct hapara_thread_struct *)dev->mmio;
 
     int ret = -1;
@@ -156,10 +156,10 @@ static int add(struct hapara_register *dev, struct hapara_thread_struct *new_nod
                 return -EINVAL;            
             curr->isValid = VALID;
             curr->next = (curr - 1)->next;
-            curr->prev = curr - base - 1;
-            (curr - 1)->next = curr - base;
+            curr->prev = curr - sbase - 1;
+            (curr - 1)->next = curr - sbase;
             curr->tid = current->pid;
-            ret = curr - base;
+            ret = curr - sbase;
             break;
         }
     }
@@ -170,10 +170,10 @@ static int del(struct hapara_register *dev, int off)
 {
     struct hapara_thread_struct *curr = 
         (struct hapara_thread_struct *)dev->mmio + off;
-    struct hapara_thread_struct *base = 
+    struct hapara_thread_struct *sbase = 
         (struct hapara_thread_struct *)dev->mmio;
-    (base + curr->prev)->next = curr->next;
-    (base + curr->next)->prev = curr->prev;
+    (sbase + curr->prev)->next = curr->next;
+    (sbase + curr->next)->prev = curr->prev;
     curr->isValid = INVALID;
     return off;
 }
@@ -181,17 +181,17 @@ static int del(struct hapara_register *dev, int off)
 static int search_del(struct hapara_register *dev, pid_t tid)
 {
     struct hapara_thread_struct *curr;
-    struct hapara_thread_struct *base = 
+    struct hapara_thread_struct *sbase = 
         (struct hapara_thread_struct *)dev->mmio;
 
     int ret = -1;
     for_each_valid(curr, dev->mmio)
     {
         if (curr->tid == tid) {
-            (base + curr->prev)->next = curr->next;
-            (base + curr->next)->prev = curr->prev;
+            (sbase + curr->prev)->next = curr->next;
+            (sbase + curr->next)->prev = curr->prev;
             curr->isValid = INVALID;
-            ret = curr - base;
+            ret = curr - sbase;
             break;
         }
     }

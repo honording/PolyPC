@@ -217,7 +217,7 @@ void print_list()
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
         return -1;
-    ioctl(fd, REG_SEARCH_DEL);
+    ioctl(fd, REG_PRINT_LIST);
     close(fd);   
 }
 void print_struct(struct hapara_thread_struct *thread_info)
