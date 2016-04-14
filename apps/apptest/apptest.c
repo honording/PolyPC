@@ -91,16 +91,17 @@ int main(int argc, char *argv[])
         return 0;
     }
     printf("apptest: add location:%d\n", ret);
-    struct hapara_thread_struct scp;
-    int i;
-    for (i = 0; i < 2; i++) {
-        ret = read_struct(&scp, i);
-        if (ret < 0) {
-            printf("apptest: read error %d.\n", i);
-            return 0;
-        }
-        print_struct(&scp);          
-    }
+    // struct hapara_thread_struct scp;
+    // int i;
+    // for (i = 0; i < 2; i++) {
+    //     ret = read_struct(&scp, i);
+    //     if (ret < 0) {
+    //         printf("apptest: read error %d.\n", i);
+    //         return 0;
+    //     }
+    //     print_struct(&scp);          
+    // }
+    print_list();
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
         printf("apptest: ddr_addr error.\n");

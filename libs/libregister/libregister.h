@@ -26,6 +26,7 @@ void set_struct(struct hapara_thread_struct *thread_info,
                 unsigned int thread_size);
 */
 void print_struct(struct hapara_thread_struct *sp);
+void print_list();
 
 int reg_add(struct hapara_thread_struct *thread_info);
 //del based on location

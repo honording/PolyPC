@@ -151,7 +151,7 @@ static int add(struct hapara_register *dev, struct hapara_thread_struct *new_nod
     {
         if (curr->isValid == INVALID) {
             if (copy_from_user(curr, 
-                               (char *)buf, 
+                               (char *)new_node, 
                                sizeof(struct hapara_thread_struct)))
                 return -EINVAL;            
             curr->isValid = VALID;
@@ -187,7 +187,7 @@ static int search_del(struct hapara_register *dev, pid_t tid)
     int ret = -1;
     for_each_valid(curr, dev->mmio)
     {
-        if (curr->tid == pid) {
+        if (curr->tid == tid) {
             (base + curr->prev)->next = curr->next;
             (base + curr->next)->prev = curr->prev;
             curr->isValid = INVALID;
@@ -198,6 +198,33 @@ static int search_del(struct hapara_register *dev, pid_t tid)
     return ret;
 }
 
+static void print_list(struct hapara_register *dev)
+{
+    struct hapara_thread_struct *thread_info;
+    struct hapara_thread_struct *base = 
+        (struct hapara_thread_struct *)dev->mmio;
+    for_each_valid(thread_info, dev->mmio)
+    {
+        printk(KERN_DEBUG "----------------------------------------\n");
+        printk(KERN_DEBUG "ID:      = %d\n", thread_info - base);
+        printk(KERN_DEBUG "isValid  = %d\n", thread_info->isValid);
+        printk(KERN_DEBUG "priority = %d\n", thread_info->priority);
+        printk(KERN_DEBUG "next     = %d\n", thread_info->next);
+        printk(KERN_DEBUG "tid      = %d\n", thread_info->tid);
+        printk(KERN_DEBUG "cur_group_id 0 = %d\n", thread_info->cur_group_id.id0);
+        printk(KERN_DEBUG "cur_group_id 1 = %d\n", thread_info->cur_group_id.id1);
+        printk(KERN_DEBUG "group_size 0   = %d\n", thread_info->group_size.id0);
+        printk(KERN_DEBUG "group_size 1   = %d\n", thread_info->group_size.id1);
+        printk(KERN_DEBUG "group_num 0    = %d\n", thread_info->group_num.id0);
+        printk(KERN_DEBUG "group_num 1    = %d\n", thread_info->group_num.id1);
+        printk(KERN_DEBUG "elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
+        printk(KERN_DEBUG "elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
+        printk(KERN_DEBUG "elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
+        printk(KERN_DEBUG "elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
+        printk(KERN_DEBUG "elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
+        printk(KERN_DEBUG "---------------------------------------\n");
+    }
+}
 static int register_open(struct inode *inode, struct file *filp)
 {
     filp->private_data = hapara_registerp;
@@ -320,6 +347,9 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
         else
             ret = location;
         break;
+    case REG_PRINT_LIST:
+        print_list(dev);
+        break;
     default:
         ret = -EINVAL;
         break;
@@ -366,11 +396,9 @@ static int __init register_init(void)
 
     struct hapara_thread_struct * sb = 
                 (struct hapara_thread_struct *)(hapara_registerp->mmio);
-
+    (sb + DUMMY)->isValid = VALID;
     //initialize dusmmy head
     //next, prev, priority, isValid
-    uint32_t val = 0x0000001;
-    (sb + DUMMY)->zero = val;
     // //initialize the HTDT list
     // uint32_t i;
     // val = 0x02000000;

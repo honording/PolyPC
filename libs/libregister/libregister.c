@@ -211,7 +211,15 @@ void libregister_test(void)
 //     unsigned int ddr_addr;
 //     unsigned int DMA_size;
 // };
-
+void print_list()
+{
+    int fd;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    ioctl(fd, REG_SEARCH_DEL);
+    close(fd);   
+}
 void print_struct(struct hapara_thread_struct *thread_info)
 {
     printf("----------------------------------------\n");
