@@ -430,8 +430,8 @@ int elf_loader(char *file_name,
         return -1;
     }
     // printf("before return from elf_loader:%X\n", main_entry);
-    elf_info->main_addr     = elf_start_addr + main_entry;
-    elf_info->stack_addr    = elf_start_addr + stack_addr;
+    elf_info->main_addr     = main_entry;
+    elf_info->stack_addr    = stack_addr;
     elf_info->thread_size   = max_ram_range;
     elf_info->ddr_addr      = addr;
     elf_info->DMA_size      = max_file_size;
