@@ -72,11 +72,7 @@ int main(int argc, char *argv[])
     // int f3 = ddr_free(a3);
     // ddr_list_print();
     reg_clr();
-    struct hapara_thread_struct sp = {
-        .isValid = 1,
-        .priority = 1,
-        .next = 0,
-    };
+    struct hapara_thread_struct sp;
 
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {

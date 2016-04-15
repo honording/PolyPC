@@ -41,6 +41,7 @@ struct hapara_thread_struct {
     struct hapara_id_pair group_num;
     struct hapara_id_pair cur_group_id;
     elf_info_t elf_info;
+    pr_info_t  pr_info;
     uint32_t argv[ARGC];
 }__attribute__((aligned(4)));
 
