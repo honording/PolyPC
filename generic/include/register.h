@@ -19,4 +19,14 @@
 
 #define RESERVED_TID   0
 
+#define for_each_valid(curr, base) \
+        for (curr = (typeof(* curr) *)(base) + ((typeof(* curr) *)(base))->next; \
+             curr - (typeof(* curr) *)(base) != 0; \
+             curr = (typeof(* curr) *)(base) + curr->next)
+
+#define for_each_slot(curr, base) \
+        for (curr = (typeof(* curr) *)(base) + 1; \
+             curr - (typeof(* curr) *)(base) < MAX_SLOT; \
+             curr++)
+
 #endif

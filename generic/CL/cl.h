@@ -6,12 +6,18 @@
 #include <setjmp.h>
 #include <xil_io.h>
 
-#define KERNEL_ARGV_BASE    //FIXME
+#include "../include/base_addr.h"
+#include "../include/thread_struct.h"
+#include "../include/mutex_manager.h"
 
-#define getArgv(num) \
-        (unsigned int *)(KERNEL_ARGV_BASE) + (num)
+#define hapara_offsetof(type, member) ((int)&((type *)0)->member)
+
+#define KERNEL_ARGV_BASE    \
+        (SLAVE_LOCAL_MEM_BASE + hapara_offsetof(struct hapara_thread_struct, argv))
+
+
 #define setArgv(num, member, type) \
-        (type *)member = (type *)(getArgv(num))
+		type *member = (type *)Xil_In32(KERNEL_ARGV_BASE + (num << 2))
 
 jmp_buf buf;
 
@@ -27,6 +33,24 @@ id_struct id = {
         .id0        = 0,
         .id1        = 0,
 };
+
+typedef struct hapara_gen_struct {
+	unsigned int org;
+	unsigned int len;
+	unsigned int numOfSlvs;
+	volatile unsigned int isFinished;	//1: finish;
+} hapara_gen_t;
+
+void lock_mutex(int num) {
+	 while (((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg1 != 1)
+		 ((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg0 = 1;
+	((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg0 = 0;
+}
+
+void release_mutex(int num) {
+	((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg2 = 1;
+	while (((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg2 != 0);
+}
 
 unsigned int getGlobalID(int d) {
     unsigned int val;

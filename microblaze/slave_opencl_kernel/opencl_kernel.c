@@ -1,11 +1,16 @@
 /*
- * slave_kernel_threads.c
+ * opencl_kernel.c
  *
- *  Created on: Apr 8, 2016
+ *  Created on: Apr 14, 2016
  *      Author: hding
  */
 
-#include "CL/cl.h"
+#ifndef __USER_PROGRAMS__
+#define __USER_PROGRAMS__
+#endif
+
+#include "../../generic/CL/cl.h"
+
 
 void kernel(
 			int *A,
@@ -15,6 +20,7 @@ void kernel(
 	unsigned int id1 = getGlobalID(1);
 	C[id0 + id1] = A[id0 + id1] + B[id0 + id1];
 }
+
 
 int main() {
 	/* Generated Codes

@@ -8,6 +8,7 @@
 #endif
 
 #include "elf_loader.h"
+#include "pr_loader.h"
 
 #define ARGC    16
 
@@ -37,8 +38,8 @@ struct hapara_thread_struct {
     uint8_t prev;
     uint8_t next;
     int tid;
-    struct hapara_id_pair group_size;
-    struct hapara_id_pair group_num;
+    struct hapara_id_pair group_size;       //size per group
+    struct hapara_id_pair group_num;        //number of groups
     struct hapara_id_pair cur_group_id;
     elf_info_t elf_info;
     pr_info_t  pr_info;

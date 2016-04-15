@@ -21,4 +21,6 @@
 
 #define FPGA_DDR_MAX_SIZE                   0x1FFFFFFF  //512MB
 
+#define SCHE_SLAVE_TRIGGER_BASE             0xC0000100
+
 #endif

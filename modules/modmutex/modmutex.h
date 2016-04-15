@@ -16,12 +16,12 @@
 #define SET             1
 #define UNSET           0
 
-struct hapara_mutex_pair
-{
-    volatile uint32_t    reg0;
-    volatile uint32_t    reg1;
-    volatile uint32_t    reg2;
-};
+// struct hapara_mutex_pair
+// {
+//     volatile uint32_t    reg0;
+//     volatile uint32_t    reg1;
+//     volatile uint32_t    reg2;
+// };
 
 struct hapara_mutex_manager
 {
