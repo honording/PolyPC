@@ -17,7 +17,7 @@
 #include "../../../generic/include/elf_loader.h"
 #include "../../../generic/include/base_addr.h"
 
-#define ELF_FILE_NAME	"/mnt/slave_kernel_thread.elf"
+#define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
 
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
@@ -72,7 +72,42 @@ int main(int argc, char *argv[])
     // int f3 = ddr_free(a3);
     // ddr_list_print();
     reg_clr();
+
+    int a_addr = ddr_malloc(16);
+    if (a_addr < 0) {
+        printf("apptest: ddr_malloc error a\n");
+        return 0;
+    }
+    int b_addr = ddr_malloc(16);
+    if (b_addr < 0) {
+        printf("apptest: ddr_malloc error b\n");
+        return 0;
+    }
+    int c_addr = ddr_malloc(16);
+    if (c_addr < 0) {
+        printf("apptest: ddr_malloc error c\n");
+        return 0;
+    }
+    int *a = (int *)a_addr;
+    int *b = (int *)b_addr;
+    int *c = (int *)c_addr;
+
+    int i;
+    for (i = 0; i < 16; i++) {
+        a[i] = i;
+        b[i] = i + 1;
+        c[i] = 0;
+    }
+
     struct hapara_thread_struct sp;
+
+    sp.argv[0] = a_addr;
+    sp.argv[1] = b_addr;
+    sp.argv[2] = c_addr;
+    sp.group_size.id0 = 1;
+    sp.group_size.id1 = 4;
+    sp.group_num.id0 = 1;
+    sp.group_num.id1 = 4;
 
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
@@ -86,18 +121,18 @@ int main(int argc, char *argv[])
         return 0;
     }
     printf("apptest: add location:%d\n", ret);
-    print_list();
-    ret = reg_del(ret);
-    if (ret == -1) {
-        printf("apptest: Reg del error 0.\n");
-        return 0;
-    }   
-    print_list();
-    ret = ddr_free(sp.elf_info.ddr_addr);
-    if (ret < 0) {
-        printf("apptest: ddr_addr error.\n");
-        return 0;
-    }
+    // print_list();
+    // ret = reg_del(ret);
+    // if (ret == -1) {
+    //     printf("apptest: Reg del error 0.\n");
+    //     return 0;
+    // }   
+    // print_list();
+    // ret = ddr_free(sp.elf_info.ddr_addr);
+    // if (ret < 0) {
+    //     printf("apptest: ddr_addr error.\n");
+    //     return 0;
+    // }
 	return 0;
 }
 

@@ -1,5 +1,8 @@
-#define MUTEX_MEM_BASE  0x40000000
-#define MAX_MUTEX       16
+#include "../../generic/include/hw_config.h"
+#include "../../generic/include/base_addr.h"
+
+#define MUTEX_MEM_BASE  MUTEX_MANAGER_BASE
+#define MAX_MUTEX       NUM_MUTEX
 
 #define RESET           0
 
@@ -26,3 +29,4 @@ int main(void)
     }
     return 0;
 }
+

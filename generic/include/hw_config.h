@@ -4,4 +4,6 @@
 #define NUM_SLAVES      4
 #define NUM_GROUPS      4
 
+#define NUM_MUTEX       4
+
 #endif

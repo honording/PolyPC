@@ -232,6 +232,7 @@ int main() {
 			if (hapara_thread->isValid == 1 &&
 				hapara_thread->priority > max_priority) {
 				htdt_off = hapara_thread - hapara_thread_base;
+				max_priority = hapara_thread->priority;
 			}
 		}
 		if (max_priority == -1) {

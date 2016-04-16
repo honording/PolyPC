@@ -23,4 +23,6 @@
 
 #define SCHE_SLAVE_TRIGGER_BASE             0xC0000100
 
+#define MUTEX_MANAGER_BASE                  0x40010000
+
 #endif
