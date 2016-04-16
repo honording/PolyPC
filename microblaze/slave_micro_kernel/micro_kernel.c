@@ -1,9 +1,3 @@
-/*
- * g0s0.c
- *
- *  Created on: Apr 8, 2016
- *      Author: hding
- */
 
 #ifndef __USER_PROGRAMS__
 #define __USER_PROGRAMS__
@@ -96,14 +90,13 @@ cpu_context_t __attribute__((section(".hapara.regs"))) cpu_context =
 				.msr	= 0,	//124
 				.ear	= 0,	//128
 				.esr	= 0,	//132
-				.fsr	= 0		//136
+				.fsr	= 0,		//136
 
 		};
 
 elf_info_t __attribute__((section(".hapara.elfs"))) elf_info = {
 		.main_addr 		= 0,
 		.stack_addr 	= 0,
-		.thread_size 	= 0
 };
 
 int main()
@@ -165,8 +158,8 @@ int main()
 			/* Store CPU Context -----End-----*/
 
 			asm("addik r11, r0, .hapara.elfs");
-			asm("lwi r3, r11, 0");
-			asm("lwi r1, r11, 4");
+			asm("lwi r3, r11, 4");
+			asm("lwi r1, r11, 8");
 			asm("brald r15, r3");
 			asm("nop");
 

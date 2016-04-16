@@ -16,6 +16,7 @@
 
 #include "../../../generic/include/elf_loader.h"
 #include "../../../generic/include/base_addr.h"
+#include "../../../generic/include/thread_struct.h"
 
 #define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
 
@@ -109,10 +110,6 @@ int main(int argc, char *argv[])
         b[i] = i + 1;
         c[i] = 0;
     }
-    munmap(a, MEM_SIZE);
-    munmap(b, MEM_SIZE);
-    munmap(c, MEM_SIZE);
-    close(devmemfd);
 
     struct hapara_thread_struct sp;
 
@@ -123,6 +120,7 @@ int main(int argc, char *argv[])
     sp.group_size.id1 = 4;
     sp.group_num.id0 = 1;
     sp.group_num.id1 = 4;
+    sp.elf_info.elf_magic = 'v';
     printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
@@ -136,18 +134,64 @@ int main(int argc, char *argv[])
         return 0;
     }
     printf("apptest: add location:%d\n", ret);
-    // print_list();
+    printf("Waiting to terminate...\n");
+    devmemfd = open(DEVMEM, O_RDWR);
+    if (devmemfd < 1) {
+        printf("apptest: devmem open failed.\n");
+        return -1;
+    }
+    struct hapara_thread_struct *htdt = mmap(NULL, 
+                                             1024,
+                                             PROT_READ | PROT_WRITE,
+                                             MAP_SHARED,
+                                             devmemfd,
+                                             ARM_HTDT_BASE);
+    while (htdt[ret].isValid != 0);
+    printf("Slaves terminated.\n");
     // ret = reg_del(ret);
     // if (ret == -1) {
     //     printf("apptest: Reg del error 0.\n");
     //     return 0;
-    // }   
-    // print_list();
-    // ret = ddr_free(sp.elf_info.ddr_addr);
-    // if (ret < 0) {
-    //     printf("apptest: ddr_addr error.\n");
-    //     return 0;
-    // }
+    // } 
+    int error = 0;
+    for (i = 0; i < MEM_SIZE; i++) {
+        if (a[i] + b[i] != c[i]) {
+            error = 1;
+            break;
+        }
+    }
+    munmap(htdt, 1024);
+    munmap(a, MEM_SIZE);
+    munmap(b, MEM_SIZE);
+    munmap(c, MEM_SIZE);
+    close(devmemfd);
+
+    if (error) {
+        printf("Solutions are not correct.\n");
+    } else {
+        printf("Passed!\n");
+    }
+    ret = ddr_free(sp.elf_info.ddr_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: elf.\n");
+        return 0;
+    }
+    ret = ddr_free(a_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: a.\n");
+        return 0;
+    }   
+    ret = ddr_free(b_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: b.\n");
+        return 0;
+    }  
+    ret = ddr_free(c_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: c.\n");
+        return 0;
+    }   
+    printf("apptest end!\n");
 	return 0;
 }
 

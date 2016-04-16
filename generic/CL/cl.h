@@ -12,8 +12,8 @@
 
 #define hapara_offsetof(type, member) ((int)&((type *)0)->member)
 
-#define KERNEL_ARGV_BASE    \
-        (SLAVE_LOCAL_MEM_BASE + hapara_offsetof(struct hapara_thread_struct, argv))
+#define KERNEL_ARGV_BASE	SCHE_SLAVE_ARGV_BASE
+//        (SLAVE_LOCAL_MEM_BASE + hapara_offsetof(struct hapara_thread_struct, argv))
 
 
 #define setArgv(num, member, type) \

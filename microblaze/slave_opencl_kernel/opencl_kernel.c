@@ -1,9 +1,10 @@
 /*
  * opencl_kernel.c
  *
- *  Created on: Apr 14, 2016
+ *  Created on: Apr 15, 2016
  *      Author: hding
  */
+
 
 #ifndef __USER_PROGRAMS__
 #define __USER_PROGRAMS__
