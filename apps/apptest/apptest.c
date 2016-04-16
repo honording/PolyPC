@@ -91,17 +91,15 @@ int main(int argc, char *argv[])
         printf("apptest: ddr_malloc error c\n");
         return 0;
     }
-    int *a = (int *)a_addr;
-    int *b = (int *)b_addr;
-    int *c = (int *)c_addr;
     printf("a addr:0x%08X\n", a_addr);
     printf("b addr:0x%08X\n", b_addr);
     printf("c addr:0x%08X\n", c_addr);
     int devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
-        perror("elf_loader: devmem open failed.");
+        printf("apptest: devmem open failed.\n");
         return -1;
     }
+    printf("begin to map a, b, and c.\n");
     int *a = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
     int *b = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
     int *c = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
@@ -111,6 +109,9 @@ int main(int argc, char *argv[])
         b[i] = i + 1;
         c[i] = 0;
     }
+    munmap(a, MEM_SIZE);
+    munmap(b, MEM_SIZE);
+    munmap(c, MEM_SIZE);
     close(devmemfd);
 
     struct hapara_thread_struct sp;
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
     sp.group_size.id1 = 4;
     sp.group_num.id0 = 1;
     sp.group_num.id1 = 4;
-
+    printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
         printf("apptest: elf_loader error\n");
