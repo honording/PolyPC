@@ -22,6 +22,9 @@
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
+#define MEM_SIZE        16
+#define DEVMEM          "/dev/mem"
+
 int main(int argc, char *argv[])
 {
     /*
@@ -73,17 +76,17 @@ int main(int argc, char *argv[])
     // ddr_list_print();
     reg_clr();
 
-    int a_addr = ddr_malloc(16);
+    int a_addr = ddr_malloc(MEM_SIZE);
     if (a_addr < 0) {
         printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(16);
+    int b_addr = ddr_malloc(MEM_SIZE);
     if (b_addr < 0) {
         printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(16);
+    int c_addr = ddr_malloc(MEM_SIZE);
     if (c_addr < 0) {
         printf("apptest: ddr_malloc error c\n");
         return 0;
@@ -91,13 +94,24 @@ int main(int argc, char *argv[])
     int *a = (int *)a_addr;
     int *b = (int *)b_addr;
     int *c = (int *)c_addr;
-
+    printf("a addr:0x%08X\n", a_addr);
+    printf("b addr:0x%08X\n", b_addr);
+    printf("c addr:0x%08X\n", c_addr);
+    int devmemfd = open(DEVMEM, O_RDWR);
+    if (devmemfd < 1) {
+        perror("elf_loader: devmem open failed.");
+        return -1;
+    }
+    int *a = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+    int *b = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    int *c = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
     int i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < MEM_SIZE; i++) {
         a[i] = i;
         b[i] = i + 1;
         c[i] = 0;
     }
+    close(devmemfd);
 
     struct hapara_thread_struct sp;
 
