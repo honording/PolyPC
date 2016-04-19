@@ -23,7 +23,7 @@
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
-#define MEM_SIZE        16
+#define MEM_SIZE        32768
 #define DEVMEM          "/dev/mem"
 
 int main(int argc, char *argv[])
@@ -101,25 +101,25 @@ int main(int argc, char *argv[])
         return -1;
     }
     printf("begin to map a, b, and c.\n");
-    int *a = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    int *b = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    int *c = mmap(NULL, MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    int *a = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+    int *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
     int i;
     for (i = 0; i < MEM_SIZE; i++) {
         a[i] = i;
         b[i] = i + 1;
         c[i] = 0;
     }
-
+    printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
 
     sp.argv[0] = a_addr;
     sp.argv[1] = b_addr;
     sp.argv[2] = c_addr;
     sp.group_size.id0 = 1;
-    sp.group_size.id1 = 4;
+    sp.group_size.id1 = 512;
     sp.group_num.id0 = 1;
-    sp.group_num.id1 = 4;
+    sp.group_num.id1 = 64;
     sp.elf_info.elf_magic = 'v';
     printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
@@ -140,19 +140,24 @@ int main(int argc, char *argv[])
         printf("apptest: devmem open failed.\n");
         return -1;
     }
-    struct hapara_thread_struct *htdt = mmap(NULL, 
+    volatile struct hapara_thread_struct *htdt = mmap(NULL, 
                                              1024,
                                              PROT_READ | PROT_WRITE,
                                              MAP_SHARED,
                                              devmemfd,
                                              ARM_HTDT_BASE);
+    if (htdt[ret].elf_info.elf_magic != 'v') {
+        printf("HDDT addr error.\n");
+        return 0;
+    }
+    // print_struct(&htdt[ret]);
     while (htdt[ret].isValid != 0);
     printf("Slaves terminated.\n");
-    // ret = reg_del(ret);
-    // if (ret == -1) {
-    //     printf("apptest: Reg del error 0.\n");
-    //     return 0;
-    // } 
+    ret = reg_del(ret);
+    if (ret == -1) {
+        printf("apptest: Reg del error 0.\n");
+        return 0;
+    } 
     int error = 0;
     for (i = 0; i < MEM_SIZE; i++) {
         if (a[i] + b[i] != c[i]) {
@@ -161,9 +166,9 @@ int main(int argc, char *argv[])
         }
     }
     munmap(htdt, 1024);
-    munmap(a, MEM_SIZE);
-    munmap(b, MEM_SIZE);
-    munmap(c, MEM_SIZE);
+    munmap(a, MEM_SIZE * sizeof(int));
+    munmap(b, MEM_SIZE * sizeof(int));
+    munmap(c, MEM_SIZE * sizeof(int));
     close(devmemfd);
 
     if (error) {

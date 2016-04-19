@@ -320,9 +320,11 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
 
     switch (cmd) {
     case REG_CLR:
+        // printk(KERN_DEBUG "modregister:enter REG_CLR.\n");
         memset(dev->mmio, 0, SCHE_SIZE);
         break;
     case REG_ADD:
+        // printk(KERN_DEBUG "modregister:enter reg+REG_ADD\n");
         location = add(dev, (struct hapara_thread_struct __user *)arg);
         if (location == -EINVAL)
             ret = -EINVAL;
@@ -330,15 +332,15 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             ret = location;
         break;
     case REG_DEL:
-        if (get_user(off, (int *)arg))
+        if (get_user(off, (int *)arg)) {
+            // printk(KERN_DEBUG "modregister:reg_del:get_user failed.\n", off);
             return -EINVAL;
-        location = del(dev, off);
-        if (location == -EINVAL)
-            ret = -EINVAL;
-        else
-            ret = location;
+        } 
+        // printk(KERN_DEBUG "modregister:reg_del:off = 0x%d\n", off);
+        ret = del(dev, off);
         break;
     case REG_SEARCH_DEL:
+        // printk(KERN_DEBUG "modregister:enter REG_SEARCH_DEL.\n");
         if (get_user(off, (int *)arg))
             return -EINVAL;
         location = search_del(dev, off);
@@ -348,9 +350,11 @@ static int register_ioctl(struct file *filp, unsigned int cmd, unsigned long arg
             ret = location;
         break;
     case REG_PRINT_LIST:
+        // printk(KERN_DEBUG "modregister:enter REG_PRINT_LIST.\n");
         print_list(dev);
         break;
     default:
+        // printk(KERN_DEBUG "modregister:enter default.\n");
         ret = -EINVAL;
         break;
     }

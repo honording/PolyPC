@@ -15,19 +15,19 @@
 
 void reg_clr()
 {
-    printf("reg_clr@libregister, in.\n");
+    // printf("reg_clr@libregister, in.\n");
     int fd;
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
         return;
     ioctl(fd, REG_CLR);
     close(fd);
-    printf("reg_clr@libregister, out.\n");
+    // printf("reg_clr@libregister, out.\n");
 }
 
 int reg_add(struct hapara_thread_struct *thread_info)
 {
-    printf("reg_add@libregister. in.\n");
+    // printf("reg_add@libregister. in.\n");
     int fd;
     int ioctl_ret = 0;
     int ret = 0;
@@ -40,26 +40,24 @@ int reg_add(struct hapara_thread_struct *thread_info)
     else
         ret = ioctl_ret;
     close(fd);
-    printf("reg_add@libregister. out\n");
+    // printf("reg_add@libregister. out\n");
     return ret;
 }
 
 int reg_del(int location)
 {
+    // printf("Enter reg_del.\n");
     int fd;
     int ioctl_ret = 0;
-    int ret = 0;
-    int off = OFF_TID;
     fd = open(FILEPATH, O_RDWR);
-    if (fd == -1)
+    if (fd == -1) {
+        // printf("red_del: open device error.\n");
         return -1;
-    ioctl_ret = ioctl(fd, REG_DEL, location);
-    if (ret < 0)
-        ret = -1;
-    else
-        ret = ioctl_ret;
+    }
+    ioctl_ret = ioctl(fd, REG_DEL, &location);
     close(fd);
-    return ret;
+    // printf("Leave reg_del\n");
+    return ioctl_ret;
 }
 
 int reg_search_del(int tid)
@@ -73,7 +71,7 @@ int reg_search_del(int tid)
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1)
         return -1;
-    ioctl_ret = ioctl(fd, REG_SEARCH_DEL, tid);
+    ioctl_ret = ioctl(fd, REG_SEARCH_DEL, &tid);
     if (ret < 0)
         ret = -1;
     else
