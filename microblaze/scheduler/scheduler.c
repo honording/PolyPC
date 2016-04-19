@@ -59,6 +59,7 @@ int main() {
 			continue;
 		}
 		hapara_thread_curr = hapara_thread_base + htdt_off;
+		group_num.id0 = hapara_thread_curr->group_num.id0;
 		cur_group_id.id0 = hapara_thread_curr->cur_group_id.id0;
 		if (cur_group_id.id0 >= group_num.id0) {
 			hapara_thread_curr->isValid = 0;
@@ -66,7 +67,6 @@ int main() {
 			continue;
 		}
 		cur_group_id.id1 = hapara_thread_curr->cur_group_id.id1;
-		group_num.id0 = hapara_thread_curr->group_num.id0;
 		group_num.id1 = hapara_thread_curr->group_num.id1;
 
 		hapara_thread_curr->cur_group_id.id0 += (cur_group_id.id1 + 1) / group_num.id1;
