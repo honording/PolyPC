@@ -1,9 +1,9 @@
-proc hapara_set_workspace {proj_name} {
-    set cur_dir $::current_dir
-    set workspace_name "$cur_dir/${proj_name}/${proj_name}.sdk"
-    sdk set_workspace workspace_name
-    return 1
-}
+# proc hapara_set_workspace {proj_name} {
+#     set cur_dir $::current_dir
+#     set workspace_name "$cur_dir/${proj_name}/${proj_name}.sdk"
+#     sdk set_workspace workspace_name
+#     return 1
+# }
 
 proc hapara_create_hw {proj_name {wrapper_name system_wrapper} {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
@@ -34,6 +34,32 @@ proc hapara_create_functional_app {proj_name source_repo {hw_mame system_wrapper
     file cp "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/slave_kernel/src/lscript.ld"
     # Build projects
     sdk build_project -type all
+    return 1
+}
+
+proc hapara_create_opencl_app {proj_name source_repo {hw_mame system_wrapper_hw_platform_0}} {
+    set cur_dir $::current_dir
+    set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
+    set app_list [glob -nocomplain -type d "$source_repo/microblaze/apps/*"]
+    if {$app_list == ""} {
+        puts "There are no OpenCL apps under $source_repo/microblaze/apps/"
+        return 0
+    }
+    set app_name_list ""
+    foreach dir $app_list {
+        set temp [string range $dir [expr {[string last "/" $dir] + 1}] end]
+        lappend app_name_list $temp
+    }
+    file mkdir "$sdk_dir/app_elfs"
+    foreach app $app_name_list {
+        sdk create_bsp_project -name "${app}_bsp" -hwproject $hw_mame -proc group0_slave_s0 -os standalone
+        sdk create_app_project -name $app -hwproject $hw_mame -proc group0_slave_s0 -os standalone -lang C -app {Empty Application}
+        sdk import_sources -name $app -path "$source_repo/microblaze/apps/$app"
+        file cp "$source_repo/microblaze/lscript/lscript80.ld" "$sdk_dir/$app/src/lscript.ld"  
+        sdk build_project -type bsp "${app}_bsp"
+        sdk build_project -type app $app
+        file cp "$sdk_dir/$app/Debug/${app}.elf" "$sdk_dir/app_elfs"
+    }
     return 1
 }
 
@@ -94,10 +120,6 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame syste
     return 1
 }
 
-proc hapara_create_opencl_app {proj_name source_repo {hw_mame system_wrapper_hw_platform_0}} {
-    
-}
-
 set current_dir [pwd]
 set source_repo "/hding/Dropbox/hdl/HaPara"
 if {$argc < 3 || $argc > 4} {
@@ -113,10 +135,12 @@ if {$argc == 4} {
     set source_repo [lindex $argv 3]
 }
 
-if {[hapara_set_workspace $project_name] == 0} {
-    puts "ERROR: When running hapara_set_workspace()."
-    return 0
-}
+# if {[hapara_set_workspace $project_name] == 0} {
+#     puts "ERROR: When running hapara_set_workspace()."
+#     return 0
+# }
+set workspace_name "$current_dir/${project_name}/${project_name}.sdk"
+sdk set_workspace $workspace_name
 
 if {[hapara_create_hw $project_name] == 0} {
     puts "ERROR: When running hapara_create_hw()."
@@ -133,3 +157,7 @@ if {[hapara_update_bitstream $project_name $num_of_group $num_of_slave]} {
     return 0
 }
 
+if {[hapara_create_opencl_app $project_name $source_repo] == 0} {
+    puts "ERROR: When running hapara_create_opencl_app()."
+    return 0
+}
