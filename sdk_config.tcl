@@ -21,23 +21,80 @@ proc hapara_create_functional_app {proj_name source_repo {hw_mame system_wrapper
     sdk create_bsp_project -name scheduler_bsp -hwproject $hw_mame -proc group0_scheduler -os standalone
     sdk create_app_project -name scheduler -hwproject $hw_mame -proc group0_scheduler -os standalone -lang C -app {Empty Application} -bsp "${group_name}_scheduler_bsp"
     sdk import_sources -name scheduler -path "$source_repo/microblaze/scheduler"
-    file cp "$source_repo/microblaze/scheduler/lscript.ld" "$sdk_dir/scheduler/src"
+    file cp "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/scheduler/src/lscript.ld"
     # Create mutex_manager project
     sdk create_bsp_project -name mutex_manager_bsp -hwproject $hw_mame -proc mutex_manager -os standalone
     sdk create_app_project -name mutex_manager -hwproject $hw_mame -proc mutex_manager -os standalone -lang C -app {Empty Application}
     sdk import_sources -name mutex_manager -path "$source_repo/microblaze/mutex_manager"
-    file cp "$source_repo/microblaze/mutex_manager/lscript.ld" "$sdk_dir/mutex_manager/src"
-    # Create slave 
+    file cp "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/mutex_manager/src/lscript.ld"
+    # Create slave
     sdk create_bsp_project -name slave_kernel_bsp -hwproject $hw_mame -proc group0_slave_s0 -os standalone
     sdk create_app_project -name slave_kernel -hwproject $hwproject -proc group0_slave_s0 -os standalone -lang C -app {Empty Application}
     sdk import_sources -name slave_kernel -path "$source_repo/microblaze/slave_kernel"
-    file cp "$source_repo/microblaze/slave_kernel/lscript.ld" "$sdk_dir/slave_kernel/src"
+    file cp "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/slave_kernel/src/lscript.ld"
     # Build projects
     sdk build_project -type all
     return 1
 }
 
-proc hapara_update_bitstream {} {
+proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame system_wrapper_hw_platform_0}} {
+    set cur_dir $::current_dir
+    set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
+    set mem_path "$sdk_dir/$hw_mame/${proj_name}.mmi"
+    # Create temp bitstream folder
+    file mkdir "$sdk_dir/bit_temp"
+    set counter 0
+    # Create mutex_manager bit
+    updatemem -force -meminfo \
+        $mem_path \
+        -bit \
+        "$sdk_dir/$hw_mame/${proj_name}.bit" \
+        -data \
+        "$sdk_dir/mutex_manager/Debug/mutex_manager.elf" \
+        -proc \
+        mutex_manager \
+        -out \
+        "$sdk_dir/bit_temp/temp$counter.bit"
+    incr counter
+    # Create scheduler and slave bit
+    for {set i 0} {$i < $num_of_group} {incr i} {
+        set group_name "group$i"
+        # Create scheduler bit
+        updatemem -force -meminfo \
+            $mem_path \
+            -bit \
+            "$sdk_dir/bit_temp/temp${[expr $counter - 1]}.bit" \
+            -data \
+            "$sdk_dir/scheduler/Debug/scheduler.elf" \
+            -proc \
+            "$group_name/scheduler" \
+            -out \
+            "$sdk_dir/bit_temp/temp$counter.bit"
+        file rm "$sdk_dir/bit_temp/temp${[expr $counter - 1]}.bit"
+        incr counter
+        for {set j 0} {$j < $num_of_slave} {incr j} {
+            set slave_name "slave_s$j"
+            # Create scheduler bit
+            updatemem -force -meminfo \
+                $mem_path \
+                -bit \
+                "$sdk_dir/bit_temp/temp${[expr $counter - 1]}.bit" \
+                -data \
+                "$sdk_dir/$slave_kernel/Debug/${slave_kernel}.elf" \
+                -proc \
+                "$group_name/$slave_name" \
+                -out \
+                "$sdk_dir/bit_temp/temp$counter.bit"
+            file rm "$sdk_dir/bit_temp/temp${[expr $counter - 1]}.bit"
+            incr counter
+        }
+    }
+    file mv "$sdk_dir/bit_temp/temp${[expr $counter - 1]}.bit" "$sdk_dir/$hw_mame/download.bit"
+    file rm -rf "$sdk_dir/bit_temp"
+    return 1
+}
+
+proc hapara_create_opencl_app {proj_name source_repo {hw_mame system_wrapper_hw_platform_0}} {
     
 }
 
@@ -63,6 +120,16 @@ if {[hapara_set_workspace $project_name] == 0} {
 
 if {[hapara_create_hw $project_name] == 0} {
     puts "ERROR: When running hapara_create_hw()."
+    return 0
+}
+
+if {[hapara_create_functional_app $project_name $source_repo] == 0} {
+    puts "ERROR: When running hapara_create_functional_app()."
+    return 0
+}
+
+if {[hapara_update_bitstream $project_name $num_of_group $num_of_slave]} {
+    puts "ERROR: When running hapara_update_bitstream()."
     return 0
 }
 
