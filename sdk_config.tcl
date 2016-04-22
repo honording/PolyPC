@@ -152,7 +152,7 @@ if {[hapara_create_functional_app $project_name $source_repo] == 0} {
     return 0
 }
 
-if {[hapara_update_bitstream $project_name $num_of_group $num_of_slave]} {
+if {[hapara_update_bitstream $project_name $num_of_group $num_of_slave] == 0} {
     puts "ERROR: When running hapara_update_bitstream()."
     return 0
 }
