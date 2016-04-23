@@ -12,7 +12,7 @@ proc hapara_create_hw {proj_name {wrapper_name system_wrapper} {hw_mame system_w
     return 1
 }
 
-proc hapara_create_functional_app {proj_name source_repo {hw_mame system_wrapper_hw_platform_0}} {
+proc hapara_create_functional_app {proj_name source_rep {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
     set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
     # Copy generic folder
@@ -37,7 +37,7 @@ proc hapara_create_functional_app {proj_name source_repo {hw_mame system_wrapper
     return 1
 }
 
-proc hapara_create_opencl_app {proj_name source_repo {hw_mame system_wrapper_hw_platform_0}} {
+proc hapara_create_opencl_app {proj_name source_repo {type Debug} {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
     set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
     set app_list [glob -nocomplain -type d "$source_repo/microblaze/apps/*"]
@@ -58,12 +58,12 @@ proc hapara_create_opencl_app {proj_name source_repo {hw_mame system_wrapper_hw_
         file copy -force "$source_repo/microblaze/lscript/lscript80.ld" "$sdk_dir/$app/src/lscript.ld"  
         sdk build_project -type bsp -name "${app}_bsp"
         sdk build_project -type app -name $app
-        file copy -force "$sdk_dir/$app/Debug/${app}.elf" "$sdk_dir/app_elfs/"
+        file copy -force "$sdk_dir/$app/$type/${app}.elf" "$sdk_dir/app_elfs/"
     }
     return 1
 }
 
-proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame system_wrapper_hw_platform_0}} {
+proc hapara_update_bitstream {proj_name num_of_group num_of_slave {type Debug} {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
     set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
     set mem_path "$sdk_dir/$hw_mame/${proj_name}.mmi"
@@ -77,7 +77,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame syste
         -bit \
         "$sdk_dir/$hw_mame/${proj_name}.bit" \
         -data \
-        "$sdk_dir/mutex_manager/Debug/mutex_manager.elf" \
+        "$sdk_dir/mutex_manager/$type/mutex_manager.elf" \
         -proc \
         /mutex_manager \
         -out \
@@ -93,7 +93,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame syste
             -bit \
             "$sdk_dir/bit_temp/temp[expr $counter - 1].bit" \
             -data \
-            "$sdk_dir/scheduler/Debug/scheduler.elf" \
+            "$sdk_dir/scheduler/$type/scheduler.elf" \
             -proc \
             "/$group_name/scheduler" \
             -out \
@@ -109,7 +109,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave {hw_mame syste
                 -bit \
                 "$sdk_dir/bit_temp/temp[expr $counter - 1].bit" \
                 -data \
-                "$sdk_dir/slave_kernel/Debug/slave_kernel.elf" \
+                "$sdk_dir/slave_kernel/$type/slave_kernel.elf" \
                 -proc \
                 "/$group_name/$slave_name" \
                 -out \
