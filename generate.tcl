@@ -255,7 +255,7 @@ proc create_hier_cell_slave_local_memory { parentCell nameHier } {
 ################################################################################
 # Create hierarchical design: group
 ################################################################################
-proc create_hier_cell_group {parentCell nameHier numOfSlave {dma_burst_length 256}} {
+proc create_hier_cell_group {parentCell nameHier numOfSlave groupNum {dma_burst_length 256}} {
     if { $parentCell eq "" || $nameHier eq "" } {
         puts "ERROR: create_hier_cell_group() - Empty argument(s)!"
         return 0
@@ -377,6 +377,9 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave {dma_burst_length 25
         CONFIG.C_DEBUG_ENABLED {1} \
         CONFIG.C_D_AXI {1} \
         CONFIG.C_D_LMB {1} \
+        CONFIG.C_PVR {2} \
+        CONFIG.C_PVR_USER1 {0x00} \
+        CONFIG.C_PVR_USER2 [format "0x%08X" $groupNum] \
         CONFIG.C_I_LMB {1} \
     ] $scheduler
 
@@ -715,7 +718,7 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     for {set i 0} {$i < $numOfGroup} {incr i} {
         # Create instance: group
         set group_name "group$i"
-        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave
+        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave $i
     }
 
     #####################################################################

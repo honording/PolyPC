@@ -18,7 +18,8 @@
 #include "../../../generic/include/base_addr.h"
 #include "../../../generic/include/thread_struct.h"
 
-#define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
+// #define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
+#define ELF_FILE_NAME   "/mnt/vector_add.elf"
 
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
