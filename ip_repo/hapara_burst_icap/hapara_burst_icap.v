@@ -15,7 +15,7 @@ module hapara_burst_icap #
 	output  [DATA_WIDTH - 1 : 0] dout
 );
 
-wire ready = &we;
+wire ready = ~((&we) & en);
 
 ICAPE2 #
 (
@@ -26,7 +26,7 @@ ICAPE2 #
 ICAPE2_inst (
 	.O(),
 	.CLK(clk),
-	.CSIB(~ready),
+	.CSIB(ready),
 	.I(din),
 	.RDWRB(1'b0)
 );
