@@ -1,6 +1,6 @@
 
 `timescale 1 ns / 1 ps
-module hapara_burst_icap_bitswap (
+module hapara_burst_icap_bitswap # (
     parameter integer DATA_WIDTH = 8
 )
 (
