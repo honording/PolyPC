@@ -26,7 +26,7 @@ ICAPE2 #
 ICAPE2_inst (
 	.O(),
 	.CLK(clk),
-	.CSIB(ready),
+	.CSIB(~ready),
 	.I(din),
 	.RDWRB(1'b0)
 );
