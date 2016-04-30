@@ -869,7 +869,7 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     lappend slowest_sync_clk [get_bd_pins intercon_htdt/ACLK] 
     lappend slowest_sync_clk [get_bd_pins intercon_htdt/M00_ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_ddr/ACLK]
-    lappend slowest_sync_clk [get_bd_pins intercon_ddr/M01_AXI]
+    lappend slowest_sync_clk [get_bd_pins intercon_ddr/M01_ACLK]
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         lappend slowest_sync_clk [get_bd_pins "$group_name/Clk"]
