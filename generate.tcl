@@ -30,7 +30,7 @@ proc hapara_create_bd {{bd_name system}} {
     return 1
 }
 
-proc hapara_update_ip_repo {repo_dir} {
+proc hapara_update_ip_repo {repo_dir resource_hls} {
     if {$repo_dir eq ""} {
         puts "ERROR: IP repository path cannot be blank."
         return 0
@@ -54,6 +54,9 @@ proc hapara_update_ip_repo {repo_dir} {
         puts "ERROR: There are not HaPara IPs locating at $repo_path"
         return 0
     }
+    set hls_project_dir_list [glob -nocomplain -type d "$resource_hls/*"]
+    set ip [concat $ip $hls_project_dir_list]
+
     set_property ip_repo_paths $ip [current_project]
     update_ip_catalog
     return 1
@@ -255,7 +258,9 @@ proc create_hier_cell_slave_local_memory { parentCell nameHier } {
 ################################################################################
 # Create hierarchical design: group
 ################################################################################
-proc create_hier_cell_group {parentCell nameHier numOfSlave groupNum {dma_burst_length 256}} {
+# numOfSlave:   The total number of slaves within one group (including MicroBlazes and Hardware IPs)
+# numOfHWSlave: The number of hardware IPs within one group
+proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNum {dma_burst_length 256}} {
     if { $parentCell eq "" || $nameHier eq "" } {
         puts "ERROR: create_hier_cell_group() - Empty argument(s)!"
         return 0
@@ -1227,6 +1232,7 @@ set num_of_group [lindex $argv 1]
 set num_of_slave [lindex $argv 2]
 set current_dir [pwd]
 set ip_repo_path "$current_dir/hardware/ip_repo"
+set resource_hls "$current_dir/resources/hls_project"
 set bd_design_nm "system"
 if {$argc >= 4} {
     set ip_repo_path [lindex $argv 3]
@@ -1246,7 +1252,7 @@ if {[hapara_create_bd $bd_design_nm] == 0} {
     puts "ERROR: When running hapara_create_bd()."
     return 0
 }
-if {[hapara_update_ip_repo $ip_repo_path] == 0} {
+if {[hapara_update_ip_repo $ip_repo_path $resource_hls] == 0} {
     puts "ERROR: When running hapara_update_ip_repo()."
     return 0
 }
