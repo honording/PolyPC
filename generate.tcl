@@ -409,7 +409,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
 
     # Create Hardware slaves
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
-        set hw_ip_name "$hw_name_s$i"
+        set hw_ip_name "${hw_name}_s$i"
         set hw [ create_bd_cell -type ip -vlnv xilinx.com:hls:${hw_name}:* $hw_ip_name ]
         set slice [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:* "axis_register_slice_$i" ]
         set xlconstant [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:* "xlconstant_$i" ]
@@ -477,7 +477,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Connect barrier master axi-stream to Hardware slave
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" $i]_AXIS"
-        set hw_ip_name "$hw_name_s$i" 
+        set hw_ip_name "${hw_name}_s$i" 
         connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$hw_ip_name/barrier"]
     }
     # Connect barrier master axi-stream to MicroBlaze slave
@@ -489,7 +489,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Connect dispatcher master axi-stream to hardware slave
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set dispatcher_master_name "hapara_axis_id_dispatcher/M[format "%02d" $i]_AXIS"
-        set hw_ip_name "$hw_name_s$i"
+        set hw_ip_name "${hw_name}_s$i"
         connect_bd_intf_net [get_bd_intf_pins $dispatcher_master_name] [get_bd_intf_pins "axis_register_slice_$i/S_AXIS"]
     }
     # Connect dispatcher master axi-stream to slave
@@ -515,7 +515,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Connect Hardware slave to intercon_data
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set intercon_data_slave_name "intercon_data/S[format "%02d" $i]_AXI"
-        set hw_ip_name "$hw_name_s$i"
+        set hw_ip_name "${hw_name}_s$i"
         connect_bd_intf_net [get_bd_intf_pins $intercon_data_slave_name] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
     }
 
@@ -601,7 +601,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         lappend clk [get_bd_pins "${slave_name}_local_memory/LMB_Clk"]       
     }
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
-        set hw_ip_name "$hw_name_s$i"
+        set hw_ip_name "${hw_name}_s$i"
         lappend clk [get_bd_pins $hw_ip_name/ap_clk]
         lappend rst [get_bd_pins $hw_ip_name/ap_rst_n]
         lappend clk [get_bd_pins axis_register_slice_$i/aclk]
@@ -619,7 +619,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set dispatcher_axis_ready_name "hapara_axis_id_dispatcher/m[format "%02d" $i]_axis_tready"
         set concat_in_name "xlconcat/In$i"
-        set hw_ip_name "$hw_name_s$i"
+        set hw_ip_name "${hw_name}_s$i"
         connect_bd_net -net "Ready$i" [get_bd_pins $dispatcher_axis_ready_name] [get_bd_pins "axis_register_slice_$i/s_axis_tready"] [get_bd_pins $concat_in_name]
     }
     # Connect dispatcher and slave ready signal
@@ -654,9 +654,33 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
 }
 
 ################################################################################
+# Return how many hardware kernel for a given group number 
+################################################################################
+# group_number:     The index of current group
+# number_per_group: Total number of slaves within one group (including mb and hw)
+# total_number:     Total number of hardware slaves 
+proc hapara_return_hw_number {group_number number_per_group total_number} {
+    set q [expr $total_number / $number_per_group]
+    set r [expr $total_number % $number_per_group]
+    if {$group_number < $q} {
+        return $number_per_group
+    }
+    if {($group_number == $q) && ($r == 0)} {
+        return 0
+    }
+    if {($group_number == $q) && ($r != 0)} {
+        return $r
+    }
+    if {$group_number > $q} {
+        return 0
+    }
+    return 0
+}
+
+################################################################################
 # Create top design
 ################################################################################
-proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
+proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     set parentCell "/"
     set parentObj [get_bd_cells $parentCell]
     if {$parentObj == ""} {
@@ -670,6 +694,8 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     }
     set oldCurInst [current_bd_instance .]
     current_bd_instance $parentObj
+
+    set max_hw_slave $::max_hw_slave
 
     # Create interface ports
     set DDR [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 DDR ]
@@ -710,7 +736,7 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     # Create instance: mdm, and set properties
     set mdm [ create_bd_cell -type ip -vlnv xilinx.com:ip:mdm:* mdm ]
     set_property -dict [ list \
-        CONFIG.C_MB_DBG_PORTS [expr "1+(1+$numOfSlave)*$numOfGroup"] \
+        CONFIG.C_MB_DBG_PORTS [expr "1+(1+$numOfSlave)*$numOfGroup-$numOfHWSlave"] \
         CONFIG.C_USE_UART {1} \
     ] $mdm
 
@@ -786,7 +812,8 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     for {set i 0} {$i < $numOfGroup} {incr i} {
         # Create instance: group
         set group_name "group$i"
-        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave $i
+        set numhw [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
+        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave $numhw $i $hw_name
     }
 
     #####################################################################
@@ -817,20 +844,26 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
     # Connect interfaces
     ############################################################################
     # Connect mdm related interface 
+    set calculative_mb 0
     connect_bd_intf_net [get_bd_intf_pins intercon_mdm/M00_AXI] [get_bd_intf_pins mdm/S_AXI]
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         set intercon_mdm_slave_name "intercon_mdm/S[format "%02d" $i]_AXI"
         connect_bd_intf_net [get_bd_intf_pins "$group_name/M02_AXI_sche"] [get_bd_intf_pins $intercon_mdm_slave_name]
-        set mdm_debug_sche_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)"]"
+        # set mdm_debug_sche_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)"]"
+        set mdm_debug_sche_name "mdm/MBDEBUG_$calculative_mb"
+        set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
+        set num_mb_per_group [expr $numOfSlave - $num_hw_per_group]
         connect_bd_intf_net [get_bd_intf_pins $group_name/DEBUG_scheduler] [get_bd_intf_pins $mdm_debug_sche_name]
-        for {set j 0} {$j < $numOfSlave} {incr j} {
-            set mdm_debug_slave_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)+1+$j"]"
+        for {set j 0} {$j < $num_mb_per_group} {incr j} {
+            # set mdm_debug_slave_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)+1+$j"]"
+            set mdm_debug_slave_name "mdm/MBDEBUG_[expr $1+$calculative_mb+$j]"
             set group_slave_debug_name "$group_name/DEBUG_s$j"
             connect_bd_intf_net [get_bd_intf_pins $group_slave_debug_name] [get_bd_intf_pins $mdm_debug_slave_name]
         }
+        set calculative_mb [expr $calculative_mb+$num_mb_per_group]
     }
-    connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "($numOfSlave+1)*$numOfGroup"]"] [get_bd_intf_pins mutex_manager/DEBUG]
+    connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "($numOfSlave+1)*$numOfGroup-$numOfHWSlave"]"] [get_bd_intf_pins mutex_manager/DEBUG]
 
     # Connect intercon_ddr related interfaces
     connect_bd_intf_net [get_bd_intf_pins intercon_ddr/M00_AXI] [get_bd_intf_pins mig_7series_0/S_AXI]
@@ -1036,8 +1069,10 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
         create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
         create_bd_addr_seg -range 0x8000 -offset $mutex_manager_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mutex_manager_ctrl/S_AXI/Mem0] SEG_mutex_manager_ctrl_Mem0
         create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
-
-        for {set j 0} {$j < $numOfSlave} {incr j} {
+        
+        set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
+        set num_mb_per_group [expr $numOfSlave - $num_hw_per_group]
+        for {set j 0} {$j < $num_mb_per_group} {incr j} {
             set slave_name "slave_s$j"
             create_bd_addr_seg -range 0x8000 -offset 0x8000 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr1/SLMB/Mem"] SEG_dlmb_bram_if_cntlr1_Mem
             create_bd_addr_seg -range 0x8000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr/SLMB/Mem"] SEG_dlmb_bram_if_cntlr_Mem
@@ -1046,6 +1081,12 @@ proc hapara_create_root_design {{numOfGroup 1} {numOfSlave 4}} {
             create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
             create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
             create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
+        }
+        for {set j 0} {$j < $num_hw_per_group} {incr j} {
+            set hw_slave_name "${hw_name}_s$i"
+            create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
+            create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
+            create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr            
         }
     }
  
@@ -1275,24 +1316,34 @@ proc hapara_export_sdk {} {
 ################################################################################
 # Main procedure 
 ################################################################################
-if {$argc < 3 || $argc > 5} {
+if {$argc < 4|| $argc > 7} {
     puts "ERROR:Invalid input arguments."
-    puts {<Project Name> <Number of Groups> <Number of Slaves> [IP Repository] [Block Design Name]}
+    puts {<Project Name> <Number of Groups> <Number of Slaves per Group> <Total Number of HW Slaves> [Name of HW Slave] [IP Repository] [Block Design Name]}
     puts "Please try again."
     return 0
 }
 set project_name [lindex $argv 0]
 set num_of_group [lindex $argv 1]
 set num_of_slave [lindex $argv 2]
+set num_of_hw    [lindex $argv 3]
 set current_dir [pwd]
+set max_hw_slave 8
+if {$num_of_hw > $max_hw_slave} {
+    puts "ERROR: Number of hardware slaves:$num_of_hw cannot exceed the maximum:$max_hw_slave"
+    return 0
+}
+set hw_name "vector_add"
 set ip_repo_path "$current_dir/hardware/ip_repo"
 set resource_hls "$current_dir/resources/hls_project"
 set bd_design_nm "system"
-if {$argc >= 4} {
-    set ip_repo_path [lindex $argv 3]
+if {$argc >= 5} {
+    set hw_name [lindex $argv 4]
 }
-if {$argc == 5} {
-    set bd_design_nm [lindex $argv 4]
+if {$argc >= 6} {
+    set ip_repo_path [lindex $argv 5]
+}
+if {$argc == 7} {
+    set bd_design_nm [lindex $argv 5]
 }
 if {[hapara_vivado_version_check] == 0} {
     puts "ERROR: When running hapara_vivado_version_check()."
