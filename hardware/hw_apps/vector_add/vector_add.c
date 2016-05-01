@@ -21,6 +21,7 @@ void vector_add(volatile unsigned int *id,
 #pragma HLS INTERFACE ap_ctrl_none port=return
 #pragma HLS INTERFACE m_axi port=data
 #pragma HLS INTERFACE axis port=id
+#pragma HLS INTERFACE axis port=barrier
     unsigned int internal_id;
     unsigned int id0, id1;
     while (1) {

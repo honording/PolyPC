@@ -260,7 +260,8 @@ proc create_hier_cell_slave_local_memory { parentCell nameHier } {
 ################################################################################
 # numOfSlave:   The total number of slaves within one group (including MicroBlazes and Hardware IPs)
 # numOfHWSlave: The number of hardware IPs within one group
-proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNum {dma_burst_length 256}} {
+# numOfMBSlave: The number of MicroBlaze slaves within one group
+proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNum {hw_name vector_add} {dma_burst_length 256}} {
     if { $parentCell eq "" || $nameHier eq "" } {
         puts "ERROR: create_hier_cell_group() - Empty argument(s)!"
         return 0
@@ -290,9 +291,12 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     set hier_obj [create_bd_cell -type hier $nameHier]
     current_bd_instance $hier_obj
 
+    # Calculate the number of MicroBlaze slaves
+    set numOfMBSlave [expr $numOfSlave-$numOfHWSlave]
+
     # Create interface pins
     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:mbdebug_rtl:3.0 DEBUG_scheduler
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set debug_name "DEBUG_s$i"
         create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:mbdebug_rtl:3.0 $debug_name
     }
@@ -349,7 +353,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Create instance: hapara_lmb_dma_dup, and set properties
     set hapara_lmb_dma_dup [ create_bd_cell -type ip -vlnv user.org:user:hapara_lmb_dma_dup:* hapara_lmb_dma_dup ]
     set_property -dict [ list \
-        CONFIG.NUM_SLAVE [expr "$numOfSlave"] \
+        CONFIG.NUM_SLAVE [expr "$numOfMBSlave"] \
     ] $hapara_lmb_dma_dup
 
     # Create instance: local_mem_ctrl, and set properties
@@ -403,7 +407,23 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         CONFIG.NUM_PORTS [expr "$numOfSlave"] \
     ] $xlconcat
 
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    # Create Hardware slaves
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
+        set hw_ip_name "$hw_name_s$i"
+        set hw [ create_bd_cell -type ip -vlnv xilinx.com:hls:${hw_name}:* $hw_ip_name ]
+        set slice [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:* "axis_register_slice_$i" ]
+        set xlconstant [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:* "xlconstant_$i" ]
+        set_property -dict [ list \
+            CONFIG.CONST_VAL $i \
+            CONFIG.CONST_WIDTH {8} \
+        ] $xlconstant
+        # Connect interface between them
+        connect_bd_intf_net [get_bd_intf_pins "axis_register_slice_$i/M_AXIS"] [get_bd_intf_pins "$hw_ip_name/id"]
+        connect_bd_net [get_bd_pins "$hw_ip_name/htID"] [get_bd_pins "xlconstant_$i/dout"]
+    }
+
+    # Create MicroBlaze slaves
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         # Create instance: slave_s#, and set properties
         set slave_name "slave_s$i"
         set slave [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:* $slave_name ]
@@ -414,7 +434,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
             CONFIG.C_FSL_LINKS {2} \
             CONFIG.C_PVR {2} \
             CONFIG.C_PVR_USER1 {0x00} \
-            CONFIG.C_PVR_USER2 [format "0x%08X" $i] \
+            CONFIG.C_PVR_USER2 [format "0x%08X" [expr $i+$numOfHWSlave]] \
             CONFIG.C_I_AXI {0} \
             CONFIG.C_I_LMB {1} \
         ] $slave
@@ -427,7 +447,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Create interface connections
     connect_bd_intf_net -intf_net debug_sche [get_bd_intf_pins DEBUG_scheduler] [get_bd_intf_pins scheduler/DEBUG]
     # Connect interface DEBUG to slave debug ports
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set debug_name "DEBUG_s$i"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $debug_name] [get_bd_intf_pins "$slave_name/DEBUG"]
@@ -454,15 +474,27 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     connect_bd_intf_net [get_bd_intf_pins "intercon_data/S[format "%02d" $numOfSlave]_AXI"] [get_bd_intf_pins intercon_dma/M00_AXI]
     connect_bd_intf_net [get_bd_intf_pins dma_bram_ctrl/S_AXI] [get_bd_intf_pins intercon_dma/M01_AXI]
 
-    # Connect barrier master axi-stream to slave
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    # Connect barrier master axi-stream to Hardware slave
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" $i]_AXIS"
+        set hw_ip_name "$hw_name_s$i" 
+        connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$hw_ip_name/barrier"]
+    }
+    # Connect barrier master axi-stream to MicroBlaze slave
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
+        set barrier_master_name "hapara_axis_barrier/M[format "%02d" [expr $i+$numOfHWSlave]]_AXIS"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$slave_name/S0_AXIS"]
     }
-    # Connect dispatcher master axi-stream to slave
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    # Connect dispatcher master axi-stream to hardware slave
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set dispatcher_master_name "hapara_axis_id_dispatcher/M[format "%02d" $i]_AXIS"
+        set hw_ip_name "$hw_name_s$i"
+        connect_bd_intf_net [get_bd_intf_pins $dispatcher_master_name] [get_bd_intf_pins "axis_register_slice_$i/S_AXIS"]
+    }
+    # Connect dispatcher master axi-stream to slave
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
+        set dispatcher_master_name "hapara_axis_id_dispatcher/M[format "%02d" [expr $i+$numOfHWSlave]]_AXIS"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $dispatcher_master_name] [get_bd_intf_pins "$slave_name/S1_AXIS"]
     }
@@ -470,7 +502,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     connect_bd_intf_net [get_bd_intf_pins hapara_axis_id_dispatcher/S00_AXIS] [get_bd_intf_pins hapara_axis_id_generator/M00_AXIS]
 
     # Connect lmb DMA duplicator to slave local memory
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set dma_dup_bram_name "hapara_lmb_dma_dup/bram_b$i"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $dma_dup_bram_name] [get_bd_intf_pins "${slave_name}_local_memory/BRAM_PORTA"]
@@ -480,9 +512,16 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     connect_bd_intf_net [get_bd_intf_pins intercon_data/M00_AXI] [get_bd_intf_pins local_mem_ctrl/S_AXI]
     connect_bd_intf_net [get_bd_intf_pins local_mem_ctrl/BRAM_PORTA] [get_bd_intf_pins local_mem_ctrl_bram/BRAM_PORTA]
 
-    # Connect slave local memories and intercon_data to slaves
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    # Connect Hardware slave to intercon_data
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set intercon_data_slave_name "intercon_data/S[format "%02d" $i]_AXI"
+        set hw_ip_name "$hw_name_s$i"
+        connect_bd_intf_net [get_bd_intf_pins $intercon_data_slave_name] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
+    }
+
+    # Connect MicroBlaze slave local memories and intercon_data to slaves
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
+        set intercon_data_slave_name "intercon_data/S[format "%02d" [expr $i+$numOfHWSlave]]_AXI"
         set dma_dup_bram_name "hapara_lmb_dma_dup/bram_s$i"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $intercon_data_slave_name] [get_bd_intf_pins "$slave_name/M_AXI_DP"]
@@ -555,9 +594,18 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         set intercon_data_slave_rst "intercon_data/S[format "%02d" $i]_ARESETN"
         lappend clk [get_bd_pins $intercon_data_slave_clk]
         lappend rst [get_bd_pins $intercon_data_slave_rst]
+    }
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set slave_name "slave_s$i"
         lappend clk [get_bd_pins "$slave_name/Clk"]
-        lappend clk [get_bd_pins "${slave_name}_local_memory/LMB_Clk"]
+        lappend clk [get_bd_pins "${slave_name}_local_memory/LMB_Clk"]       
+    }
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
+        set hw_ip_name "$hw_name_s$i"
+        lappend clk [get_bd_pins $hw_ip_name/ap_clk]
+        lappend rst [get_bd_pins $hw_ip_name/ap_rst_n]
+        lappend clk [get_bd_pins axis_register_slice_$i/aclk]
+        lappend rst [get_bd_pins axis_register_slice_$i/aresetn]
     }
     # Handle intercon_data slave clk and rst for inter_dma and scheduler_axi_periph
     lappend clk [get_bd_pins "intercon_data/S[format "%02d" $numOfSlave]_ACLK"]
@@ -567,10 +615,16 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     connect_bd_net -net CLK $clk
     connect_bd_net -net PERI_ARESETN $rst
 
-
-    # Connect dispatcher and slave ready signal
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    # Connect dispatcher and Hardware axi-stream slice ready signal
+    for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set dispatcher_axis_ready_name "hapara_axis_id_dispatcher/m[format "%02d" $i]_axis_tready"
+        set concat_in_name "xlconcat/In$i"
+        set hw_ip_name "$hw_name_s$i"
+        connect_bd_net -net "Ready$i" [get_bd_pins $dispatcher_axis_ready_name] [get_bd_pins "axis_register_slice_$i/s_axis_tready"] [get_bd_pins $concat_in_name]
+    }
+    # Connect dispatcher and slave ready signal
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
+        set dispatcher_axis_ready_name "hapara_axis_id_dispatcher/m[format "%02d" [expr $i+$numOfHWSlave]]_axis_tready"
         set concat_in_name "xlconcat/In$i"
         set slave_name "slave_s$i"
         connect_bd_net -net "Ready$i" [get_bd_pins $dispatcher_axis_ready_name] [get_bd_pins "$slave_name/S1_AXIS_TREADY"] [get_bd_pins $concat_in_name]
@@ -584,7 +638,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     lappend mb_reset [get_bd_pins scheduler/Reset]
     lappend bus_struct_reset [get_bd_pins BUS_STRUCT_RESET]
     lappend bus_struct_reset [get_bd_pins scheduler_local_memory/SYS_Rst]
-    for {set i 0} {$i < $numOfSlave} {incr i} {
+    for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set slave_name "slave_s$i"
         lappend mb_reset [get_bd_pins "$slave_name/Reset"]
         lappend bus_struct_reset [get_bd_pins "${slave_name}_local_memory/SYS_Rst"]
