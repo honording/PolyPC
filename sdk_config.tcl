@@ -18,7 +18,7 @@ proc hapara_find_first_mb {num_of_group num_of_slave total_num_of_hw_slave} {
     }
     set q [expr $total_num_of_hw_slave / $num_of_slave]
     set r [expr $total_num_of_hw_slave % $num_of_slave]
-    return "group${q}_slave_s${r}"
+    return "group${q}_slave_s0"
 }
 
 ################################################################################
