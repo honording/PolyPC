@@ -9,8 +9,9 @@ proc hls_config_update {args} {
 	}
 	set args_list [string range $args 1 [expr [string length $args] - 2]]
 
-	if {[llength $args_list] == 2} {
+	if {([llength $args_list] == 2) || ([llength $args_list] == 3 && [lindex $args_list 2] == "all")} {
 		set app_list [glob -nocomplain -type d "$repo/*"]
+		puts "$app_list"
 		set app_name_list ""
 		if {$app_list == ""} {
 			puts "ERROR: There are no HLS apps under $repo"
@@ -21,19 +22,22 @@ proc hls_config_update {args} {
 	        set temp [string range $dir [expr {[string last "/" $dir] + 1}] end]
 	        lappend app_name_list $temp
 		}
-
-		set res_app_list [glob -nocomplain -type d "$resources/hls_project/*"]
-		set res_app_name_list ""
-		foreach dir $res_app_list {
-	        set temp [string range $dir [expr {[string last "/" $dir] + 1}] end]
-	        lappend res_app_name_list $temp		
-		}
-
-		foreach app $app_name_list {
-			if {[lsearch $res_app_name_list $app] < 0}  {
-				lappend new_app_name_list $app
+		if {[llength $args_list] == 3} {
+			set new_app_name_list $app_name_list
+		} else {
+			set res_app_list [glob -nocomplain -type d "$resources/hls_project/*"]
+			set res_app_name_list ""
+			foreach dir $res_app_list {
+		        set temp [string range $dir [expr {[string last "/" $dir] + 1}] end]
+		        lappend res_app_name_list $temp		
 			}
-		}		
+
+			foreach app $app_name_list {
+				if {[lsearch $res_app_name_list $app] < 0}  {
+					lappend new_app_name_list $app
+				}
+			}				
+		}
 	} else {
 		for {set i 2} {$i < [llength $args_list]} {incr i} {
 			lappend new_app_name_list [lindex $args_list $i]

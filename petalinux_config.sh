@@ -13,7 +13,7 @@ petalinux_dir="$curr_dir/$1/petalinux"
 repo_dir="$curr_dir/software/petalinux"
 
 if [ ! -d $petalinux_dir ]; then
-	echo "No petalinux forlder: $petalinux_dir exists."
+	echo "Warning: No petalinux forlder: $petalinux_dir exists."
 	echo "Creating petalinux project folder."
 	cd $project_dir
 	petalinux-create -t project -n petalinux --template zynq
