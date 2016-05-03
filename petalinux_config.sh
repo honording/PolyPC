@@ -46,7 +46,7 @@ done
 cp -r $repo_dir/apps/* $petalinux_dir/components/apps/
 cp -r $repo_dir/libs/* $petalinux_dir/components/libs/
 cp -r $repo_dir/modules/* $petalinux_dir/components/modules/
-cp -r $repo_dir/generic/* $petalinux_dir/components/generic/
+cp -r $repo_dir/../generic/* $petalinux_dir/components/generic/
 
 # Compiling and preparing the projects
 petalinux-build
