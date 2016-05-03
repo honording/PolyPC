@@ -13,7 +13,7 @@ proc hapara_create_hw {proj_name {wrapper_name system_wrapper} {hw_mame system_w
 }
 
 proc hapara_find_first_mb {num_of_group num_of_slave total_num_of_hw_slave} {
-    if {$num_of_group * $num_of_slave <= $total_num_of_hw_slave} {
+    if {[expr $num_of_group * $num_of_slave] <= $total_num_of_hw_slave} {
         return ""
     }
     set q [expr $total_num_of_hw_slave / $num_of_slave]
@@ -45,7 +45,7 @@ proc hapara_return_hw_number {group_number number_per_group total_number} {
     return 0
 }
 
-proc hapara_create_functional_app {proj_name source_rep first_mb {hw_mame system_wrapper_hw_platform_0}} {
+proc hapara_create_functional_app {proj_name source_repo first_mb {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
     set sdk_dir "$cur_dir/$proj_name/${proj_name}.sdk"
     # Copy generic folder
@@ -166,7 +166,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
 }
 
 set current_dir [pwd]
-set source_repo "/home/hding/Projects/HaPara/HaPara"
+set source_repo "$current_dir/software"
 if {$argc < 4 || $argc > 5} {
     puts "ERROR:Invalid input arguments."
     puts {<Project Name> <Number of Groups> <Number of Slaves> <Total Number of HW Slaves> [Source Codes Repository]}
@@ -187,7 +187,7 @@ if {$argc == 5} {
 # }
 set workspace_name "$current_dir/${project_name}/${project_name}.sdk"
 sdk set_workspace $workspace_name
-set first_mb [hapara_find_first_mb num_of_group num_of_slave num_of_hw_slave]
+set first_mb [hapara_find_first_mb $num_of_group $num_of_slave $num_of_hw_slave]
 
 if {[hapara_create_hw $project_name] == 0} {
     puts "ERROR: When running hapara_create_hw()."

@@ -1309,6 +1309,7 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
 proc hapara_export_sdk {} {
     set project_name [current_project]
     set bd_design_nm [current_bd_design .]
+    # open_project "./$project_name/${project_name}.xpr"
     set curr_dir $::current_dir
     set proj_path "$curr_dir/$project_name"
     set sdk_dir "$proj_path/${project_name}.sdk"
@@ -1351,11 +1352,11 @@ if {$argc < 4|| $argc > 7} {
 set project_name [lindex $argv 0]
 set num_of_group [lindex $argv 1]
 set num_of_slave [lindex $argv 2]
-set num_of_hw    [lindex $argv 3]
+set max_hw_slave [lindex $argv 3]
 set current_dir [pwd]
-set max_hw_slave 8
-if {$num_of_hw > $max_hw_slave} {
-    puts "ERROR: Number of hardware slaves:$num_of_hw cannot exceed the maximum:$max_hw_slave"
+set maximum_hw 8
+if {$max_hw_slave > $maximum_hw} {
+    puts "ERROR: Number of hardware slaves:$max_hw_slave cannot exceed the maximum:$maximum_hw"
     return 0
 }
 set hw_name "vector_add"
@@ -1387,24 +1388,24 @@ if {[hapara_update_ip_repo $ip_repo_path $resource_hls] == 0} {
     puts "ERROR: When running hapara_update_ip_repo()."
     return 0
 }
-if {[hapara_create_root_design $num_of_group $num_of_slave $num_of_hw $hw_name] == 0} {
+if {[hapara_create_root_design $num_of_group $num_of_slave $max_hw_slave $hw_name] == 0} {
     puts "ERROR: When running hapara_create_root_design()."
     return 0
 }
-if {[hapara_create_hdl_wrapper] == 0} {
-    puts "ERROR: When running hapara_create_root_design()."
-    return 0
-}
-if {[hapara_generate_bitstream] == 0} {
-    puts "ERROR: When running hapara_generate_bitstream()."
-    return 0
-}
-if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
-    puts "ERROR: When running hapara_generate_mmi()."
-    return 0
-}
-if {[hapara_export_sdk] == 0} {
-    puts "ERROR: When running hapara_export_sdk()."
-    return 0
-}
+# if {[hapara_create_hdl_wrapper] == 0} {
+#     puts "ERROR: When running hapara_create_hdl_wrapper()."
+#     return 0
+# }
+# if {[hapara_generate_bitstream] == 0} {
+#     puts "ERROR: When running hapara_generate_bitstream()."
+#     return 0
+# }
+# if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
+#     puts "ERROR: When running hapara_generate_mmi()."
+#     return 0
+# }
+# if {[hapara_export_sdk] == 0} {
+#     puts "ERROR: When running hapara_export_sdk()."
+#     return 0
+# }
 
