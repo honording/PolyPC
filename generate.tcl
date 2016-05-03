@@ -1392,20 +1392,20 @@ if {[hapara_create_root_design $num_of_group $num_of_slave $max_hw_slave $hw_nam
     puts "ERROR: When running hapara_create_root_design()."
     return 0
 }
-# if {[hapara_create_hdl_wrapper] == 0} {
-#     puts "ERROR: When running hapara_create_hdl_wrapper()."
-#     return 0
-# }
-# if {[hapara_generate_bitstream] == 0} {
-#     puts "ERROR: When running hapara_generate_bitstream()."
-#     return 0
-# }
-# if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
-#     puts "ERROR: When running hapara_generate_mmi()."
-#     return 0
-# }
-# if {[hapara_export_sdk] == 0} {
-#     puts "ERROR: When running hapara_export_sdk()."
-#     return 0
-# }
+if {[hapara_create_hdl_wrapper] == 0} {
+    puts "ERROR: When running hapara_create_hdl_wrapper()."
+    return 0
+}
+if {[hapara_generate_bitstream] == 0} {
+    puts "ERROR: When running hapara_generate_bitstream()."
+    return 0
+}
+if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
+    puts "ERROR: When running hapara_generate_mmi()."
+    return 0
+}
+if {[hapara_export_sdk] == 0} {
+    puts "ERROR: When running hapara_export_sdk()."
+    return 0
+}
 
