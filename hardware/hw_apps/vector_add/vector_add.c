@@ -1,8 +1,5 @@
-//#define SCHE_SLAVE_ARGV_BASE     0xF0000080    //0xC0000000
-//#define SCHE_SLAVE_TRIGGER_BASE 0xF0000040  //0xC0000100
-
-#define SCHE_SLAVE_ARGV_BASE     0xF0000000    //0xC0000000
-#define SCHE_SLAVE_TRIGGER_BASE 0xF0800000  //0xC2000000
+#define SCHE_SLAVE_ARGV_BASE      0xF0000020    //0xC0000080
+#define SCHE_SLAVE_TRIGGER_BASE   0xF0000040    //0xC0000100
 
 void kernel(unsigned int arg0, unsigned int arg1, unsigned int arg2, 
             unsigned int id0, unsigned int id1, 

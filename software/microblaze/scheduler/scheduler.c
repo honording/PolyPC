@@ -20,11 +20,15 @@
 #include "../../generic/CL/cl.h"
 #include "../../generic/include/base_addr.h"
 #include "../../generic/include/register.h"
-#include "../../generic/include/hw_config.h"
+//#include "../../generic/include/hw_config.h"
 
 
 
 int main() {
+	unsigned int pvr = 0;
+	getpvr(1, pvr);
+	num_of_slave	= pvr >> 16;
+	num_of_mb_slave = pvr & 0x0000FFFF;
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
 	struct hapara_thread_struct *hapara_thread_base =
@@ -77,24 +81,26 @@ int main() {
 				.id1 = hapara_thread_curr->group_size.id1,
 		};
 		hapara_gen->org = ((cur_group_id.id0 * group_size.id0) << 16) | (cur_group_id.id1 * group_size.id1);
-		hapara_gen->numOfSlvs = NUM_SLAVES;
-//		hapara_gen->numOfSlvs = 1;
+		hapara_gen->numOfSlvs = num_of_slave;
 		hapara_gen->len = (group_size.id0 << 16) | (group_size.id1);
 		if (hapara_thread_curr->elf_info.elf_magic != elf_info->elf_magic) {
 			elf_info->elf_magic = hapara_thread_curr->elf_info.elf_magic;
 			elf_info->main_addr = hapara_thread_curr->elf_info.main_addr;
 			elf_info->stack_addr = hapara_thread_curr->elf_info.stack_addr;
 			memcpy((char *)SCHE_SLAVE_ARGV_BASE, (char *)(&(hapara_thread_curr->argv[0])), ARGC);
-			Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->elf_info.ddr_addr);	//source
-			Xil_Out32((SCHEDULER_DMA_BASE + 0x20), DMA_INST_MEM_BASE);								//destination
-			Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
-			while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);				//not idle: bit == 0
+			if (num_of_mb_slave != 0) {
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->elf_info.ddr_addr);	//source
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), DMA_INST_MEM_BASE);						//destination
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
+				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
+			}
 		}
 		int i;
-		for (i = 0; i < NUM_SLAVES; i++) {
+		for (i = 0; i < num_of_slave; i++) {
 			trigger[i] = 1;
 		}
 		while (hapara_gen->isFinished != 1);
 	}
 	return 0;
 }
+
