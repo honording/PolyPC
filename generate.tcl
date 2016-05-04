@@ -1292,7 +1292,7 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
     set bitstream_name "$project_name.bit"
     file mkdir "$proj_path/bitstream"
     file mkdir "$proj_path/reports"
-    file mkdir "#proj_path/checkpoints"
+    file mkdir "$proj_path/checkpoints"
 
     # Set maximum number of number of threads to run
     set_param general.maxThreads $numOfThreads

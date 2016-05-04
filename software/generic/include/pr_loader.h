@@ -3,9 +3,9 @@
 
 
 struct pr_info_struct {
-    unsigned int begin_addr;
+    unsigned int ddr_addr;
     unsigned int num_pr_file;
-    unsigned int total_size;
+    unsigned int each_size;
 };
 
 typedef struct pr_info_struct pr_info_t;

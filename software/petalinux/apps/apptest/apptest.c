@@ -19,7 +19,8 @@
 #include "../../../generic/include/thread_struct.h"
 
 // #define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
-#define ELF_FILE_NAME   "/mnt/vector_add.elf"
+#define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
+#define PR_FILE_PATH    "/mnt/elf_apps/pr/"
 
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
@@ -128,7 +129,11 @@ int main(int argc, char *argv[])
         printf("apptest: elf_loader error\n");
         return 0;
     }
+    printf("apptest: begin to load PR bitstream into memory.\n");
+
     print_struct(&sp);
+
+
     ret = reg_add(&sp);
     if (ret == -1) {
         printf("apptest: Reg add error 0.\n");
