@@ -395,7 +395,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
 
     # Create instance: scheduler, and set properties
     set scheduler [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:* scheduler ]
-    set pvr2 [expr "($numOfSlave<<16) & $numOfMBSlave"]
+    set pvr2 [expr "($numOfSlave<<16) | $numOfMBSlave"]
     set_property -dict [ list \
         CONFIG.C_DEBUG_ENABLED {1} \
         CONFIG.C_D_AXI {1} \
