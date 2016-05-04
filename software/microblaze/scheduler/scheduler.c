@@ -27,8 +27,8 @@
 int main() {
 	unsigned int pvr = 0;
 	getpvr(1, pvr);
-	num_of_slave	= pvr >> 16;
-	num_of_mb_slave = pvr & 0x0000FFFF;
+	int num_of_slave	= pvr >> 16;
+	int num_of_mb_slave = pvr & 0x0000FFFF;
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
 	struct hapara_thread_struct *hapara_thread_base =

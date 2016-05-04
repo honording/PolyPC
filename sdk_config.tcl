@@ -95,8 +95,9 @@ proc hapara_create_opencl_app {proj_name source_repo first_mb {type Debug} {hw_m
         sdk create_app_project -name $app -hwproject $hw_mame -proc $first_mb -os standalone -lang C -app {Empty Application} -bsp "${app}_bsp"
         sdk import_sources -name $app -path "$source_repo/microblaze/apps/$app"
         file copy -force "$source_repo/microblaze/lscript/lscript80.ld" "$sdk_dir/$app/src/lscript.ld"  
-        sdk build_project -type bsp -name "${app}_bsp"
-        sdk build_project -type app -name $app
+        # sdk build_project -type bsp -name "${app}_bsp"
+        # sdk build_project -type app -name $app
+        sdk build_project -type all -name $app
         file copy -force "$sdk_dir/$app/$type/${app}.elf" "$sdk_dir/app_elfs/"
     }
     return 1
