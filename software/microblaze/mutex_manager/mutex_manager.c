@@ -1,5 +1,6 @@
 #include "../../generic/include/hw_config.h"
 #include "../../generic/include/base_addr.h"
+#include <xil_io.h>
 
 #define MUTEX_MEM_BASE  MUTEX_MANAGER_BASE
 #define MAX_MUTEX       NUM_MUTEX
@@ -7,9 +8,9 @@
 #define RESET           0
 
 struct mutex_pair_struct {
-    unsigned int r_m;
-    unsigned int w_m;
-    unsigned int wr_m;
+    volatile unsigned int r_m;
+    volatile unsigned int w_m;
+    volatile unsigned int wr_m;
 };
 
 int main(void)

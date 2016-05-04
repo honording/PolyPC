@@ -22,7 +22,7 @@
 jmp_buf buf;
 
 typedef struct id_struct_s {
-    int isIDGet;
+    volatile int isIDGet;
     unsigned int id0;
     unsigned int id1;
 } id_struct;

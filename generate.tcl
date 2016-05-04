@@ -1290,20 +1290,34 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
     set proj_path "$curr_dir/$project_name"
     set top_module_name "${bd_design_nm}_wrapper"
     set bitstream_name "$project_name.bit"
+    file mkdir "$proj_path/bitstream"
+    file mkdir "$proj_path/reports"
+    file mkdir "#proj_path/checkpoints"
+
     # Set maximum number of number of threads to run
     set_param general.maxThreads $numOfThreads
     # Synthesis design
     synth_design -top $top_module_name
+    
+    # Write checkpoints
+    write_checkpoint -force "$proj_path/checkpoints/synth_full.dcp"
+
     # Place design
-    opt_design
-    place_design
-    phys_opt_design
+    
+    # opt_design
+    # place_design
+    # phys_opt_design
+    
     # Route design
-    route_design
+    
+    # route_design
+    
     # Write bitstream
-    write_bitstream -force "$proj_path/$bitstream_name"
+    
+    # write_bitstream -force "$proj_path/$bitstream_name"
     return 1
 }
+
 ################################################################################
 # Export to SDK
 ################################################################################
@@ -1401,12 +1415,12 @@ if {[hapara_generate_bitstream] == 0} {
     puts "ERROR: When running hapara_generate_bitstream()."
     return 0
 }
-if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
-    puts "ERROR: When running hapara_generate_mmi()."
-    return 0
-}
-if {[hapara_export_sdk] == 0} {
-    puts "ERROR: When running hapara_export_sdk()."
-    return 0
-}
+# if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
+#     puts "ERROR: When running hapara_generate_mmi()."
+#     return 0
+# }
+# if {[hapara_export_sdk] == 0} {
+#     puts "ERROR: When running hapara_export_sdk()."
+#     return 0
+# }
 
