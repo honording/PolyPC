@@ -1227,11 +1227,14 @@ proc hapara_generate_mmi_addspace {fileout brams cell_name begin_addr} {
         puts $fileout "    </AddressSpace>"
     }
 }
-proc hapara_generate_mmi {numOfGroup numOfSlave} {
-    set project_name [current_project]
-    set bd_design_nm [current_bd_design .]
+proc hapara_generate_mmi {project_name numOfGroup numOfSlave numOfHWSlave {bd_design_nm system}} {
+    # set project_name [current_project]
+    # set bd_design_nm [current_bd_design .]
     set curr_dir $::current_dir
-    set max_hw_slave $::max_hw_slave
+    set max_hw_slave $numOfHWSlave
+    set proj_dir "$curr_dir/$project_name"
+    open_checkpoint "$proj_dir/checkpoints/route_static.dcp"
+
     set filename "$curr_dir/$project_name/$project_name.mmi"
     set fileout [open $filename "w"]
     set brams [split [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ BMEM.bram.* }] " "]
@@ -1278,6 +1281,7 @@ proc hapara_generate_mmi {numOfGroup numOfSlave} {
     puts $fileout "</Config>"
     puts $fileout "</MemInfo>"
     close $fileout
+    close_design
     return 1
 }
 ################################################################################
@@ -1315,15 +1319,117 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
     # Write bitstream
     
     # write_bitstream -force "$proj_path/$bitstream_name"
+    close_project
+    return 1
+}
+################################################################################
+# DO pr staff in none-project mode
+################################################################################
+proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_name system} {hw_name vector_add}} {
+    open_checkpoint "$proj_dir/checkpoints/synth_full.dcp"
+    set slice [list SLICE_X52Y300:SLICE_X67Y349 SLICE_X94Y300:SLICE_X109Y349 SLICE_X52Y200:SLICE_X67Y249 SLICE_X94Y200:SLICE_X109Y249 \
+                    SLICE_X52Y100:SLICE_X67Y149 SLICE_X94Y100:SLICE_X109Y149 SLICE_X52Y0:SLICE_X67Y49 SLICE_X94Y0:SLICE_X109Y49 ]
+    set dsp48 [list DSP48_X3Y120:DSP48_X3Y139 DSP48_X4Y120:DSP48_X4Y139 DSP48_X3Y80:DSP48_X3Y99 DSP48_X4Y80:DSP48_X4Y99  \
+                    DSP48_X3Y40:DSP48_X3Y59 DSP48_X4Y40:DSP48_X4Y59 DSP48_X3Y0:DSP48_X3Y19 DSP48_X4Y0:DSP48_X4Y19]
+    set ram18 [list RAMB18_X3Y120:RAMB18_X3Y139 RAMB18_X4Y120:RAMB18_X4Y139 RAMB18_X3Y80:RAMB18_X3Y99 RAMB18_X4Y80:RAMB18_X4Y99  \
+                    RAMB18_X3Y40:RAMB18_X3Y59 RAMB18_X4Y40:RAMB18_X4Y59 RAMB18_X3Y0:RAMB18_X3Y19 RAMB18_X4Y0:RAMB18_X4Y19]
+    set ram36 [list RAMB36_X3Y60:RAMB36_X3Y69 RAMB36_X4Y60:RAMB36_X4Y69 RAMB36_X3Y40:RAMB36_X3Y49 RAMB36_X4Y40:RAMB36_X4Y49 \
+                    RAMB36_X3Y20:RAMB36_X3Y29 RAMB36_X4Y20:RAMB36_X4Y29 RAMB36_X3Y0:RAMB36_X3Y9 RAMB36_X4Y0:RAMB36_X4Y9]
+
+    set counter 0
+    for {set i 0} {$i < $num_of_group} {incr i} {
+            set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+            set num_mb_per_group [expr $num_of_slave - $num_hw_per_group]
+            for {set j 0} {$j < $num_hw_per_group} {incr j} {
+                set pb_name "pblock_group${i}_s${j}"
+                create_pblock $pb_name
+                set location ""
+                lappend location [lindex $slice $counter]
+                lappend location [lindex $dsp48 $counter]
+                lappend location [lindex $ram18 $counter]
+                lappend location [lindex $ram36 $counter]
+                incr counter
+                resize_pblock $pb_name -add $location
+                add_cells_to_pblock $pb_name [get_cells [list ${bd_name}_i/group${i}/${hw_name}_s${j}]] -clear_locs
+                set_property RESET_AFTER_RECONFIG 1 [get_pblocks $pb_name]
+                set_property SNAPPING_MODE ON [get_pblocks $pb_name]
+                set_property HD.RECONFIGURABLE 1 [get_cells ${bd_name}_i/group${i}/${hw_name}_s${j}]
+            }
+    }
+
+    opt_design
+    place_design
+    route_design
+
+    for {set i 0} {$i < $num_of_group} {incr i} {
+            set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+            set num_mb_per_group [expr $num_of_slave - $num_hw_per_group]
+            for {set j 0} {$j < $num_hw_per_group} {incr j} {
+                update_design -cell ${bd_name}_i/group${i}/${hw_name}_s${j} -black_box
+            }
+    }
+
+    lock_design -level routing
+
+    # Save checkpoints
+    write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp" -force
+    # Close checkpoints
+    close_design
+
+
+    set repo_dcp "$curr_dir/resources/hls_project"
+    set app_list [glob -nocomplain -type d "$repo_dcp/*"]
+    if {$app_list == ""} {
+        puts "ERROR: There are no HLS apps under $repo"
+        return 0
+    }
+    foreach dir $app_list {
+        set app_name [string range $dir [expr {[string last "/" $dir] + 1}] end]
+        set dcp_name "$dir/sol_dcp/impl/ip/${app_name}.dcp"
+        open_checkpoint "$proj_dir/checkpoints/route_static.dcp"
+        for {set i 0} {$i < $num_of_group} {incr i} {
+            set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+            set num_mb_per_group [expr $num_of_slave - $num_hw_per_group]
+            for {set j 0} {$j < $num_hw_per_group} {incr j} {
+                read_checkpoint -cell ${bd_name}_i/group${i}/${hw_name}_s${j} $dcp_name
+            }
+        }
+        opt_design
+        place_design
+        route_design
+        file mkdir "$proj_dir/bitstream/$app_name"
+        write_bitstream -file "$proj_dir/bitstream/$app_name/${app_name}.bit" -force
+        file copy -force "$proj_dir/bitstream/$app_name/${app_name}.bit" "$proj_dir/bitstream/static.bit"
+        file delete -force "$proj_dir/bitstream/$app_name/${app_name}.bit"
+        close_design
+    }
+    file copy -force "$proj_dir/bitstream/static.bit" "$proj_path/${project_name}.bit"
+    # Generate bin files
+    foreach dir $app_list {
+        set bit_path "$proj_dir/bitstream/$app_name"
+        set counter 0
+        for {set i 0} {$i < $num_of_group} {incr i} {
+            set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+            set num_mb_per_group [expr $num_of_slave - $num_hw_per_group]
+            for {set j 0} {$j < $num_hw_per_group} {incr j} {
+                # cd $bit_path
+                set pb_name "pblock_group${i}_s${j}"
+                set bit_name "$bit_path/${hw_name}_${pb_name}_partial.bit"
+                set bin_name "$bit_path/pr[format "%02d" $counter].bin"
+                write_cfgmem -force -format bin -loadbit "up 0 $bit_name" $bin_name
+                incr counter
+            }
+        }   
+    }  
     return 1
 }
 
 ################################################################################
 # Export to SDK
 ################################################################################
-proc hapara_export_sdk {} {
-    set project_name [current_project]
-    set bd_design_nm [current_bd_design .]
+proc hapara_export_sdk {project_name {bd_design_nm system}} {
+    # set project_name [current_project]
+    # set bd_design_nm [current_bd_design .]
     # open_project "./$project_name/${project_name}.xpr"
     set curr_dir $::current_dir
     set proj_path "$curr_dir/$project_name"
@@ -1415,12 +1521,16 @@ if {[hapara_generate_bitstream] == 0} {
     puts "ERROR: When running hapara_generate_bitstream()."
     return 0
 }
-# if {[hapara_generate_mmi $num_of_group $num_of_slave] == 0} {
-#     puts "ERROR: When running hapara_generate_mmi()."
-#     return 0
-# }
-# if {[hapara_export_sdk] == 0} {
-#     puts "ERROR: When running hapara_export_sdk()."
-#     return 0
-# }
+if {[hapara_generate_pr $project_name $num_of_group $num_of_slave $max_hw_slave] == 0} {
+    puts "ERROR: When running hapara_generate_pr()."
+    return 0
+}
+if {[hapara_generate_mmi $num_of_group $num_of_slave $max_hw_slave] == 0} {
+    puts "ERROR: When running hapara_generate_mmi()."
+    return 0
+}
+if {[hapara_export_sdk $project_name] == 0} {
+    puts "ERROR: When running hapara_export_sdk()."
+    return 0
+}
 
