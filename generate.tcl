@@ -1326,6 +1326,8 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
 # DO pr staff in none-project mode
 ################################################################################
 proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_name system} {hw_name vector_add}} {
+    set curr_dir $::current_dir
+    set proj_dir "$curr_dir/$project_name"
     open_checkpoint "$proj_dir/checkpoints/synth_full.dcp"
     set slice [list SLICE_X52Y300:SLICE_X67Y349 SLICE_X94Y300:SLICE_X109Y349 SLICE_X52Y200:SLICE_X67Y249 SLICE_X94Y200:SLICE_X109Y249 \
                     SLICE_X52Y100:SLICE_X67Y149 SLICE_X94Y100:SLICE_X109Y149 SLICE_X52Y0:SLICE_X67Y49 SLICE_X94Y0:SLICE_X109Y49 ]
@@ -1372,7 +1374,7 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
     lock_design -level routing
 
     # Save checkpoints
-    write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp" -force
+    write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp"
     # Close checkpoints
     close_design
 
@@ -1403,7 +1405,7 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
         file delete -force "$proj_dir/bitstream/$app_name/${app_name}.bit"
         close_design
     }
-    file copy -force "$proj_dir/bitstream/static.bit" "$proj_path/${project_name}.bit"
+    file copy -force "$proj_dir/bitstream/static.bit" "$proj_dir/${project_name}.bit"
     # Generate bin files
     foreach dir $app_list {
         set bit_path "$proj_dir/bitstream/$app_name"
@@ -1430,9 +1432,10 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
 proc hapara_export_sdk {project_name {bd_design_nm system}} {
     # set project_name [current_project]
     # set bd_design_nm [current_bd_design .]
-    # open_project "./$project_name/${project_name}.xpr"
+    
     set curr_dir $::current_dir
     set proj_path "$curr_dir/$project_name"
+    open_project "$proj_path/${project_name}.xpr"
     set sdk_dir "$proj_path/${project_name}.sdk"
     if {[file exists $sdk_dir] == 0} {
         puts "Creating SDK folder: $sdk_dir"
@@ -1458,6 +1461,7 @@ proc hapara_export_sdk {project_name {bd_design_nm system}} {
     }
     puts "Creating HDF file containing"
     write_sysdef -force -meminfo $mmi_file -hwdef $hwdef_file -bitfile $bit_file -file "$sdk_dir/${bd_design_nm}_wrapper.hdf" 
+    close_project
     return 1
 }
 
@@ -1521,11 +1525,13 @@ if {[hapara_generate_bitstream] == 0} {
     puts "ERROR: When running hapara_generate_bitstream()."
     return 0
 }
+
+Begin with none-project mode
 if {[hapara_generate_pr $project_name $num_of_group $num_of_slave $max_hw_slave] == 0} {
     puts "ERROR: When running hapara_generate_pr()."
     return 0
 }
-if {[hapara_generate_mmi $num_of_group $num_of_slave $max_hw_slave] == 0} {
+if {[hapara_generate_mmi $project_name $num_of_group $num_of_slave $max_hw_slave] == 0} {
     puts "ERROR: When running hapara_generate_mmi()."
     return 0
 }
