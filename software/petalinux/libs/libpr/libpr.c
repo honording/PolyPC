@@ -22,8 +22,8 @@ int pr_loader(char *file_path,
     strcat(file_name, "/info");
     fp = fopen(file_name, "r");
     if (NULL == fp) {
-    	printf("pr_loader: open /info error.\n");
-    	return 0;
+    	perror("pr_loader: open /info error.\n");
+    	return -1;
     }
     int num_pr;
     int size_pr;
@@ -54,10 +54,37 @@ int pr_loader(char *file_path,
         }
         return -1;        
     }
-    char pr_name[] = "pr00.bin";
 
-
-
-	munmap(exec, file_size);
+    /* Move pr.bin into DDR memory
+     */
+    strcpy(file_name, file_path);
+    strcat(file_name, "/pr.bin");
+    fp = fopen(file_name, "r");
+    if (NULL == fp) {
+    	perror("pr_loader: open /pr.bin error.\n");
+		munmap(exec, total_size);
+    	close(devmemfd);
+        if (ddr_free(pr_ddr_addr) == -1) {
+            perror("pr_loader: pr ddr free got error.");
+        }
+    	return -1;
+    }
+	int read_num = fread(exec, sizeof(char), total_size, fp);
+	if (read_num != total_size) {
+		perror("pr_loader: read pr.bin to DDR error.");
+		fclose(fp);
+		munmap(exec, total_size);
+    	close(devmemfd);
+        if (ddr_free(pr_ddr_addr) == -1) {
+            perror("pr_loader: pr ddr free got error.");
+        }
+        return 0;
+	}
+    fclose(fp);
+	munmap(exec, total_size);
     close(devmemfd);
+    pr_info->ddr_addr 		= pr_ddr_addr;
+    pr_info->num_pr_file 	= num_pr;
+    pr_info->each_size		= size_pr;
+    return 1;
 }
