@@ -25,10 +25,16 @@
 
 
 int main() {
-	unsigned int pvr = 0;
-	getpvr(1, pvr);
-	int num_of_slave	= pvr >> 16;
-	int num_of_mb_slave = pvr & 0x0000FFFF;
+	unsigned int pvr1 = 0;
+	unsigned int pvr2 = 0;
+	getpvr(0, pvr1);
+	getpvr(1, pvr2);
+	int num_of_slave	= pvr2 >> 16;
+	int num_of_mb_slave = pvr2 & 0x0000FFFF;
+	int num_of_hw_slave = num_of_slave - num_of_mb_slave;
+	int group_index = pvr1 & 0x000000FF;
+	int pr_offset = group_index * num_of_slave;
+
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
 	struct hapara_thread_struct *hapara_thread_base =
@@ -85,14 +91,24 @@ int main() {
 		hapara_gen->len = (group_size.id0 << 16) | (group_size.id1);
 		if (hapara_thread_curr->elf_info.elf_magic != elf_info->elf_magic) {
 			elf_info->elf_magic = hapara_thread_curr->elf_info.elf_magic;
-			elf_info->main_addr = hapara_thread_curr->elf_info.main_addr;
-			elf_info->stack_addr = hapara_thread_curr->elf_info.stack_addr;
 			memcpy((char *)SCHE_SLAVE_ARGV_BASE, (char *)(&(hapara_thread_curr->argv[0])), ARGC);
 			if (num_of_mb_slave != 0) {
+				elf_info->main_addr = hapara_thread_curr->elf_info.main_addr;
+				elf_info->stack_addr = hapara_thread_curr->elf_info.stack_addr;
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->elf_info.ddr_addr);	//source
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), DMA_INST_MEM_BASE);						//destination
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
 				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
+			}
+			if (num_of_hw_slave != 0) {
+				// unsigned int ddr_addr;
+    			// unsigned int num_pr_file;
+    			// unsigned int each_size;
+				int pr_size = hapara_thread_curr->pr_info.each_size;
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
+				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0				
 			}
 		}
 		int i;
