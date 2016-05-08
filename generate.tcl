@@ -1378,6 +1378,11 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
     # Close checkpoints
     close_design
 
+    if {$num_of_hw == 0} {
+        open_checkpoint "$proj_dir/checkpoints/route_static.dcp"
+        write_bitstream -file "$proj_dir/${project_name}.bit" -force
+        return 1
+    }
 
     set repo_dcp "$curr_dir/resources/hls_project"
     set app_list [glob -nocomplain -type d "$repo_dcp/*"]
@@ -1526,7 +1531,7 @@ if {[hapara_generate_bitstream] == 0} {
     return 0
 }
 
-Begin with none-project mode
+# Begin with none-project mode
 if {[hapara_generate_pr $project_name $num_of_group $num_of_slave $max_hw_slave] == 0} {
     puts "ERROR: When running hapara_generate_pr()."
     return 0

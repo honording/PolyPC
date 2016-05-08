@@ -5,7 +5,8 @@
 
 #include "../libddrmalloc/libddrmalloc.h"
 
-#define DEVMEM  "/dev/mem"
+#define DEVMEM  	"/dev/mem"
+#define MAX_LENGTH	256
 
 
 int pr_loader(char *file_path, 
