@@ -1318,7 +1318,7 @@ proc hapara_generate_bitstream {{numOfThreads 8}} {
     
     # Write bitstream
     
-    # write_bitstream -force "$proj_path/$bitstream_name"
+    # write_bitstream -force "$proj_path/full_${bitstream_name}"
     close_project
     return 1
 }

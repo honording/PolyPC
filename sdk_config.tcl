@@ -141,7 +141,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
             "/$group_name/scheduler" \
             -out \
             "$sdk_dir/bit_temp/temp$counter.bit"
-        file delete "$sdk_dir/bit_temp/temp[expr $counter - 1].bit"
+        # file delete "$sdk_dir/bit_temp/temp[expr $counter - 1].bit"
         incr counter
         for {set j 0} {$j < $num_mb_per_group} {incr j} {
             set slave_name "slave_s$j"
@@ -162,7 +162,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
         }
     }
     file copy -force "$sdk_dir/bit_temp/temp[expr $counter - 1].bit" "$sdk_dir/$hw_mame/download.bit"
-    file delete -force "$sdk_dir/bit_temp"
+    # file delete -force "$sdk_dir/bit_temp"
     return 1
 }
 
