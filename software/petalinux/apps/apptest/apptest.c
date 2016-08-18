@@ -79,17 +79,17 @@ int main(int argc, char *argv[])
     // ddr_list_print();
     reg_clr();
 
-    int a_addr = ddr_malloc(MEM_SIZE);
+    int a_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (a_addr < 0) {
         printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(MEM_SIZE);
+    int b_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (b_addr < 0) {
         printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(MEM_SIZE);
+    int c_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (c_addr < 0) {
         printf("apptest: ddr_malloc error c\n");
         return 0;
