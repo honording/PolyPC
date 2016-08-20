@@ -25,7 +25,7 @@
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
-#define MEM_SIZE        32768
+#define MEM_SIZE        16
 #define DEVMEM          "/dev/mem"
 
 int main(int argc, char *argv[])
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
     sp.argv[1] = b_addr;
     sp.argv[2] = c_addr;
     sp.group_size.id0 = 1;
-    sp.group_size.id1 = 512;
+    sp.group_size.id1 = 4;
     sp.group_num.id0 = 1;
-    sp.group_num.id1 = 64;
+    sp.group_num.id1 = 4;
     sp.elf_info.elf_magic = 'v';
     printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
@@ -166,9 +166,11 @@ int main(int argc, char *argv[])
     } 
     int error = 0;
     for (i = 0; i < MEM_SIZE; i++) {
+        printf("%d + %d = %d.", a[i], b[i], c[i]);
         if (a[i] + b[i] != c[i]) {
-            error = 1;
-            break;
+            printf("Error.\n");
+        } else {
+            printf("\n");
         }
     }
     munmap(htdt, 1024);
