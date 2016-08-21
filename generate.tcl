@@ -1423,7 +1423,7 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
                 set pb_name "pblock_group${i}_s${j}"
                 set bit_name "$bit_path/${hw_name}_${pb_name}_partial.bit"
                 set bin_name "$bit_path/pr[format "%02d" $counter].bin"
-                write_cfgmem -force -format bin -loadbit "up 0 $bit_name" $bin_name
+                write_cfgmem -force -format bin -interface smapx32 -loadbit "up 0 $bit_name" $bin_name
                 incr counter
             }
         }   
