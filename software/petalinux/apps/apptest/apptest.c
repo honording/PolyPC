@@ -30,53 +30,6 @@
 
 int main(int argc, char *argv[])
 {
-    /*
-	elf_info_t elf_info;
-	elf_info.main_addr 		= 0;
-	elf_info.stack_addr 	= 0;
-	elf_info.thread_size 	= 0;
-	printf("return from elf_loader:%x\n", elf_loader(ELF_FILE_NAME, 
-                                                     ELF_LOAD_ADDR + 3072 * 4, 
-                                                     ELF_START_ADDR,
-                                                     &elf_info));
-	printf("main_addr:  %8X\n", elf_info.main_addr);
-	printf("stack_addr: %8X\n", elf_info.stack_addr);
-	printf("thread_size:%8X\n", elf_info.thread_size);
-
-    reg_clr();
-    int ret = 0;
-    struct hapara_thread_struct *sp;
-    sp = malloc(sizeof(struct hapara_thread_struct));
-    if (sp == NULL) {
-        printf("Malloc error.@main\n");
-        return 0;
-    }
-
-    set_struct(sp, 1, 10, 1, 0, 100, 0, 0, elf_info.main_addr, 
-                                           elf_info.stack_addr, 
-                                           elf_info.thread_size);
-    
-    ret = reg_add(sp);
-    */
-    // ddr_list_print();
-    // int a0 = ddr_malloc(34);
-    // printf("a0 = 0x%8X\n", a0);
-    // int a1 = ddr_malloc(8987);
-    // printf("a1 = 0x%8X\n", a1);
-    // int a2 = ddr_malloc(343);
-    // printf("a2 = 0x%8X\n", a2);
-    // int a3 = ddr_malloc(1203);
-    // printf("a3 = 0x%8X\n", a3);
-    // ddr_list_print();
-    // int f0 = ddr_free(a0);
-    // // printf("f0 = %d\n", f0);
-    // int f1 = ddr_free(a1);
-    // // printf("f1 = %d\n", f1);
-    // // ddr_list_print();
-    // int f2 = ddr_free(a2);
-    // // printf("f2 = %d\n", f2);
-    // int f3 = ddr_free(a3);
-    // ddr_list_print();
     reg_clr();
 
     int a_addr = ddr_malloc(MEM_SIZE * sizeof(int));
@@ -131,7 +84,7 @@ int main(int argc, char *argv[])
     }
     printf("apptest: begin to load PR bitstream into memory.\n");
 
-    
+
     print_struct(&sp);
 
 
