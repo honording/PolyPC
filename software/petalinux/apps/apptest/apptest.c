@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
     }
     printf("apptest: begin to load PR bitstream into memory.\n");
 
+    
     print_struct(&sp);
 
 

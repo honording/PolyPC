@@ -4,6 +4,7 @@
 #define ARM_MUTEX_MANAGER_BASE              0x40010000
 #define ARM_HTDT_BASE                       0x40000000
 #define ARM_DDR_BASE                        0x60000000
+#define ARM_ICAP                            0x42000000
 
 #define DMA_LOCAL_MEM_BASE                  0xC0000000
 #define DMA_INST_MEM_BASE                   0xC2000000
@@ -26,5 +27,7 @@
 #define SCHE_SLAVE_TRIGGER_BASE             0xC0000100
 
 #define MUTEX_MANAGER_BASE                  0x40010000
+
+#define ICAP_SPAN                           0x800000    //8MB
 
 #endif
