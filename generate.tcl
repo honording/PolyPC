@@ -1383,6 +1383,8 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
         write_bitstream -file "$proj_dir/${project_name}.bit" -force
         return 1
     }
+    # Generate bitstream without acc
+    write_bitstream -file "$proj_dir/bitstream/static.bit" -force
 
     set repo_dcp "$curr_dir/resources/hls_project"
     set app_list [glob -nocomplain -type d "$repo_dcp/*"]
@@ -1406,8 +1408,8 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
         route_design
         file mkdir "$proj_dir/bitstream/$app_name"
         write_bitstream -file "$proj_dir/bitstream/$app_name/${app_name}.bit" -force
-        file copy -force "$proj_dir/bitstream/$app_name/${app_name}.bit" "$proj_dir/bitstream/static.bit"
-        file delete -force "$proj_dir/bitstream/$app_name/${app_name}.bit"
+        # file copy -force "$proj_dir/bitstream/$app_name/${app_name}.bit" "$proj_dir/bitstream/static.bit"
+        # file delete -force "$proj_dir/bitstream/$app_name/${app_name}.bit"
         close_design
     }
     file copy -force "$proj_dir/bitstream/static.bit" "$proj_dir/${project_name}.bit"
@@ -1427,7 +1429,7 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
                 incr counter
             }
         }   
-    }  
+    }   
     return 1
 }
 

@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
     unsigned int *icap = mmap(NULL, ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, ARM_ICAP);
     unsigned int *icap_buffer = (unsigned int *)__vector_add_pblock_group0_s0_partial_bin;
     unsigned int buffer_len = __vector_add_pblock_group0_s0_partial_bin_len / 4; 
+    // unsigned int *icap_buffer = (unsigned int *)__vector_add_pblock_group0_s0_partial_8_bin;
+    // unsigned int buffer_len = __vector_add_pblock_group0_s0_partial_8_bin_len / 4; 
     printf("Begin to memcpy PR buffer\n");
     memcpy(icap, icap_buffer, buffer_len);
     munmap(icap, ICAP_SPAN);
