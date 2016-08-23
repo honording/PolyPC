@@ -53,6 +53,8 @@ cp $petalinux_dir/subsystems/linux/hw-description/psinit/* $petalinux_dir/subsys
 
 # Compiling and preparing the projects
 petalinux-build
-petalinux-package --image
-petalinux-package --boot --fsbl ./images/linux/zynq_fsbl.elf --u-boot --force
-petalinux-package --prebuilt --fpga ../${1}.sdk/system_wrapper_hw_platform_0/download.bit --force
+# petalinux-package --image
+# petalinux-package --boot --fsbl ./images/linux/zynq_fsbl.elf --u-boot --force
+# petalinux-package --prebuilt --fpga ../${1}.sdk/system_wrapper_hw_platform_0/download.bit --force
+
+echo "Petalinux Compiling Done."

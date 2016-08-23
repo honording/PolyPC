@@ -229,7 +229,7 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
             incr counter
         }
     }
-    file copy -force "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit" "$sdk_dir/$hw_full_mame/download_full.bit"
+    file copy -force "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit" "$sdk_dir/$hw_full_mame/download.bit"
 
     # file delete -force "$sdk_dir/bit_temp"
     return 1
