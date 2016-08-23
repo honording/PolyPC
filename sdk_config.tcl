@@ -7,8 +7,16 @@
 
 proc hapara_create_hw {proj_name {wrapper_name system_wrapper} {hw_mame system_wrapper_hw_platform_0}} {
     set cur_dir $::current_dir
+    puts "Creating system_wrapper_hw_platform_0"
     set wrapper_path "$cur_dir/${proj_name}/${proj_name}.sdk/${wrapper_name}.hdf"
     sdk create_hw_project -name $hw_mame -hwspec $wrapper_path
+
+    puts "Creating system_wrapper_full_hw_platform_0"
+    set wrapper_full_path "$cur_dir/${proj_name}/${proj_name}.sdk/${wrapper_name}_full.hdf"
+    set hw_full_mame "system_wrapper_full_hw_platform_0"
+    sdk create_hw_project -name $hw_full_mame -hwspec $wrapper_full_path
+    # Delete system_wrapper_full.hdf for Petalinux config
+    file delete "$wrapper_full_path"
     return 1
 }
 
@@ -22,11 +30,11 @@ proc hapara_find_first_mb {num_of_group num_of_slave total_num_of_hw_slave} {
 }
 
 ################################################################################
-# Return how many hardware kernel for a given group number 
+# Return how many hardware kernel for a given group number
 ################################################################################
 # group_number:     The index of current group
 # number_per_group: Total number of slaves within one group (including mb and hw)
-# total_number:     Total number of hardware slaves 
+# total_number:     Total number of hardware slaves
 proc hapara_return_hw_number {group_number number_per_group total_number} {
     set q [expr $total_number / $number_per_group]
     set r [expr $total_number % $number_per_group]
@@ -65,7 +73,7 @@ proc hapara_create_functional_app {proj_name source_repo first_mb {hw_mame syste
         sdk create_bsp_project -name slave_kernel_bsp -hwproject $hw_mame -proc $first_mb -os standalone
         sdk create_app_project -name slave_kernel -hwproject $hw_mame -proc $first_mb -os standalone -lang C -app {Empty Application} -bsp slave_kernel_bsp
         sdk import_sources -name slave_kernel -path "$source_repo/microblaze/slave_kernel"
-        file copy -force "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/slave_kernel/src/lscript.ld"        
+        file copy -force "$source_repo/microblaze/lscript/lscript00.ld" "$sdk_dir/slave_kernel/src/lscript.ld"
     }
     # Build projects
     sdk build_project -type all
@@ -94,7 +102,7 @@ proc hapara_create_opencl_app {proj_name source_repo first_mb {type Debug} {hw_m
         sdk create_bsp_project -name "${app}_bsp" -hwproject $hw_mame -proc $first_mb -os standalone
         sdk create_app_project -name $app -hwproject $hw_mame -proc $first_mb -os standalone -lang C -app {Empty Application} -bsp "${app}_bsp"
         sdk import_sources -name $app -path "$source_repo/microblaze/apps/$app"
-        file copy -force "$source_repo/microblaze/lscript/lscript80.ld" "$sdk_dir/$app/src/lscript.ld"  
+        file copy -force "$source_repo/microblaze/lscript/lscript80.ld" "$sdk_dir/$app/src/lscript.ld"
         # sdk build_project -type bsp -name "${app}_bsp"
         # sdk build_project -type app -name $app
         sdk build_project -type all -name $app
@@ -109,8 +117,11 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
     set mem_path "$sdk_dir/$hw_mame/${proj_name}.mmi"
     # Create temp bitstream folder
     file mkdir "$sdk_dir/bit_temp"
+
+    # Add ELF for static.bit
     set counter 0
     # Create mutex_manager bit
+    puts "Geneate download.bit with static.bit"
     puts "Creating /mutex_manager bits."
     exec updatemem -force -meminfo \
         $mem_path \
@@ -157,11 +168,69 @@ proc hapara_update_bitstream {proj_name num_of_group num_of_slave num_of_hw_slav
                 "/$group_name/$slave_name" \
                 -out \
                 "$sdk_dir/bit_temp/temp$counter.bit"
-            file delete "$sdk_dir/bit_temp/temp[expr $counter - 1].bit"
+            # file delete "$sdk_dir/bit_temp/temp[expr $counter - 1].bit"
             incr counter
         }
     }
     file copy -force "$sdk_dir/bit_temp/temp[expr $counter - 1].bit" "$sdk_dir/$hw_mame/download.bit"
+
+    # Add ELF for full.bit
+    set counter 0
+    # Create mutex_manager bit
+    puts "Geneate download_full.bit with full.bit"
+    puts "Creating /mutex_manager bits."
+    set hw_full_mame "system_wrapper_full_hw_platform_0"
+    exec updatemem -force -meminfo \
+        $mem_path \
+        -bit \
+        "$sdk_dir/$hw_full_mame/${proj_name}_full.bit" \
+        -data \
+        "$sdk_dir/mutex_manager/$type/mutex_manager.elf" \
+        -proc \
+        /mutex_manager \
+        -out \
+        "$sdk_dir/bit_temp/tempfull$counter.bit"
+    incr counter
+    # Create scheduler and slave bit
+    for {set i 0} {$i < $num_of_group} {incr i} {
+        set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw_slave]
+        set num_mb_per_group [expr $num_of_slave - $num_hw_per_group]
+
+        set group_name "group$i"
+        # Create scheduler bit
+        puts "Creating /$group_name/scheduler bits."
+        exec updatemem -force -meminfo \
+            $mem_path \
+            -bit \
+            "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit" \
+            -data \
+            "$sdk_dir/scheduler/$type/scheduler.elf" \
+            -proc \
+            "/$group_name/scheduler" \
+            -out \
+            "$sdk_dir/bit_temp/tempfull$counter.bit"
+        # file delete "$sdk_dir/bit_temp/temp[expr $counter - 1].bit"
+        incr counter
+        for {set j 0} {$j < $num_mb_per_group} {incr j} {
+            set slave_name "slave_s$j"
+            # Create slave bit
+            puts "Creating /$group_name/$slave_name bits."
+            exec updatemem -force -meminfo \
+                $mem_path \
+                -bit \
+                "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit" \
+                -data \
+                "$sdk_dir/slave_kernel/$type/slave_kernel.elf" \
+                -proc \
+                "/$group_name/$slave_name" \
+                -out \
+                "$sdk_dir/bit_temp/tempfull$counter.bit"
+            # file delete "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit"
+            incr counter
+        }
+    }
+    file copy -force "$sdk_dir/bit_temp/tempfull[expr $counter - 1].bit" "$sdk_dir/$hw_full_mame/download_full.bit"
+
     # file delete -force "$sdk_dir/bit_temp"
     return 1
 }
