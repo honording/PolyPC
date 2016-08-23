@@ -1375,16 +1375,19 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
 
     # Save checkpoints
     write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp"
+    # Generate bitstream without acc
+    write_bitstream -file "$proj_dir/bitstream/static.bit" -force
     # Close checkpoints
     close_design
 
     if {$num_of_hw == 0} {
-        open_checkpoint "$proj_dir/checkpoints/route_static.dcp"
-        write_bitstream -file "$proj_dir/${project_name}.bit" -force
+        # open_checkpoint "$proj_dir/checkpoints/route_static.dcp"
+        # write_bitstream -file "$proj_dir/${project_name}.bit" -force
+        file copy -force "$proj_dir/bitstream/static.bit" "$proj_dir/${project_name}.bit"
+        # close_design
         return 1
     }
-    # Generate bitstream without acc
-    write_bitstream -file "$proj_dir/bitstream/static.bit" -force
+
 
     set repo_dcp "$curr_dir/resources/hls_project"
     set app_list [glob -nocomplain -type d "$repo_dcp/*"]
