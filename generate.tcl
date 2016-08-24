@@ -1419,7 +1419,10 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
     file copy -force "$proj_dir/bitstream/static.bit" "$proj_dir/${project_name}.bit"
     file copy -force "$proj_dir/bitstream/full.bit" "$proj_dir/${project_name}_full.bit"
     # Generate bin files
+    puts "Generate bin files."
+    puts "$app_list"
     foreach dir $app_list {
+        set app_name [string range $dir [expr {[string last "/" $dir] + 1}] end]
         set bit_path "$proj_dir/bitstream/$app_name"
         set counter 0
         for {set i 0} {$i < $num_of_group} {incr i} {
@@ -1428,7 +1431,7 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw {bd_na
             for {set j 0} {$j < $num_hw_per_group} {incr j} {
                 # cd $bit_path
                 set pb_name "pblock_group${i}_s${j}"
-                set bit_name "$bit_path/${hw_name}_${pb_name}_partial.bit"
+                set bit_name "$bit_path/${app_name}_${pb_name}_partial.bit"
                 set bin_name "$bit_path/pr[format "%02d" $counter].bin"
                 write_cfgmem -force -format bin -interface smapx32 -loadbit "up 0 $bit_name" $bin_name
                 incr counter

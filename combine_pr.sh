@@ -18,7 +18,7 @@ fi
 
 for dir in `ls $bitstream_dir`
 do
-	if [ "$dir" == "static.bit" ]; then
+	if [[ $dir == *.bit ]]; then
 		continue
 	fi
 	bin_dir="$bitstream_dir/$dir"
