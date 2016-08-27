@@ -93,10 +93,10 @@
 
 	localparam dispatch 	= 3'b001;
 	localparam waitslave	= 3'b010;
-	localparam terminate	= 3'b100
+	localparam terminate	= 3'b100;
 
-	reg [1 : 0] curr_state;
-	reg [1 : 0] next_state;
+	reg [2 : 0] curr_state;
+	reg [2 : 0] next_state;
 
 	// Logic for curr_state
 	always @(posedge s00_axis_aclk) begin
