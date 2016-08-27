@@ -91,12 +91,13 @@
 		input wire  m07_axis_tready
 	);
 
-	localparam dispatch 	= 3'b001;
-	localparam waitslave	= 3'b010;
-	localparam terminate	= 3'b100;
+	localparam dispatch 	= 4'b0001;
+	localparam waitslave	= 4'b0010;
+	localparam terminate	= 4'b0100;
+	localparam waitdata		= 4'b1000;
 
-	reg [2 : 0] curr_state;
-	reg [2 : 0] next_state;
+	reg [3 : 0] curr_state;
+	reg [3 : 0] next_state;
 
 	// Logic for curr_state
 	always @(posedge s00_axis_aclk) begin
@@ -111,7 +112,7 @@
 
 	wire slaves_ready;
 	// Logic for next_state
-	always @(s00_axis_tdata or slaves_ready) begin 
+	always @(s00_axis_tdata or slaves_ready or curr_state) begin 
 		case (curr_state) 
 			dispatch:
 				if (s00_axis_tdata == {DATA_WIDTH{1'b1}}) begin
@@ -128,7 +129,14 @@
 					next_state = waitslave;
 				end
 			terminate:
-				next_state = dispatch;
+				next_state = waitdata;
+			waitdata: 
+				if (s00_axis_tdata != {DATA_WIDTH{1'b1}}) begin
+					next_state = dispatch;
+				end
+				else begin
+					next_state = waitdata;
+				end
 			default:
 				next_state = 3'bxxx;
 		endcase
@@ -159,6 +167,7 @@
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid &&  
 								   priority_sel[0]);
 
@@ -198,7 +207,8 @@
         						   m02_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[2] && 
@@ -206,13 +216,15 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[2] && 
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   priority_sel[2]);
 
@@ -231,7 +243,8 @@
         						   m03_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[3] && 
 								   ~priority_sel[2] && 
@@ -239,20 +252,23 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[3] && 
 								   ~priority_sel[2] && 
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[3] && 
 								   priority_sel[2]);
 
 		assign  m03_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   priority_sel[3]);
 
@@ -273,7 +289,8 @@
         						   m04_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[4] && 
 								   ~priority_sel[3] && 
@@ -282,7 +299,8 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[4] && 
 								   ~priority_sel[3] && 
@@ -290,20 +308,23 @@
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[4] && 
 								   ~priority_sel[3] && 
 								   priority_sel[2]);
 
 		assign  m03_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[4] && 
 								   priority_sel[3]);
 
 		assign  m04_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   priority_sel[4]);
 
@@ -326,7 +347,8 @@
         						   m05_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[5] && 
 								   ~priority_sel[4] && 
@@ -336,7 +358,8 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[5] && 
 								   ~priority_sel[4] && 
@@ -345,7 +368,8 @@
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[5] && 
 								   ~priority_sel[4] && 
@@ -353,20 +377,23 @@
 								   priority_sel[2]);
 
 		assign  m03_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[5] && 
 								   ~priority_sel[4] && 
 								   priority_sel[3]);
 
 		assign  m04_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[5] && 
 								   priority_sel[4]);
 
 		assign  m05_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   priority_sel[5]);
 
@@ -391,7 +418,8 @@
         						   m06_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   ~priority_sel[5] && 
@@ -402,7 +430,8 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   ~priority_sel[5] && 
@@ -412,7 +441,8 @@
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   ~priority_sel[5] && 
@@ -422,6 +452,7 @@
 
 		assign  m03_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   ~priority_sel[5] && 
@@ -429,20 +460,23 @@
 								   priority_sel[3]);
 
 		assign  m04_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   ~priority_sel[5] && 
 								   priority_sel[4]);
 
 		assign  m05_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[6] && 
 								   priority_sel[5]);
 
 		assign  m06_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   priority_sel[6]);
 
@@ -469,7 +503,8 @@
         						   m07_axis_tready);
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -481,7 +516,8 @@
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -492,7 +528,8 @@
 								   priority_sel[1]);
 
 		assign  m02_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -502,7 +539,8 @@
 								   priority_sel[2]);
 
 		assign  m03_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -511,7 +549,8 @@
 								   priority_sel[3]);
 
 		assign  m04_axis_tvalid = (curr_state == terminate) || 
-								  (curr_state == dispatch && 
+								  (curr_state == dispatch &&
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} && 
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -520,6 +559,7 @@
 
 		assign  m05_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   ~priority_sel[6] && 
@@ -527,12 +567,14 @@
 
 		assign  m06_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   ~priority_sel[7] && 
 								   priority_sel[6]);
 
 		assign  m07_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   priority_sel[7]);
 

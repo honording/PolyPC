@@ -56,12 +56,13 @@
     // localparam numOfSlave   = 2;
 
     // State defination
-    localparam reset            = 3'b001; 
-    localparam counting         = 3'b010;
-    localparam ending           = 3'b100;
+    localparam reset            = 4'b0001; 
+    localparam counting         = 4'b0010;
+    localparam waitend          = 4'b0100;
+    localparam ending           = 4'b1000;
 
-    reg [2 : 0] next_state;
-    reg [2 : 0] curr_state;
+    reg [3 : 0] next_state;
+    reg [3 : 0] curr_state;
 
     reg [X_LENGTH - 1 : 0] counterX;
     reg [Y_LENGTH - 1 : 0] counterY;
@@ -89,20 +90,22 @@
                 end
             counting:
                 if (slave_counter == 1) begin
-                    next_state = ending;
+                    next_state = waitend;
                 end
                 else begin
                     next_state = counting;
                 end
-            ending:
+            waitend:
                 if (M_AXIS_TREADY == 1) begin
-                    next_state = reset;
-                end
-                else begin
                     next_state = ending;
                 end
+                else begin
+                    next_state = waitend;
+                end
+            ending:
+                next_state = reset;
             default:
-                next_state = 3'bxxx;
+                next_state = 4'bxxxx;
         endcase
     end
     assign M_AXIS_TVALID = (curr_state == counting || curr_state == ending);
