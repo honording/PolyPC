@@ -130,208 +130,418 @@
 			terminate:
 				next_state = dispatch;
 			default:
-				next_state = 2'bxx;
+				next_state = 3'bxxx;
 		endcase
 	end
+
+	assign  m00_axis_tdata  = s00_axis_tdata;
+	assign  m00_axis_tlast  = s00_axis_tlast;
+	assign  m01_axis_tdata  = s00_axis_tdata;
+	assign  m01_axis_tlast  = s00_axis_tlast;
+	assign  m02_axis_tdata  = s00_axis_tdata;
+	assign  m02_axis_tlast  = s00_axis_tlast;
+	assign  m03_axis_tdata  = s00_axis_tdata;
+	assign  m03_axis_tlast  = s00_axis_tlast;
+	assign  m04_axis_tdata  = s00_axis_tdata;
+	assign  m04_axis_tlast  = s00_axis_tlast;	
+	assign  m05_axis_tdata  = s00_axis_tdata;
+	assign  m05_axis_tlast  = s00_axis_tlast;
+	assign  m06_axis_tdata  = s00_axis_tdata;
+	assign  m06_axis_tlast  = s00_axis_tlast;
+	assign  m07_axis_tdata  = s00_axis_tdata;
+	assign  m07_axis_tlast  = s00_axis_tlast;
 
 	// Add user logic here
     generate if (NUM_SLAVES == 1)
     begin: NUM_SLAVES_1
-        assign  s00_axis_tready = m00_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  m00_axis_tready;
 
-		assign  m00_axis_tvalid = s00_axis_tvalid &  priority_sel[0];
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid &&  
+								   priority_sel[0]);
 
 		assign  slaves_ready = m00_axis_tready;
-		
-
     end
     endgenerate
 
     generate if (NUM_SLAVES == 2)
     begin: NUM_SLAVES_2
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[1]);
 
-		assign slaves_ready = m00_axis_tready & m01_axis_tready;
-
-
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 3)
     begin: NUM_SLAVES_3
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[2]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 4)
     begin: NUM_SLAVES_4
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready || 
+        						   m03_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[3] & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & ~priority_sel[3] & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[3] && 
+								   priority_sel[2]);
 
-		assign  m03_axis_tvalid = s00_axis_tvalid & priority_sel[3];
-		assign  m03_axis_tdata  = s00_axis_tdata;
-		assign  m03_axis_tlast  = s00_axis_tlast;
+		assign  m03_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[3]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready &
+							   m03_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 5)
     begin: NUM_SLAVES_5
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready || 
+        						   m03_axis_tready || 
+        						   m04_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & ~priority_sel[4] & ~priority_sel[3] & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   priority_sel[2]);
 
-		assign  m03_axis_tvalid = s00_axis_tvalid & ~priority_sel[4] & priority_sel[3];
-		assign  m03_axis_tdata  = s00_axis_tdata;
-		assign  m03_axis_tlast  = s00_axis_tlast;
+		assign  m03_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[4] && 
+								   priority_sel[3]);
 
-		assign  m04_axis_tvalid = s00_axis_tvalid & priority_sel[4];
-		assign  m04_axis_tdata  = s00_axis_tdata;
-		assign  m04_axis_tlast  = s00_axis_tlast;
+		assign  m04_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[4]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready &
+							   m03_axis_tready &
+							   m04_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 6)
     begin: NUM_SLAVES_6
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready | m05_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready || 
+        						   m03_axis_tready || 
+        						   m04_axis_tready || 
+        						   m05_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   priority_sel[2]);
 
-		assign  m03_axis_tvalid = s00_axis_tvalid & ~priority_sel[5] & ~priority_sel[4] & priority_sel[3];
-		assign  m03_axis_tdata  = s00_axis_tdata;
-		assign  m03_axis_tlast  = s00_axis_tlast;
+		assign  m03_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   priority_sel[3]);
 
-		assign  m04_axis_tvalid = s00_axis_tvalid & ~priority_sel[5] & priority_sel[4];
-		assign  m04_axis_tdata  = s00_axis_tdata;
-		assign  m04_axis_tlast  = s00_axis_tlast;
+		assign  m04_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[5] && 
+								   priority_sel[4]);
 
-		assign  m05_axis_tvalid = s00_axis_tvalid & priority_sel[5];
-		assign  m05_axis_tdata  = s00_axis_tdata;
-		assign  m05_axis_tlast  = s00_axis_tlast;
+		assign  m05_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[5]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready &
+							   m03_axis_tready &
+							   m04_axis_tready &
+							   m05_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 7)
     begin: NUM_SLAVES_7
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready | m05_axis_tready | m06_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready || 
+        						   m03_axis_tready || 
+        						   m04_axis_tready || 
+        						   m05_axis_tready || 
+        						   m06_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   priority_sel[2]);
 
-		assign  m03_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & priority_sel[3];
-		assign  m03_axis_tdata  = s00_axis_tdata;
-		assign  m03_axis_tlast  = s00_axis_tlast;
+		assign  m03_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch &&
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   priority_sel[3]);
 
-		assign  m04_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & ~priority_sel[5] & priority_sel[4];
-		assign  m04_axis_tdata  = s00_axis_tdata;
-		assign  m04_axis_tlast  = s00_axis_tlast;
+		assign  m04_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   priority_sel[4]);
 
-		assign  m05_axis_tvalid = s00_axis_tvalid & ~priority_sel[6] & priority_sel[5];
-		assign  m05_axis_tdata  = s00_axis_tdata;
-		assign  m05_axis_tlast  = s00_axis_tlast;
+		assign  m05_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[6] && 
+								   priority_sel[5]);
 
-		assign  m06_axis_tvalid = s00_axis_tvalid & priority_sel[6];
-		assign  m06_axis_tdata  = s00_axis_tdata;
-		assign  m06_axis_tlast  = s00_axis_tlast;
+		assign  m06_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[6]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready &
+							   m03_axis_tready &
+							   m04_axis_tready &
+							   m05_axis_tready &
+							   m06_axis_tready;
     end
     endgenerate
 
     generate if (NUM_SLAVES == 8)
     begin: NUM_SLAVES_8
-        assign  s00_axis_tready = m00_axis_tready | m01_axis_tready | m02_axis_tready | m03_axis_tready | m04_axis_tready | m05_axis_tready | m06_axis_tready | m07_axis_tready;
+        assign  s00_axis_tready = (curr_state == dispatch || curr_state == terminate) && 
+        						  (m00_axis_tready || 
+        						   m01_axis_tready || 
+        						   m02_axis_tready || 
+        						   m03_axis_tready || 
+        						   m04_axis_tready || 
+        						   m05_axis_tready || 
+        						   m06_axis_tready || 
+        						   m07_axis_tready);
 
-		assign  m00_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & ~priority_sel[1] & priority_sel[0] ;
-		assign  m00_axis_tdata  = s00_axis_tdata;
-		assign  m00_axis_tlast  = s00_axis_tlast;
+		assign  m00_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   ~priority_sel[1] && 
+								   priority_sel[0]);
 
-		assign  m01_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & ~priority_sel[2] & priority_sel[1];
-		assign  m01_axis_tdata  = s00_axis_tdata;
-		assign  m01_axis_tlast  = s00_axis_tlast;
+		assign  m01_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   ~priority_sel[2] && 
+								   priority_sel[1]);
 
-		assign  m02_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & ~priority_sel[3] & priority_sel[2];
-		assign  m02_axis_tdata  = s00_axis_tdata;
-		assign  m02_axis_tlast  = s00_axis_tlast;
+		assign  m02_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   ~priority_sel[3] && 
+								   priority_sel[2]);
 
-		assign  m03_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & ~priority_sel[4] & priority_sel[3];
-		assign  m03_axis_tdata  = s00_axis_tdata;
-		assign  m03_axis_tlast  = s00_axis_tlast;
+		assign  m03_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   ~priority_sel[4] && 
+								   priority_sel[3]);
 
-		assign  m04_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & ~priority_sel[5] & priority_sel[4];
-		assign  m04_axis_tdata  = s00_axis_tdata;
-		assign  m04_axis_tlast  = s00_axis_tlast;
+		assign  m04_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   ~priority_sel[5] && 
+								   priority_sel[4]);
 
-		assign  m05_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & ~priority_sel[6] & priority_sel[5];
-		assign  m05_axis_tdata  = s00_axis_tdata;
-		assign  m05_axis_tlast  = s00_axis_tlast;
+		assign  m05_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   ~priority_sel[6] && 
+								   priority_sel[5]);
 
-		assign  m06_axis_tvalid = s00_axis_tvalid & ~priority_sel[7] & priority_sel[6];
-		assign  m06_axis_tdata  = s00_axis_tdata;
-		assign  m06_axis_tlast  = s00_axis_tlast;
+		assign  m06_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   ~priority_sel[7] && 
+								   priority_sel[6]);
 
-		assign  m07_axis_tvalid = s00_axis_tvalid & priority_sel[7];
-		assign  m07_axis_tdata  = s00_axis_tdata;
-		assign  m07_axis_tlast  = s00_axis_tlast;
+		assign  m07_axis_tvalid = (curr_state == terminate) || 
+								  (curr_state == dispatch && 
+								   s00_axis_tvalid && 
+								   priority_sel[7]);
+
+		assign  slaves_ready = m00_axis_tready & 
+							   m01_axis_tready &
+							   m02_axis_tready &
+							   m03_axis_tready &
+							   m04_axis_tready &
+							   m05_axis_tready &
+							   m06_axis_tready &
+							   m07_axis_tready;
     end
     endgenerate
 
