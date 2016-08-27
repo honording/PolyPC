@@ -91,6 +91,49 @@
 		input wire  m07_axis_tready
 	);
 
+	localparam dispatch 	= 3'b001;
+	localparam waitslave	= 3'b010;
+	localparam terminate	= 3'b100
+
+	reg [1 : 0] curr_state;
+	reg [1 : 0] next_state;
+
+	// Logic for curr_state
+	always @(posedge s00_axis_aclk) begin
+		if (!s00_axis_aresetn) begin
+			// reset
+			curr_state <= dispatch;
+		end
+		else begin
+			curr_state <= next_state;
+		end
+	end
+
+	wire slaves_ready;
+	// Logic for next_state
+	always @(s00_axis_tdata or slaves_ready) begin 
+		case (curr_state) 
+			dispatch:
+				if (s00_axis_tdata == {DATA_WIDTH{1'b1}}) begin
+					next_state = terminate;
+				end
+				else begin
+					next_state = dispatch;
+				end
+			waitslave:
+				if (slaves_ready) begin
+					next_state = terminate;
+				end
+				else begin
+					next_state = waitslave;
+				end
+			terminate:
+				next_state = dispatch;
+			default:
+				next_state = 2'bxx;
+		endcase
+	end
+
 	// Add user logic here
     generate if (NUM_SLAVES == 1)
     begin: NUM_SLAVES_1
@@ -99,6 +142,10 @@
 		assign  m00_axis_tvalid = s00_axis_tvalid &  priority_sel[0];
 		assign  m00_axis_tdata  = s00_axis_tdata;
 		assign  m00_axis_tlast  = s00_axis_tlast;
+
+		assign  slaves_ready = m00_axis_tready;
+		
+
     end
     endgenerate
 
@@ -113,6 +160,10 @@
 		assign  m01_axis_tvalid = s00_axis_tvalid & priority_sel[1];
 		assign  m01_axis_tdata  = s00_axis_tdata;
 		assign  m01_axis_tlast  = s00_axis_tlast;
+
+		assign slaves_ready = m00_axis_tready & m01_axis_tready;
+
+
     end
     endgenerate
 

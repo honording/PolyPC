@@ -75,38 +75,10 @@
     assign lengthX  = len[C_M_AXIS_TDATA_WIDTH - 1 : LENGTH];
     assign lengthY  = len[LENGTH - 1 : 0];
 
-    //reg [X_LENGTH - 1 : 0] lengthX; //FIXME
-    //reg [Y_LENGTH - 1 : 0] lengthY; //FIXME
-    // localparam lengthX = 4;
-    // localparam lengthY = 3;
-
-    // wire overflow    = (counterX >= lengthX - 1) && (counterY >= lengthY - 1);
     assign Finish = curr_state == ending;
+
     // next state
-    /*
-    always @(curr_state or overflow or En or M_AXIS_TREADY) begin
-        case (curr_state)
-            reset:             //001
-                if (En) 
-                    if (M_AXIS_TREADY == 1'b1) next_state = counting_send;
-                    else next_state = sendwait;
-                else next_state = reset;
-            counting_send:    //010
-                if (M_AXIS_TREADY == 1'b1) 
-                    if (overflow) next_state = reset;
-                    else next_state = counting_send;
-                else next_state = sendwait;
-            sendwait:        //100
-                if (M_AXIS_TREADY == 1'b1) 
-                    if (overflow) next_state = reset;
-                    else next_state = counting_send;
-                else next_state = sendwait;
-            default:
-                next_state = 3'bxxx;
-        endcase
-    end
-    */
-    always @(curr_state or En or slave_counter or numOfSlv) begin
+    always @(curr_state or En or slave_counter) begin
         case (curr_state)
             reset:
                 if (En) begin
@@ -116,19 +88,24 @@
                     next_state = reset;
                 end
             counting:
-                if (slave_counter == numOfSlv) begin
+                if (slave_counter == 1) begin
                     next_state = ending;
                 end
                 else begin
                     next_state = counting;
                 end
             ending:
-                next_state = reset;
+                if (M_AXIS_TREADY == 1) begin
+                    next_state = reset;
+                end
+                else begin
+                    next_state = ending;
+                end
             default:
                 next_state = 3'bxxx;
         endcase
     end
-    assign M_AXIS_TVALID = (curr_state == counting);
+    assign M_AXIS_TVALID = (curr_state == counting || curr_state == ending);
 
     // logic for current state
     always @(posedge M_AXIS_ACLK) begin
@@ -142,33 +119,6 @@
     end
 
     // logic for counterX, counterY
-    /*
-    always @(posedge M_AXIS_ACLK or negedge M_AXIS_ARESETN) begin
-        if (!M_AXIS_ARESETN) begin
-            // reset
-            counterX <= 0;
-            counterY <= 0;
-        end
-        else if (curr_state == reset) begin
-            counterX <= 0;
-            counterY <= 0;
-        end
-        else if (curr_state == counting_send) begin
-            if (counterY >= lengthY - 1) begin
-                counterY <= 0;
-                if (counterX >= lengthX - 1) begin
-                    counterX <= 0;
-                end
-                else begin
-                    counterX <= counterX + 1;    
-                end
-            end 
-            else begin
-                counterY <= counterY + 1;    
-            end
-        end
-    end
-    */
     always @(posedge M_AXIS_ACLK) begin
         if (!M_AXIS_ARESETN || curr_state == reset) begin
             counterX <= {X_LENGTH{1'b0}};
