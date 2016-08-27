@@ -174,12 +174,14 @@
 
 		assign  m00_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   ~priority_sel[1] && 
 								   priority_sel[0]);
 
 		assign  m01_axis_tvalid = (curr_state == terminate) || 
 								  (curr_state == dispatch && 
+								   s00_axis_tdata != {DATA_WIDTH{1'b1}} &&
 								   s00_axis_tvalid && 
 								   priority_sel[1]);
 
