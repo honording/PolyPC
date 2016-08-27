@@ -78,7 +78,7 @@
     assign Finish = curr_state == ending;
 
     // next state
-    always @(curr_state or En or slave_counter) begin
+    always @(curr_state or En or slave_counter or M_AXIS_TREADY) begin
         case (curr_state)
             reset:
                 if (En) begin

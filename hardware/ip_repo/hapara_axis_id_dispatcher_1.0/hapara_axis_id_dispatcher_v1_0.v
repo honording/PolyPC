@@ -115,7 +115,7 @@
 		case (curr_state) 
 			dispatch:
 				if (s00_axis_tdata == {DATA_WIDTH{1'b1}}) begin
-					next_state = terminate;
+					next_state = waitslave;
 				end
 				else begin
 					next_state = dispatch;
