@@ -156,8 +156,8 @@
             // reset
             slave_counter <= 0;
         end
-        else if ((curr_state == counting || curr_state == ending) && 
-                 M_AXIS_TREADY && 
+        else if ((curr_state == counting || curr_state == waitend) && 
+                 // M_AXIS_TREADY && 
                  counterY == {Y_LENGTH{1'b1}} && counterX == {X_LENGTH{1'b1}}) begin
             slave_counter <= slave_counter + 1;
         end
