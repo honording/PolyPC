@@ -159,7 +159,7 @@
         else if ((curr_state == counting || curr_state == waitend) && 
                  // M_AXIS_TREADY && 
                  counterY == {Y_LENGTH{1'b1}} && counterX == {X_LENGTH{1'b1}}) begin
-            slave_counter <= slave_counter + 1;
+            slave_counter <= 1;
         end
         else begin
             slave_counter <= slave_counter;
