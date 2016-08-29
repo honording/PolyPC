@@ -141,22 +141,22 @@ int main(int argc, char *argv[])
     Xil_Out32(icap,rp_math_BS_ADDRESS0,  pr_ddr_addr);
     Xil_Out32(icap,rp_math_BS_SIZE0,   PR_SIZE);
 
-    print("Initializing RM trigger ID registers for Math and Shift RMs\n");
+    printf("Initializing RM trigger ID registers for Math and Shift RMs\n");
     Xil_Out32(icap,rp_math_TRIGGER0,0);
 
-    print("Initializing RM address and control registers for Math and Shift RMs\n");
+    printf("Initializing RM address and control registers for Math and Shift RMs\n");
     Xil_Out32(icap,rp_math_RM_ADDRESS0,0);
     Xil_Out32(icap,rp_math_RM_CONTROL0,0xFF0);
 
-    print("Reading RM bitstreams address and size registers for Math and Shift RMs\n");
+    printf("Reading RM bitstreams address and size registers for Math and Shift RMs\n");
     printf("Adder RM address  = %x\n",Xil_In32(icap,rp_math_BS_ADDRESS0));
     printf("Adder RM size     = %d Bytes\n",Xil_In32(icap,rp_math_BS_SIZE0));
 
-    print("Reading RM Trigger and address registers for Math and Shift RMs\n");
+    printf("Reading RM Trigger and address registers for Math and Shift RMs\n");
     printf("Adder RM Trigger0 = %x\n",Xil_In32(icap,rp_math_TRIGGER0));
     printf("Adder RM Address0 = %x\n",Xil_In32(icap,rp_math_RM_ADDRESS0));
 
-    print("Putting the PRC core's Math RP in Restart with Status mode\n");
+    printf("Putting the PRC core's Math RP in Restart with Status mode\n");
     Xil_Out32(icap,rp_math_CONTROL,2);
     printf("Reading the Math RP status=%x\n",Xil_In32(icap,rp_math_STATUS));
 
@@ -173,12 +173,12 @@ int main(int argc, char *argv[])
         printf("0x%x\n", Xil_In32(icap,rp_math_STATUS)&0x78);
         Status=Xil_In32(icap,rp_math_STATUS)&0x07;
       switch(Status) {
-        case 7 : print("RM loaded\n"); loading_done=1; break;
-        case 6 : print("RM is being reset\n"); break;
-        case 5 : print("Software start-up step\n"); break;
-        case 4 : print("Loading new RM\n"); break;
-        case 2 : print("Software shutdown\n"); break;
-        case 1 : print("Hardware shutdown\n"); break;
+        case 7 : printf("RM loaded\n"); loading_done=1; break;
+        case 6 : printf("RM is being reset\n"); break;
+        case 5 : printf("Software start-up step\n"); break;
+        case 4 : printf("Loading new RM\n"); break;
+        case 2 : printf("Software shutdown\n"); break;
+        case 1 : printf("Hardware shutdown\n"); break;
       }
     }
     int ret = ddr_free(pr_ddr_addr);
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     printf("VADD Reconfiguration Completed!\n");
-    munmap(icap, ICAP_SPAN)
+    munmap(icap, ICAP_SPAN);
     munmap(pr_ddr_pt, PR_MAZ_SIZE);
     close(devmemfd);
 
