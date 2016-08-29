@@ -44,11 +44,11 @@
 #define rp_math_BS_ADDRESS0   0X00064
 #define rp_math_BS_SIZE0      0X00068
 
-void Xil_Out32(icap,unsigned int *icap, unsigned int off, unsigned int val) { 
+void Xil_Out32(unsigned int *icap,unsigned int *icap, unsigned int off, unsigned int val) { 
     icap[off >> 2] = val;
 }
 
-unsigned int Xil_In32(icap,unsigned int *icap, unsigned int off) {
+unsigned int Xil_In32(unsigned int *icap,unsigned int *icap, unsigned int off) {
     return icap[off >> 2];
 }
 

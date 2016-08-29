@@ -24,8 +24,8 @@ cd $petalinux_dir
 petalinux-build -c rootfs
 petalinux-package --image
 petalinux-package --boot --fsbl ./images/linux/zynq_fsbl.elf --u-boot --force
-petalinux-package --prebuilt --fpga ../${1}.sdk/system_wrapper_hw_platform_0/download.bit --force
+# petalinux-package --prebuilt --fpga ../${1}.sdk/system_wrapper_hw_platform_0/download.bit --force
 
 # Boot system
-xsdb "$curr_dir/zynq_rst.tcl"
-petalinux-boot --jtag --prebuilt 3
+# xsdb "$curr_dir/zynq_rst.tcl"
+# petalinux-boot --jtag --prebuilt 3
