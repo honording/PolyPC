@@ -29,7 +29,7 @@
 #define ICAP_SPAN                   0xFFFF    //64KB
 
 #define DEVMEM          "/dev/mem"
-#define PR_MAZ_SIZE     0x100000
+#define PR_MAX_SIZE     0x100000
 #define PR_SIZE         493268
 
 #define rp_math_STATUS        0X00000
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 #endif
     */
 
-    int pr_ddr_addr = ddr_malloc(MEM_SIZE * sizeof(int));
+    int pr_ddr_addr = ddr_malloc(PR_MAX_SIZE);
     if (pr_ddr_addr < 0) {
         printf("apploadpr: ddr_malloc error a\n");
         return 0;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     printf("Begin to map icap space.\n");
     unsigned int *icap      = mmap(NULL, ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, XPAR_PRC_0_BASEADDR);
     printf("Begin to map pr_ddr_pt space.\n");
-    unsigned char *pr_ddr_pt = mmap(NULL, PR_MAZ_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
+    unsigned char *pr_ddr_pt = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
     if (strcmp(argv[0], "add") == 0) {
         memcpy(pr_ddr_pt, __add_bin, __add_bin_len);
     } else {
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
     }
     printf("VADD Reconfiguration Completed!\n");
     munmap(icap, ICAP_SPAN);
-    munmap(pr_ddr_pt, PR_MAZ_SIZE);
+    munmap(pr_ddr_pt, PR_MAX_SIZE);
     close(devmemfd);
 
     return 0;
