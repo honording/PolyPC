@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
     int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
     int i;
     for (i = 0; i < MEM_SIZE; i++) {
-        a[i] = i;
-        b[i] = i + 1;
+        a[i] = i + i;
+        b[i] = i;
         c[i] = 0;
     }
     printf("Initialize finished.\n");

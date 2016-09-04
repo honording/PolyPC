@@ -24,13 +24,16 @@
 
 #include "pr_add.h"
 #include "pr_sub.h"
+// #include "acc_add_bit.h"
+// #include "acc_sub_bit.h"
 
 #define XPAR_PRC_0_BASEADDR         0x42000000
-#define ICAP_SPAN                   0xFFFF    //64KB
+#define PRC_ICAP_SPAN                   0xFFFF    //64KB
 
 #define DEVMEM          "/dev/mem"
 #define PR_MAX_SIZE     0x100000
-#define PR_SIZE         493268
+// #define PR_SIZE         580532
+#define PR_SIZE         __pr_sub_bin_len
 
 #define rp_math_STATUS        0X00000
 #define rp_math_CONTROL       0X00000
@@ -111,7 +114,7 @@ int main(int argc, char *argv[])
         printf("apploadpr: ddr_malloc error a\n");
         return 0;
     }
-
+    printf("PR DDR address:0x%X\n", pr_ddr_addr);
     printf("Begin to open devmem.\n");
     int devmemfd = open(DEVMEM, O_RDWR | O_SYNC);
     if (devmemfd < 1) {
@@ -119,13 +122,15 @@ int main(int argc, char *argv[])
         return -1;
     }
     printf("Begin to map icap space.\n");
-    unsigned int *icap      = mmap(NULL, ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, XPAR_PRC_0_BASEADDR);
+    unsigned int *icap          = mmap(NULL, PRC_ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, XPAR_PRC_0_BASEADDR);
     printf("Begin to map pr_ddr_pt space.\n");
-    unsigned char *pr_ddr_pt = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
-    if (strcmp(argv[0], "add") == 0) {
-        memcpy(pr_ddr_pt, __add_bin, __add_bin_len);
+    unsigned int *pr_ddr_pt    = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
+    if (strcmp(argv[1], "add") == 0) {
+        memcpy(pr_ddr_pt, __pr_add_bin, PR_SIZE);
+        printf("Copy Add.\n");
     } else {
-        memcpy(pr_ddr_pt, __sub_bin, __sub_bin_len);
+        memcpy(pr_ddr_pt, __pr_sub_bin, PR_SIZE);
+        printf("Copy Sub.\n");
     }
 
     unsigned int Status;
@@ -146,7 +151,7 @@ int main(int argc, char *argv[])
 
     printf("Initializing RM address and control registers for Math and Shift RMs\n");
     Xil_Out32(icap,rp_math_RM_ADDRESS0,0);
-    Xil_Out32(icap,rp_math_RM_CONTROL0,0xFF0);
+    Xil_Out32(icap,rp_math_RM_CONTROL0,0x1FF0);
 
     printf("Reading RM bitstreams address and size registers for Math and Shift RMs\n");
     printf("Adder RM address  = %x\n",Xil_In32(icap,rp_math_BS_ADDRESS0));
@@ -170,24 +175,41 @@ int main(int argc, char *argv[])
     }
     loading_done = 0;
     while(!loading_done) {
-        printf("0x%x\n", Xil_In32(icap,rp_math_STATUS)&0x78);
+        // printf("0x%x\n", Xil_In32(icap,rp_math_STATUS)&0x78);
         Status=Xil_In32(icap,rp_math_STATUS)&0x07;
-      switch(Status) {
-        case 7 : printf("RM loaded\n"); loading_done=1; break;
-        case 6 : printf("RM is being reset\n"); break;
-        case 5 : printf("Software start-up step\n"); break;
-        case 4 : printf("Loading new RM\n"); break;
-        case 2 : printf("Software shutdown\n"); break;
-        case 1 : printf("Hardware shutdown\n"); break;
-      }
+        switch(Status) {
+            case 7 : 
+                printf("RM loaded\n"); 
+                loading_done=1; 
+                break;
+            case 6 : 
+                printf("RM is being reset\n"); 
+                break;
+            case 5 : 
+                printf("Software start-up step\n"); 
+                break;
+            case 4 : 
+                printf("."); 
+                break;
+            case 2 : 
+                printf("Software shutdown\n"); 
+                break;
+            case 1 : 
+                printf("Hardware shutdown\n"); 
+                break;
+            default:
+                break;
+        }
     }
     int ret = ddr_free(pr_ddr_addr);
     if (ret < 0) {
         printf("apploadpr: ddr_free error: pr_ddr_addr.\n");
         return 0;
     }
-    printf("VADD Reconfiguration Completed!\n");
-    munmap(icap, ICAP_SPAN);
+    printf("\nVADD Reconfiguration Completed!\n");
+
+pr_exit:
+    munmap(icap, PRC_ICAP_SPAN);
     munmap(pr_ddr_pt, PR_MAX_SIZE);
     close(devmemfd);
 
