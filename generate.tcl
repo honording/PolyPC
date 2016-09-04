@@ -370,7 +370,6 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         ] $hapara_lmb_dma_dup
     }
 
-
     # Create instance: local_mem_ctrl, and set properties
     set local_mem_ctrl [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:* local_mem_ctrl ]
     set_property -dict [ list \
@@ -434,122 +433,45 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
             CONFIG.CONST_WIDTH {8} \
         ] $xlconstant
 
-        # Create id decoupler
-        set id_decouple [ create_bd_cell -type ip -vlnv xilinx.com:ip:pr_decoupler:* "id_decouple_$i" ]
-        set_property -dict [list \
-            CONFIG.ALL_PARAMS {HAS_SIGNAL_STATUS 0 INTF {id {ID 0 VLNV xilinx.com:interface:axis_rtl:* MODE slave}}} \
-            CONFIG.GUI_INTERFACE_NAME {id} \
-            CONFIG.GUI_SELECT_VLNV {xilinx.com:interface:axis_rtl:*} \
-            CONFIG.GUI_SELECT_MODE {slave} \
-            CONFIG.GUI_HAS_SIGNAL_STATUS {0} \
-            CONFIG.GUI_SELECT_INTERFACE {0} \
-            CONFIG.GUI_SIGNAL_SELECT_0 {TVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_1 {TREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_2 {TDATA} \
-            CONFIG.GUI_SIGNAL_SELECT_3 {TUSER} \
-            CONFIG.GUI_SIGNAL_SELECT_4 {TLAST} \
-            CONFIG.GUI_SIGNAL_SELECT_5 {TID} \
-            CONFIG.GUI_SIGNAL_SELECT_6 {TDEST} \
-            CONFIG.GUI_SIGNAL_SELECT_7 {TSTRB} \
-            CONFIG.GUI_SIGNAL_SELECT_8 {TKEEP} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_0 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_1 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_0 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_1 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_2 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_4 {true} \
-            CONFIG.GUI_SIGNAL_WIDTH_2 {32} \
-            CONFIG.GUI_SIGNAL_WIDTH_7 {4} \
-            CONFIG.GUI_SIGNAL_WIDTH_8 {4}] \
-        ] $id_decouple
-
-        # Create barrier decoupler
-        set barrier_decouple [ create_bd_cell -type ip -vlnv xilinx.com:ip:pr_decoupler:* "barrier_decouple_$i" ]
-        set_property -dict [list \
-            CONFIG.ALL_PARAMS {HAS_SIGNAL_STATUS 0 INTF {id {ID 0 VLNV xilinx.com:interface:axis_rtl:* MODE slave}}} \
-            CONFIG.GUI_INTERFACE_NAME {barrier} \
-            CONFIG.GUI_SELECT_VLNV {xilinx.com:interface:axis_rtl:*} \
-            CONFIG.GUI_SELECT_MODE {slave} \
-            CONFIG.GUI_HAS_SIGNAL_STATUS {0} \
-            CONFIG.GUI_SELECT_INTERFACE {0} \
-            CONFIG.GUI_SIGNAL_SELECT_0 {TVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_1 {TREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_2 {TDATA} \
-            CONFIG.GUI_SIGNAL_SELECT_3 {TUSER} \
-            CONFIG.GUI_SIGNAL_SELECT_4 {TLAST} \
-            CONFIG.GUI_SIGNAL_SELECT_5 {TID} \
-            CONFIG.GUI_SIGNAL_SELECT_6 {TDEST} \
-            CONFIG.GUI_SIGNAL_SELECT_7 {TSTRB} \
-            CONFIG.GUI_SIGNAL_SELECT_8 {TKEEP} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_0 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_1 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_0 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_1 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_2 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_4 {true} \
-            CONFIG.GUI_SIGNAL_WIDTH_2 {32} \
-            CONFIG.GUI_SIGNAL_WIDTH_7 {4} \
-            CONFIG.GUI_SIGNAL_WIDTH_8 {4}] \
-        ] $barrier_decouple
-
-        # Create hw master decoupler
-        set master_decouple [ create_bd_cell -type ip -vlnv xilinx.com:ip:pr_decoupler:* "master_decouple_$i" ]
-        set_property -dict [list \
-            CONFIG.ALL_PARAMS {HAS_SIGNAL_STATUS 0 INTF {master {ID 0 VLNV xilinx.com:interface:aximm_rtl:*}}} \
-            CONFIG.GUI_INTERFACE_NAME {master} \
-            CONFIG.GUI_SELECT_VLNV {xilinx.com:interface:aximm_rtl:*} \
-            CONFIG.GUI_HAS_SIGNAL_STATUS {0} \
-            CONFIG.GUI_SELECT_INTERFACE {0} \
-            CONFIG.GUI_INTERFACE_PROTOCOL {axi4} \
-            CONFIG.GUI_SIGNAL_SELECT_0 {ARVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_1 {ARREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_2 {AWVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_3 {AWREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_4 {BVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_5 {BREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_6 {RVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_7 {RREADY} \
-            CONFIG.GUI_SIGNAL_SELECT_8 {WVALID} \
-            CONFIG.GUI_SIGNAL_SELECT_9 {WREADY} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_0 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_1 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_2 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_3 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_4 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_5 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_6 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_7 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_8 {true} \
-            CONFIG.GUI_SIGNAL_DECOUPLED_9 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_0 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_1 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_2 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_3 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_4 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_5 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_6 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_7 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_8 {true} \
-            CONFIG.GUI_SIGNAL_PRESENT_9 {true}] \
-        ] $master_decouple
+        # Create decoupler for each HW slave
+        set pr_decoupler [ create_bd_cell -type ip -vlnv xilinx.com:ip:pr_decoupler:* pr_decoupler_$i ]
+        set_property -dict [ list \
+            CONFIG.ALL_PARAMS \
+            { \
+                HAS_SIGNAL_STATUS 0 \
+                INTF { \
+                      id {ID 0 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave} \
+                      barrier {ID 1 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave } \
+                      master {ID 2 VLNV xilinx.com:interface:aximm_rtl:1.0 MODE master} \
+                     } \
+            } \
+        ] $pr_decoupler
 
         # Create exported ports: decouple and rst
         create_bd_pin -dir I "S${i}_decouple"
         create_bd_pin -dir I -type rst "S${i}_rst"
 
         # Connect interface between them
-        connect_bd_intf_net [get_bd_intf_pins "axis_register_slice_$i/M_AXIS"] [get_bd_intf_pins "id_decouple_$i/s_id"]
-        connect_bd_intf_net [get_bd_intf_pins "id_decouple_$i/rp_id"] [get_bd_intf_pins "$hw_ip_name/id"]
-        connect_bd_intf_net [get_bd_intf_pins "barrier_decouple_$i/rp_barrier"] [get_bd_intf_pins "$hw_ip_name/barrier"]
-        connect_bd_intf_net [get_bd_intf_pins "master_decouple_$i/rp_master"] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
+        connect_bd_intf_net [get_bd_intf_pins "axis_register_slice_$i/M_AXIS"] [get_bd_intf_pins "pr_decoupler_$i/s_id"]
+        connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_id"] [get_bd_intf_pins "$hw_ip_name/id"]
+        connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_barrier"] [get_bd_intf_pins "$hw_ip_name/barrier"]
+        # connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_master"] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_ARVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_ARVALID"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_AWVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_AWVALID"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_BREADY"] [get_bd_pins "$hw_ip_name/m_axi_data_BREADY"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_RREADY"] [get_bd_pins "$hw_ip_name/m_axi_data_RREADY"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_WVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_WVALID"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_ARREADY"] [get_bd_pins "$hw_ip_name/m_axi_data_ARREADY"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_AWREADY"] [get_bd_pins "$hw_ip_name/m_axi_data_AWREADY"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_BVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_BVALID"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_RVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_RVALID"]
+        connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_WREADY"] [get_bd_pins "$hw_ip_name/m_axi_data_WREADY"]
 
         connect_bd_net [get_bd_pins "$hw_ip_name/htID"] [get_bd_pins "xlconstant_$i/dout"]
 
         # Connect decouple and rst
         connect_bd_net [get_bd_pins "S${i}_rst"] [get_bd_pins "$hw_ip_name/ap_rst_n"]
-        connect_bd_net [get_bd_pins "S${i}_decouple"] [get_bd_pins "id_decouple_$i/decouple"]
-        connect_bd_net [get_bd_pins "S${i}_decouple"] [get_bd_pins "barrier_decouple_$i/decouple"]
-        connect_bd_net [get_bd_pins "S${i}_decouple"] [get_bd_pins "master_decouple_$i/decouple"]
+        connect_bd_net [get_bd_pins "S${i}_decouple"] [get_bd_pins "pr_decoupler_$i/decouple"]
     }
 
     # Create MicroBlaze slaves
@@ -613,7 +535,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" $i]_AXIS"
         set hw_ip_name "${hw_name}_s$i"
-        set barrier_name "barrier_decouple_$i"
+        set barrier_name "pr_decoupler_$i"
         connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$barrier_name/s_barrier"]
     }
     # Connect barrier master axi-stream to MicroBlaze slave
@@ -652,8 +574,18 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set intercon_data_slave_name "intercon_data/S[format "%02d" $i]_AXI"
         set hw_ip_name "${hw_name}_s$i"
-        set master_decouple_name "master_decouple_$i"
-        connect_bd_intf_net [get_bd_intf_pins $intercon_data_slave_name] [get_bd_intf_pins "$master_decouple_name/s_master"]
+        set pr_decouple_name "pr_decoupler_$i" 
+        connect_bd_intf_net [get_bd_intf_pins $intercon_data_slave_name] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_arready"] [get_bd_pins "${pr_decouple_name}/s_master_ARREADY"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_awready"] [get_bd_pins "${pr_decouple_name}/s_master_AWREADY"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_bvalid"] [get_bd_pins "${pr_decouple_name}/s_master_BVALID"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_rvalid"] [get_bd_pins "${pr_decouple_name}/s_master_RVALID"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_wready"] [get_bd_pins "${pr_decouple_name}/s_master_WREADY"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_arvalid"] [get_bd_pins "${pr_decouple_name}/s_master_ARVALID"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_awvalid"] [get_bd_pins "${pr_decouple_name}/s_master_AWVALID"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_bready"] [get_bd_pins "${pr_decouple_name}/s_master_BREADY"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_rready"] [get_bd_pins "${pr_decouple_name}/s_master_RREADY"]
+        connect_bd_net [get_bd_pins "${intercon_data_slave_name}_wvalid"] [get_bd_pins "${pr_decouple_name}/s_master_WVALID"]
     }
 
     # Connect MicroBlaze slave local memories and intercon_data to slaves
@@ -888,11 +820,11 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     set para {CONFIG.ALL_PARAMS}
     set vs "VS {"
     set vs_count 0
-    for {set i 0} {$i < $num_of_group} {incr i} {
-        set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+    for {set i 0} {$i < $numOfGroup} {incr i} {
+        set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $numOfHWSlave]
         for {set j 0} {$j < $num_hw_per_group} {incr j} {
-            set vs_name "group${i}hws{j}"
-            append vs "VS_$vs_count {ID $vs_count NAME $vs_name RM {RM_0 {ID 0 NAME RM_0 BS {0 {ID 0 ADDR 0 SIZE 0 CLEAR 0}} RESET_REQUIRED low RESET_DURATION 8}}} "
+            set vs_name "group${i}hws${j}"
+            append vs "$vs_name {ID $vs_count NAME $vs_name RM {RM_0 {ID 0 NAME RM_0 BS {0 {ID 0 ADDR 0 SIZE 0 CLEAR 0}} RESET_REQUIRED low RESET_DURATION 8}}} "
             incr vs_count
         }
     }
@@ -1022,10 +954,10 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     connect_bd_intf_net [get_bd_intf_pins hapara_simple_icap_0/icap] [get_bd_intf_pins prc_0/ICAP]
     connect_bd_intf_net [get_bd_intf_pins intercon_prc/M00_AXI] [get_bd_intf_pins prc_0/s_axi_reg]
     # Connect PRC group hw related interface
-    for {set i 0} {$i < $num_of_group} {incr i} {
-        set num_hw_per_group [hapara_return_hw_number $i $num_of_slave $num_of_hw]
+    for {set i 0} {$i < $numOfGroup} {incr i} {
+        set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $numOfHWSlave]
         for {set j 0} {$j < $num_hw_per_group} {incr j} {   
-            set vs_name "group${i}hws{j}"
+            set vs_name "group${i}hws${j}"
             set group_name "group${i}"
             set group_decouple "${group_name}/S${j}_decouple"
             set group_rst "${group_name}/S${j}_rst"
@@ -1243,7 +1175,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     set ddr_base            "0x60000000"
     set local_mem_base      "0xC0000000"
     set dma_elf_base        "0xC2000000"
-    set icap_base           "0x42000000"
+    set prc_base            "0x42000000"
 
     set sch_dma_base        "0x44A10000"
     set sch_gen_base        "0x44A00000"
@@ -1257,7 +1189,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     create_bd_addr_seg -range 0x8000 -offset $htdt_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs htdt_ctrl/S_AXI/Mem0] SEG_htdt_ctrl_Mem0
     create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
     create_bd_addr_seg -range 0x8000 -offset $mutex_manager_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs mutex_manager_ctrl/S_AXI/Mem0] SEG_mutex_manager_ctrl_Mem0
-    # create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
+    create_bd_addr_seg -range 0x10000 -offset $prc_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs prc_0/s_axi_reg/Reg] SEG_prc_0_Reg
 
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
@@ -1270,7 +1202,6 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         }
         create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/cdma/Data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
         create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/cdma/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
-        # create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/cdma/Data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
 
         # Scheduler setup
         create_bd_addr_seg -range 0x10000 -offset $sch_dma_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs "$group_name/cdma/S_AXI_LITE/Reg"] SEG_cdma_Reg
@@ -1282,7 +1213,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         create_bd_addr_seg -range 0x1000 -offset $sch_mdm_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mdm/S_AXI/Reg] SEG_mdm_Reg
         create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
         create_bd_addr_seg -range 0x8000 -offset $mutex_manager_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mutex_manager_ctrl/S_AXI/Mem0] SEG_mutex_manager_ctrl_Mem0
-        # create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
+        create_bd_addr_seg -range 0x10000 -offset $prc_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs prc_0/s_axi_reg/Reg] SEG_prc_0_Reg
 
         for {set j 0} {$j < $num_mb_per_group} {incr j} {
             set slave_name "slave_s$j"
@@ -1292,11 +1223,9 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
             create_bd_addr_seg -range 0x8000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Instruction"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/ilmb_bram_if_cntlr/SLMB/Mem"] SEG_ilmb_bram_if_cntlr_Mem
             create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
             create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
-            # create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
         }
         for {set j 0} {$j < $num_hw_per_group} {incr j} {
             set hw_slave_name "${hw_name}_s$j"
-            # create_bd_addr_seg -range 0x800000 -offset $icap_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs icap_ctrl/S_AXI/Mem0] SEG_icap_ctrl_Mem0
             create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
             create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/$hw_slave_name/Data_m_axi_data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
         }
