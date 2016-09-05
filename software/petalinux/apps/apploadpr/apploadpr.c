@@ -33,7 +33,7 @@
 #define DEVMEM          "/dev/mem"
 #define PR_MAX_SIZE     0x100000
 // #define PR_SIZE         580532
-#define PR_SIZE         __pr_sub_bin_len
+#define PR_SIZE         __vector_add_pr_add_bin_len
 
 #define rp_math_STATUS        0X00000
 #define rp_math_CONTROL       0X00000
@@ -126,10 +126,10 @@ int main(int argc, char *argv[])
     printf("Begin to map pr_ddr_pt space.\n");
     unsigned int *pr_ddr_pt    = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
     if (strcmp(argv[1], "add") == 0) {
-        memcpy(pr_ddr_pt, __pr_add_bin, PR_SIZE);
+        memcpy(pr_ddr_pt, __vector_add_pr_add_bin, PR_SIZE);
         printf("Copy Add.\n");
     } else {
-        memcpy(pr_ddr_pt, __pr_sub_bin, PR_SIZE);
+        memcpy(pr_ddr_pt, __vector_sub_pr_sub_bin, PR_SIZE);
         printf("Copy Sub.\n");
     }
 
