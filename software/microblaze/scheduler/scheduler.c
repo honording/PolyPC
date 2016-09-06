@@ -20,6 +20,7 @@
 #include "../../generic/CL/cl.h"
 #include "../../generic/include/base_addr.h"
 #include "../../generic/include/register.h"
+#include "../../generic/include/prc_addr_mapping.h"
 //#include "../../generic/include/hw_config.h"
 
 
@@ -34,6 +35,7 @@ int main() {
 	int num_of_hw_slave = num_of_slave - num_of_mb_slave;
 	int group_index = pvr1 & 0x000000FF;
 	int pr_offset = group_index * num_of_slave;
+	unsigned int VSM_MASK = pr_offset << 7;
 
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
@@ -100,16 +102,17 @@ int main() {
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
 				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
 			}
-			// if (num_of_hw_slave != 0) {
-			// 	// unsigned int ddr_addr;
-   //  			// unsigned int num_pr_file;
-   //  			// unsigned int each_size;
-			// 	int pr_size = hapara_thread_curr->pr_info.each_size;
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
-			// 	while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0				
-			// }
+			if (num_of_hw_slave != 0) {
+				// unsigned int ddr_addr;
+    			// unsigned int num_pr_file;
+    			// unsigned int each_size;
+				int pr_size = hapara_thread_curr->pr_info.each_size;
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
+				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
+				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
+
+			}
 		}
 		int i;
 		for (i = 0; i < num_of_slave; i++) {
