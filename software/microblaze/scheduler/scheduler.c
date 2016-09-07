@@ -23,6 +23,21 @@
 #include "../../generic/include/prc_addr_mapping.h"
 //#include "../../generic/include/hw_config.h"
 
+#define STATUS  			(VS_STATUS + SCHEDULER_ICAP)
+#define CONTROL 			(VS_CONTROL + SCHEDULER_ICAP)
+#define SW_TRIGGER 			(VS_SW_TRIGGER + SCHEDULER_ICAP)
+#define TRIGGER0 			(VS_TRIGGER0 + SCHEDULER_ICAP)
+#define TRIGGER1 			(VS_TRIGGER1 + SCHEDULER_ICAP)
+#define RM_BS_INDEx0 		(VS_RM_BS_INDEx0 + SCHEDULER_ICAP)
+#define RM_CONTROL0 		(VS_RM_CONTROL0 + SCHEDULER_ICAP)
+#define RM_BS_INDEx1 		(VS_RM_BS_INDEx1 + SCHEDULER_ICAP)
+#define RM_CONTROL1 		(VS_RM_CONTROL1 + SCHEDULER_ICAP)
+#define BS_ID0 				(VS_BS_ID0 + SCHEDULER_ICAP)
+#define BS_ADDRESS0 		(VS_BS_ADDRESS0 + SCHEDULER_ICAP)
+#define BS_SIZE0 			(VS_BS_SIZE0 + SCHEDULER_ICAP)
+#define BS_ID1 				(VS_BS_ID1 + SCHEDULER_ICAP)
+#define BS_ADDRESS1 		(VS_BS_ADDRESS1 + SCHEDULER_ICAP)
+#define BS_SIZE1 			(VS_BS_SIZE1 + SCHEDULER_ICAP)
 
 
 int main() {
@@ -35,7 +50,8 @@ int main() {
 	int num_of_hw_slave = num_of_slave - num_of_mb_slave;
 	int group_index = pvr1 & 0x000000FF;
 	int pr_offset = group_index * num_of_slave;
-	unsigned int VSM_MASK = pr_offset << 7;
+	int i, j;
+
 
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
@@ -100,21 +116,55 @@ int main() {
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->elf_info.ddr_addr);	//source
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), DMA_INST_MEM_BASE);						//destination
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
+				// while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
+			}
+			// if (num_of_hw_slave != 0) {
+			// 	// unsigned int ddr_addr;
+   //  			// unsigned int num_pr_file;
+   //  			// unsigned int each_size;
+			// 	int pr_size = hapara_thread_curr->pr_info.each_size;
+			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
+			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
+			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
+			// 	while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
+
+			// }
+			for (i = 0; i < num_of_hw_slave; i++) {
+				unsigned int VSM_OFFSET = (pr_offset + i) << 7;
+				//  xil_printf("Putting the PRC core's Math RP in Shutdown mode\n\r");
+				Xil_Out32(VSM_OFFSET | CONTROL, 0);
+				//  xil_printf("Waiting for the shutdown to occur\r\n");
+				while(!(Xil_In32(VSM_OFFSET | STATUS) & 0x80));
+				//  xil_printf("Initializing RM bitstream address and size registers for Current PR RM\r\n");
+				unsigned int curr_pr_offset = hapara_thread_curr->pr_info.ddr_addr + 
+											  VSM_OFFSET * pr_size
+				Xil_Out32(VSM_OFFSET | BS_ADDRESS0, curr_pr_offset);
+				Xil_Out32(VSM_OFFSET | BS_SIZE0, pr_size);
+				//  xil_print("Initializing RM trigger ID registers for Current RM\r\n");
+				Xil_Out32(VSM_OFFSET | TRIGGER0, 0);
+				//  xil_print("Initializing RM index and control registers for Current RM.\r\n");
+				Xil_Out32(VSM_OFFSET | RM_BS_INDEx0, 0);
+				//  Reset Active low mode for 8 clock cycles.
+				Xil_Out32(VSM_OFFSET | RM_CONTROL0, 0xF0);
+				//  xil_print("Putting the PRC core's Math RP in Restart with Status mode\n\r");
+				Xil_Out32(VSM_OFFSET | CONTROL, 2);
+				//  xil_printf("Generating software trigger for VADD reconfiguration\r\n");
+				Status = Xil_In32(VSM_OFFSET | SW_TRIGGER);
+				if(!(Status & 0x8000)) {
+				//  xil_printf("Starting VADD Reconfiguration\n\r");
+					Xil_Out32(VSM_OFFSET | SW_TRIGGER, 0);
+				}				
+			}
+			// Wait for ELF and PR BIN files to finish transferring
+			if (num_of_mb_slave != 0) {
 				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
 			}
-			if (num_of_hw_slave != 0) {
-				// unsigned int ddr_addr;
-    			// unsigned int num_pr_file;
-    			// unsigned int each_size;
-				int pr_size = hapara_thread_curr->pr_info.each_size;
-				Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
-				Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
-				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
-				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
-
+			for (i = 0; i < num_of_hw_slave; i++) {
+				unsigned int VSM_OFFSET = (pr_offset + i) << 7;
+				while((Xil_In32(VSM_OFFSET | STATUS) & 0x07) != 7);
 			}
 		}
-		int i;
+
 		for (i = 0; i < num_of_slave; i++) {
 			trigger[i] = 1;
 		}

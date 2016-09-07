@@ -1,5 +1,5 @@
-#ifndef _CL_H_
-#define _CL_H_
+#ifndef _PRC_ADDR_MAPPING_H_
+#define _PRC_ADDR_MAPPING_H_
 
 #define VS_STATUS           0x00000000
 #define VS_CONTROL          0x00000000
