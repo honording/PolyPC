@@ -153,7 +153,7 @@ int main() {
 				if(!(Status & 0x8000)) {
 				//  xil_printf("Starting VADD Reconfiguration\n\r");
 					Xil_Out32(VSM_OFFSET | SW_TRIGGER, 0);
-				}				
+				}
 			}
 			// Wait for ELF and PR BIN files to finish transferring
 			if (num_of_mb_slave != 0) {
