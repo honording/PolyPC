@@ -10,7 +10,7 @@ APP = apptest
 APP_OBJS = apptest.o
 
 # Add custom libraries
-CLDLIBS = -lelfmb -lregister -lddrmalloc
+CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc
 
 all: build install
 

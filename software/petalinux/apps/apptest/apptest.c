@@ -11,16 +11,17 @@
 #include <sys/mman.h>
 
 #include "../../libs/libelfmb/libelfmb.h"
+#include "../../libs/libpr/libpr.h"
 #include "../../libs/libregister/libregister.h"
 #include "../../libs/libddrmalloc/libddrmalloc.h"
 
 #include "../../../generic/include/elf_loader.h"
+#include "../../../generic/include/pr_loader.h"
 #include "../../../generic/include/base_addr.h"
 #include "../../../generic/include/thread_struct.h"
 
-// #define ELF_FILE_NAME	"/mnt/opencl_kernel.elf"
 #define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
-#define PR_FILE_PATH    "/mnt/elf_apps/pr/"
+#define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
 
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
@@ -83,6 +84,11 @@ int main(int argc, char *argv[])
         return 0;
     }
     printf("apptest: begin to load PR bitstream into memory.\n");
+    ret = pr_loader(PR_FILE_PATH, &sp.pr_info);
+    if (ret < 0) {
+        printf("apptes: pr_loader error\n");
+        return 0;
+    }
 
 
     print_struct(&sp);
@@ -141,6 +147,11 @@ int main(int argc, char *argv[])
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
         printf("apptest: ddr_free error: elf.\n");
+        return 0;
+    }
+    ret = ddr_free(sp.pr_info.ddr_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: pr.\n");
         return 0;
     }
     ret = ddr_free(a_addr);
