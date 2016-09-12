@@ -236,7 +236,7 @@ void print_struct(struct hapara_thread_struct *thread_info)
     printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
     printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
     printf("pr_info ddr_addr     = 0x%08X\n", thread_info->pr_info.ddr_addr);
-    printf("pr_info num_pr_file  = 0x%d\n", thread_info->pr_info.num_pr_file);
-    printf("pr_info each_size    = 0x%d\n", thread_info->pr_info.each_size);
+    printf("pr_info num_pr_file  = %d\n", thread_info->pr_info.num_pr_file);
+    printf("pr_info each_size    = %d\n", thread_info->pr_info.each_size);
     printf("---------------------------------------\n");
 }

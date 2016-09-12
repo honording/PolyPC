@@ -20,10 +20,12 @@
 #include "../../../generic/include/base_addr.h"
 #include "../../../generic/include/thread_struct.h"
 
-#define PR_FILE_PATH    "/mnt/pr_files/vector_add/pr.bin"
+#define PR_FILE_PATH    "/mnt/pr_files/vector_xxx/pr0x.bin"
+#define PR_INFO_PATH    "/mnt/pr_files/vector_xxx/info"
+//                       012345678901234567890123456789012
 
-#include "pr_add.h"
-#include "pr_sub.h"
+// #include "pr_add.h"
+// #include "pr_sub.h"
 // #include "acc_add_bit.h"
 // #include "acc_sub_bit.h"
 
@@ -35,17 +37,17 @@
 // #define PR_SIZE         580532
 #define PR_SIZE         __vector_add_pr_add_bin_len
 
-#define vsm_off | rm_math_STATUS        0X00000
-#define vsm_off | rm_math_CONTROL       0X00000
-#define vsm_off | rm_math_SW_TRIGGER    0X00004
-#define vsm_off | rm_math_TRIGGER0      0X00020
+#define     rm_math_STATUS        0X00000
+#define     rm_math_CONTROL       0X00000
+#define     rm_math_SW_TRIGGER    0X00004
+#define     rm_math_TRIGGER0      0X00020
 
-#define vsm_off | rm_math_RM_ADDRESS0   0X00040
-#define vsm_off | rm_math_RM_CONTROL0   0X00044
+#define     rm_math_RM_ADDRESS0   0X00040
+#define     rm_math_RM_CONTROL0   0X00044
 
-#define vsm_off | rm_math_BS_ID0        0X00060
-#define vsm_off | rm_math_BS_ADDRESS0   0X00064
-#define vsm_off | rm_math_BS_SIZE0      0X00068
+#define     rm_math_BS_ID0        0X00060
+#define     rm_math_BS_ADDRESS0   0X00064
+#define     rm_math_BS_SIZE0      0X00068
 
 void Xil_Out32(unsigned int *icap, unsigned int off, unsigned int val) { 
     icap[off >> 2] = val;
@@ -214,8 +216,51 @@ int main(int argc, char *argv[])
     printf("PR done.\n");
 #endif
     */
+    if (argc != 2) {
+        printf("Input arguments: [Acc name]\n");
+        return 0;
+    }
+    int numPR = 0;
+    int sizePR = 0;
+    unsigned char* pr_content = NULL;
+    int i, j;
+    char pr_file_name[] = PR_FILE_PATH;
+    char pr_info_name[] = PR_INFO_PATH;
+    // printf("file name: %s\n info name: %s\n", pr_file_name, pr_info_name);
+    FILE *fp = NULL;
+    for (j = 0; j < 3; j++) {
+        pr_info_name[21 + j] = argv[1][j];
+    }
+    printf("PR info name:%s\n", pr_info_name);
+    fp = fopen(pr_info_name, "r");
+    fscanf(fp, "%d", &numPR);
+    printf("Number of PR files: %d\n", numPR);
+    fscanf(fp, "%d", &sizePR);
+    printf("PR size: %d\n", sizePR);
+    fclose(fp);
+    pr_content = (unsigned char *)malloc(sizePR);
+    for (i = 0; i < numPR; i++) {
+        for (j = 0; j < 3; j++) {
+            pr_file_name[21 + j] = argv[1][j];
+        }
+        pr_file_name[28] = '0' + i;
+        printf("PR file name: %s\n", pr_file_name);
+        fp = fopen(pr_file_name, "r");
 
-
-
+        int read_num = fread(pr_content, sizeof(char), sizePR, fp);
+        if (read_num != sizePR) {
+            printf("PR read error: %d\n", read_num);
+            fclose(fp);
+            return 0;
+        }
+        if (do_pr(sizePR, pr_content, i) != 1) {
+            printf("do_pr error.\n");
+            fclose(fp);
+            return 0;
+        }
+        fclose(fp);
+    }
+    free(pr_content);
+    printf("Done.\n");
     return 0;
 }

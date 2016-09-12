@@ -127,42 +127,48 @@ int main() {
 			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
 			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
 			// 	while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
-
 			// }
+
 			int pr_size = hapara_thread_curr->pr_info.each_size;
-			for (i = 0; i < num_of_hw_slave; i++) {
-				int Status;
-				unsigned int VSM_OFFSET = (pr_offset + i) << 7;
-				//  xil_printf("Putting the PRC core's Math RP in Shutdown mode\n\r");
-				Xil_Out32(VSM_OFFSET | CONTROL, 0);
-				//  xil_printf("Waiting for the shutdown to occur\r\n");
-				while(!(Xil_In32(VSM_OFFSET | STATUS) & 0x80));
-				//  xil_printf("Initializing RM bitstream address and size registers for Current PR RM\r\n");
-				unsigned int curr_pr_offset = hapara_thread_curr->pr_info.ddr_addr + VSM_OFFSET * pr_size;
-				Xil_Out32(VSM_OFFSET | BS_ADDRESS0, curr_pr_offset);
-				Xil_Out32(VSM_OFFSET | BS_SIZE0, pr_size);
-				//  xil_print("Initializing RM trigger ID registers for Current RM\r\n");
-				Xil_Out32(VSM_OFFSET | TRIGGER0, 0);
-				//  xil_print("Initializing RM index and control registers for Current RM.\r\n");
-				Xil_Out32(VSM_OFFSET | RM_BS_INDEx0, 0);
-				//  Reset Active low mode for 8 clock cycles.
-				Xil_Out32(VSM_OFFSET | RM_CONTROL0, 0xF0);
-				//  xil_print("Putting the PRC core's Math RP in Restart with Status mode\n\r");
-				Xil_Out32(VSM_OFFSET | CONTROL, 2);
-				//  xil_printf("Generating software trigger for VADD reconfiguration\r\n");
-				Status = Xil_In32(VSM_OFFSET | SW_TRIGGER);
-				if(!(Status & 0x8000)) {
-				//  xil_printf("Starting VADD Reconfiguration\n\r");
-					Xil_Out32(VSM_OFFSET | SW_TRIGGER, 0);
-				}
+			if (pr_size != -1) {
+				for (i = 0; i < num_of_hw_slave; i++) {
+					int Status;
+					unsigned int VSM_OFFSET = (pr_offset + i) << 7;
+					//  xil_printf("Putting the PRC core's Math RP in Shutdown mode\n\r");
+					Xil_Out32(VSM_OFFSET | CONTROL, 0);
+					//  xil_printf("Waiting for the shutdown to occur\r\n");
+					while(!(Xil_In32(VSM_OFFSET | STATUS) & 0x80));
+					//  xil_printf("Initializing RM bitstream address and size registers for Current PR RM\r\n");
+					unsigned int curr_pr_offset = hapara_thread_curr->pr_info.ddr_addr + VSM_OFFSET * pr_size;
+					Xil_Out32(VSM_OFFSET | BS_ADDRESS0, curr_pr_offset);
+					Xil_Out32(VSM_OFFSET | BS_SIZE0, pr_size);
+					//  xil_print("Initializing RM trigger ID registers for Current RM\r\n");
+					Xil_Out32(VSM_OFFSET | TRIGGER0, 0);
+					//  xil_print("Initializing RM index and control registers for Current RM.\r\n");
+					Xil_Out32(VSM_OFFSET | RM_BS_INDEx0, 0);
+					//  Reset Active low mode for 8 clock cycles.
+					Xil_Out32(VSM_OFFSET | RM_CONTROL0, 0xF0);
+					//  xil_print("Putting the PRC core's Math RP in Restart with Status mode\n\r");
+					Xil_Out32(VSM_OFFSET | CONTROL, 2);
+					//  xil_printf("Generating software trigger for VADD reconfiguration\r\n");
+					Status = Xil_In32(VSM_OFFSET | SW_TRIGGER);
+					if(!(Status & 0x8000)) {
+					//  xil_printf("Starting VADD Reconfiguration\n\r");
+						Xil_Out32(VSM_OFFSET | SW_TRIGGER, 0);
+					}
+				}				
 			}
+
+
 			// Wait for ELF and PR BIN files to finish transferring
 			if (num_of_mb_slave != 0) {
 				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
 			}
-			for (i = 0; i < num_of_hw_slave; i++) {
-				unsigned int VSM_OFFSET = (pr_offset + i) << 7;
-				while((Xil_In32(VSM_OFFSET | STATUS) & 0x07) != 7);
+			if (pr_size != -1) {
+				for (i = 0; i < num_of_hw_slave; i++) {
+					unsigned int VSM_OFFSET = (pr_offset + i) << 7;
+					while((Xil_In32(VSM_OFFSET | STATUS) & 0x07) != 7);
+				}				
 			}
 		}
 

@@ -11,5 +11,6 @@
 
 int pr_loader(char *file_path, 
               pr_info_t *pr_info);
+void disable_mb_pr(pr_info_t *pr_info);
 
 #endif

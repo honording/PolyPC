@@ -88,3 +88,7 @@ int pr_loader(char *file_path,
     pr_info->each_size		= size_pr;
     return 1;
 }
+
+void disable_mb_pr(pr_info_t *pr_info) {
+    pr_info->each_size = -1;
+} 
