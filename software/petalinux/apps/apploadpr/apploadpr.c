@@ -216,8 +216,8 @@ int main(int argc, char *argv[])
     printf("PR done.\n");
 #endif
     */
-    if (argc != 2) {
-        printf("Input arguments: [Acc name]\n");
+    if (argc < 2 || argc > 3) {
+        printf("Input arguments: [Acc name] (Number of Acc)\n");
         return 0;
     }
     int numPR = 0;
@@ -239,6 +239,10 @@ int main(int argc, char *argv[])
     printf("PR size: %d\n", sizePR);
     fclose(fp);
     pr_content = (unsigned char *)malloc(sizePR);
+    if (argc == 3) {
+        numPR = argv[2][0] - '0';
+        printf("User number of PR files: %d\n", numPR);
+    }
     for (i = 0; i < numPR; i++) {
         for (j = 0; j < 3; j++) {
             pr_file_name[21 + j] = argv[1][j];

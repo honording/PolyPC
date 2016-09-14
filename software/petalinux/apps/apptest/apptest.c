@@ -84,14 +84,18 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // printf("apptest: begin to load PR bitstream into memory.\n");
-    // ret = pr_loader(PR_FILE_PATH, &sp.pr_info);
-    // if (ret < 0) {
-    //     printf("apptes: pr_loader error\n");
-    //     return 0;
-    // }
+    printf("apptest: begin to load PR bitstream into memory.\n");
+    ret = pr_loader(PR_FILE_PATH, &sp.pr_info);
+    if (ret < 0) {
+        printf("apptes: pr_loader error\n");
+        return 0;
+    }
 
-    disable_mb_pr(&sp.pr_info);
+    if (argc == 2) {
+        printf("Disable MB Pr flow.\n");
+        disable_mb_pr(&sp.pr_info);
+    }
+    
 
 
     print_struct(&sp);
@@ -151,11 +155,11 @@ int main(int argc, char *argv[])
         printf("apptest: ddr_free error: elf.\n");
         return 0;
     }
-    // ret = ddr_free(sp.pr_info.ddr_addr);
-    // if (ret < 0) {
-    //     printf("apptest: ddr_free error: pr.\n");
-    //     return 0;
-    // }
+    ret = ddr_free(sp.pr_info.ddr_addr);
+    if (ret < 0) {
+        printf("apptest: ddr_free error: pr.\n");
+        return 0;
+    }
     ret = ddr_free(a_addr);
     if (ret < 0) {
         printf("apptest: ddr_free error: a.\n");
