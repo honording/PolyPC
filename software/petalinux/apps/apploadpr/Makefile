@@ -10,7 +10,7 @@ APP = apploadpr
 APP_OBJS = apploadpr.o
 
 # Add custom libraries
-CLDLIBS = -lelfmb -lregister -lddrmalloc
+CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc
 
 all: build install
 

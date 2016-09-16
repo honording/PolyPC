@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
         printf("Disable MB Pr flow.\n");
         disable_mb_pr(&sp.pr_info);
     }
-    
 
 
     print_struct(&sp);

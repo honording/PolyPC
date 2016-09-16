@@ -139,7 +139,7 @@ int main() {
 					//  xil_printf("Waiting for the shutdown to occur\r\n");
 					while(!(Xil_In32(VSM_OFFSET | STATUS) & 0x80));
 					//  xil_printf("Initializing RM bitstream address and size registers for Current PR RM\r\n");
-					unsigned int curr_pr_offset = hapara_thread_curr->pr_info.ddr_addr + VSM_OFFSET * pr_size;
+					unsigned int curr_pr_offset = hapara_thread_curr->pr_info.ddr_addr + (pr_offset + i) * pr_size;
 					Xil_Out32(VSM_OFFSET | BS_ADDRESS0, curr_pr_offset);
 					Xil_Out32(VSM_OFFSET | BS_SIZE0, pr_size);
 					//  xil_print("Initializing RM trigger ID registers for Current RM\r\n");
