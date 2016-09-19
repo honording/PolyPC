@@ -137,7 +137,7 @@ int do_pr(int pr_size, unsigned char *pr_data, unsigned int vsm) {
                 printf("Software start-up step\n"); 
                 break;
             case 4 : 
-                printf("."); 
+                // printf("."); 
                 break;
             case 2 : 
                 printf("Software shutdown\n"); 
