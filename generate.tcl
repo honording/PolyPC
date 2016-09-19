@@ -931,15 +931,22 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         set intercon_ddr [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_ddr ]
         set_property -dict [ list \
             CONFIG.NUM_MI {1} \
-            CONFIG.NUM_SI [expr "2+$numOfGroup"] \
+            CONFIG.NUM_SI {2} \
         ] $intercon_ddr
     } else {
         set intercon_ddr [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_ddr ]
         set_property -dict [ list \
             CONFIG.NUM_MI {1} \
-            CONFIG.NUM_SI [expr "1+$numOfGroup"] \
+            CONFIG.NUM_SI {1} \
         ] $intercon_ddr
     }
+
+    # Create instance: intercon_pre_ddr
+    set intercon_pre_ddr [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_pre_ddr ]
+    set_property -dict [ list \
+        CONFIG.NUM_MI {1} \
+        CONFIG.NUM_SI [expr "1+$numOfGroup"] \
+    ] $intercon_pre_ddr
 
 
     # Create instance: rst_mig_7series_0_100M, and set properties
@@ -1030,15 +1037,16 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     }
     connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "($numOfSlave+1)*$numOfGroup-$numOfHWSlave"]"] [get_bd_intf_pins mutex_manager/DEBUG]
 
-    # Connect intercon_ddr related interfaces
+    # Connect intercon_ddr and intercon_pre_ddr related interfaces
     connect_bd_intf_net [get_bd_intf_pins intercon_ddr/M00_AXI] [get_bd_intf_pins mig_7series_0/S_AXI]
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
-        connect_bd_intf_net [get_bd_intf_pins "$group_name/M00_AXI_data_ddr"] [get_bd_intf_pins "intercon_ddr/S[format "%02d" $i]_AXI"]
+        connect_bd_intf_net [get_bd_intf_pins "$group_name/M00_AXI_data_ddr"] [get_bd_intf_pins "intercon_pre_ddr/S[format "%02d" $i]_AXI"]
     }
-    connect_bd_intf_net [get_bd_intf_pins intercon_ddr/S[format "%02d" $numOfGroup]_AXI] [get_bd_intf_pins intercon_zynq/M00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins intercon_pre_ddr/S[format "%02d" $numOfGroup]_AXI] [get_bd_intf_pins intercon_zynq/M00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins intercon_ddr/S00_AXI] [get_bd_intf_pins intercon_pre_ddr/M00_AXI]
     if {$total_hw_slave > 0} {
-        connect_bd_intf_net [get_bd_intf_pins intercon_ddr/S[format "%02d" [expr $numOfGroup+1]]_AXI] [get_bd_intf_pins prc_0/m_axi_mem]
+        connect_bd_intf_net [get_bd_intf_pins intercon_ddr/S01_AXI] [get_bd_intf_pins prc_0/m_axi_mem]
     }
 
     # Connect intercon_mutex_manager and mutex_manager related interfaces
@@ -1147,11 +1155,12 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         lappend slowest_sync_clk [get_bd_pins intercon_prc/M00_ACLK]        
     }
     lappend slowest_sync_clk [get_bd_pins intercon_ddr/ACLK]
+    lappend slowest_sync_clk [get_bd_pins intercon_pre_ddr/ACLK]
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         lappend slowest_sync_clk [get_bd_pins "$group_name/Clk"]
-        set intercon_ddr_slave_clk "intercon_ddr/S[format "%02d" $i]_ACLK"
-        lappend slowest_sync_clk [get_bd_pins $intercon_ddr_slave_clk]
+        set intercon_pre_ddr_slave_clk "intercon_pre_ddr/S[format "%02d" $i]_ACLK"
+        lappend slowest_sync_clk [get_bd_pins $intercon_pre_ddr_slave_clk]
         set intercon_htdt_slave_clk "intercon_htdt/S[format "%02d" $i]_ACLK"
         lappend slowest_sync_clk [get_bd_pins $intercon_htdt_slave_clk]
         if {$total_hw_slave > 0} {
@@ -1163,9 +1172,11 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         set intercon_mutex_manager_slave_clk "intercon_mutex_manager/S[format "%02d" $i]_ACLK"
         lappend slowest_sync_clk [get_bd_pins $intercon_mutex_manager_slave_clk]
     }
-    lappend slowest_sync_clk [get_bd_pins "intercon_ddr/S[format "%02d" $numOfGroup]_ACLK"]
+    lappend slowest_sync_clk [get_bd_pins "intercon_pre_ddr/S[format "%02d" $numOfGroup]_ACLK"]
+    lappend slowest_sync_clk [get_bd_pins "intercon_pre_ddr/M00_ACLK"]
+    lappend slowest_sync_clk [get_bd_pins "intercon_ddr/S00_ACLK"]
     if {$total_hw_slave > 0} {
-        lappend slowest_sync_clk [get_bd_pins "intercon_ddr/S[format "%02d" [expr $numOfGroup+1]]_ACLK"]
+        lappend slowest_sync_clk [get_bd_pins "intercon_ddr/S01_ACLK"]
     }
     lappend slowest_sync_clk [get_bd_pins "intercon_htdt/S[format "%02d" $numOfGroup]_ACLK"]
     if {$total_hw_slave > 0} {
@@ -1179,6 +1190,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     set interconnect_aresetn ""
     lappend interconnect_aresetn [get_bd_pins rst_clk_wiz_1_zynq/interconnect_aresetn]
     lappend interconnect_aresetn [get_bd_pins intercon_ddr/ARESETN]
+    lappend interconnect_aresetn [get_bd_pins intercon_pre_ddr/ARESETN]
     lappend interconnect_aresetn [get_bd_pins intercon_htdt/ARESETN]
     if {$total_hw_slave > 0} {
         lappend interconnect_aresetn [get_bd_pins intercon_prc/ARESETN]        
@@ -1218,8 +1230,8 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         lappend peripheral_aresetn [get_bd_pins "$group_name/PERIPHERAL_ARESETN"]
-        set intercon_ddr_slave_rst "intercon_ddr/S[format "%02d" $i]_ARESETN"
-        lappend peripheral_aresetn [get_bd_pins $intercon_ddr_slave_rst]
+        set intercon_pre_ddr_slave_rst "intercon_pre_ddr/S[format "%02d" $i]_ARESETN"
+        lappend peripheral_aresetn [get_bd_pins $intercon_pre_ddr_slave_rst]
         set intercon_htdt_slave_rst "intercon_htdt/S[format "%02d" $i]_ARESETN"
         lappend peripheral_aresetn [get_bd_pins $intercon_htdt_slave_rst]
         if {$total_hw_slave > 0} {
@@ -1231,9 +1243,11 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name} {
         set intercon_mutex_manager_slave_rst "intercon_mutex_manager/S[format "%02d" $i]_ARESETN"
         lappend peripheral_aresetn [get_bd_pins $intercon_mutex_manager_slave_rst]
     }
-    lappend peripheral_aresetn [get_bd_pins "intercon_ddr/S[format "%02d" $numOfGroup]_ARESETN"]
+    lappend peripheral_aresetn [get_bd_pins "intercon_pre_ddr/S[format "%02d" $numOfGroup]_ARESETN"]
+    lappend peripheral_aresetn [get_bd_pins "intercon_pre_ddr/M00_ARESETN"]
+    lappend peripheral_aresetn [get_bd_pins "intercon_ddr/S00_ARESETN"]
     if {$total_hw_slave > 0} {
-        lappend peripheral_aresetn [get_bd_pins "intercon_ddr/S[format "%02d" [expr $numOfGroup+1]]_ARESETN"]
+        lappend peripheral_aresetn [get_bd_pins "intercon_ddr/S01_ARESETN"]
     }
     lappend peripheral_aresetn [get_bd_pins "intercon_htdt/S[format "%02d" $numOfGroup]_ARESETN"]
     if {$total_hw_slave > 0} {
