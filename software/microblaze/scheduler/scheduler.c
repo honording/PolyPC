@@ -107,9 +107,9 @@ int main() {
 		hapara_gen->org = ((cur_group_id.id0 * group_size.id0) << 16) | (cur_group_id.id1 * group_size.id1);
 		hapara_gen->numOfSlvs = num_of_slave;
 		hapara_gen->len = (group_size.id0 << 16) | (group_size.id1);
+		memcpy((char *)SCHE_SLAVE_ARGV_BASE, (char *)(&(hapara_thread_curr->argv[0])), ARGC);
 		if (hapara_thread_curr->elf_info.elf_magic != elf_info->elf_magic) {
 			elf_info->elf_magic = hapara_thread_curr->elf_info.elf_magic;
-			memcpy((char *)SCHE_SLAVE_ARGV_BASE, (char *)(&(hapara_thread_curr->argv[0])), ARGC);
 			if (num_of_mb_slave != 0) {
 				elf_info->main_addr = hapara_thread_curr->elf_info.main_addr;
 				elf_info->stack_addr = hapara_thread_curr->elf_info.stack_addr;
@@ -128,7 +128,6 @@ int main() {
 			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
 			// 	while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
 			// }
-
 			int pr_size = hapara_thread_curr->pr_info.each_size;
 			if (pr_size != -1) {
 				for (i = 0; i < num_of_hw_slave; i++) {

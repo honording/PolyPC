@@ -5,7 +5,7 @@
 
 #ifdef PRIVATE_MEM
 #include "string.h"
-#define N 128
+#define N 32
 int a_buffer[N];
 int b_buffer[N];
 int c_buffer[N];

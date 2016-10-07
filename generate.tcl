@@ -979,6 +979,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     #####################################################################
 
     # Create instance: processing_system7_0, and set properties
+    # CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {150}
     set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:* processing_system7_0 ]
     set_property -dict [ list \
         CONFIG.preset {ZC706} \
@@ -1560,6 +1561,9 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw existP
         opt_design
         place_design
         route_design
+        # Report
+        report_utilization -file "$proj_dir/reports/util.rpt"
+        # report_power -file $outputDir/post_route_power.rpt
         # Save checkpoints
         write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp"
         # Generate bitstream 
