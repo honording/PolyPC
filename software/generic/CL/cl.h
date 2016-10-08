@@ -41,14 +41,14 @@ typedef struct hapara_gen_struct {
 	volatile unsigned int isFinished;	//1: finish;
 } hapara_gen_t;
 
-void lock_mutex(int num) {
-	 while (((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg1 != 1)
-		 ((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg0 = 1;
+void lock_mutex(int num, int id) {
+	 while (((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg1 != id)
+		 ((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg0 = id;
 	((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg0 = 0;
 }
 
-void release_mutex(int num) {
-	((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg2 = 1;
+void release_mutex(int num, int id) {
+	((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg2 = id;
 	while (((struct hapara_mutex_pair *)SCHEDULER_MUTEX_MANAGER_BASE + num)->reg2 != 0);
 }
 

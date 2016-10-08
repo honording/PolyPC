@@ -31,16 +31,23 @@
 #define DEVMEM          "/dev/mem"
 
 #define BUF_LEN     32
-#define ID_NUM      (MEM_SIZE / BUF_LEN)
+// #define ID_NUM      (MEM_SIZE / BUF_LEN)
 #define TAP         5
 
 
 int main(int argc, char *argv[])
 {
+    if (argc != 3) {
+        printf("Input: %s [Number of Groups] [Input Data Size]\n", argv[0]);
+        return 0;
+    }
+
     reg_clr();
 
-    int MEM_SIZE = atoi(argv[1]) * 1024;
+    int MEM_SIZE = atoi(argv[2]) * 1024;
+    int num_group = atoi(argv[1]);
     printf("MEM_SIZE: %d\n", MEM_SIZE);
+    printf("Number of Groups: %d\n", num_group);
 
     int a_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (a_addr < 0) {
@@ -78,13 +85,15 @@ int main(int argc, char *argv[])
     printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
 
+    int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
+
     sp.argv[0] = a_addr;
     sp.argv[1] = b_addr;
     sp.argv[2] = c_addr;
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;
-    sp.group_num.id1 = 1;
+    sp.group_num.id1 = num_group;
     sp.elf_info.elf_magic = 'v';
     printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);

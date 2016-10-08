@@ -73,7 +73,7 @@ int main() {
 				.id0 = 0,
 				.id1 = 0,
 		};
-		lock_mutex(REG_MUTEX);
+		lock_mutex(REG_MUTEX, group_index + 1);
 		for_each_valid(hapara_thread, SCHEDULER_HTDT_BASE)
 		{
 			if (hapara_thread->isValid == 1 &&
@@ -83,7 +83,7 @@ int main() {
 			}
 		}
 		if (max_priority == -1) {
-			release_mutex(REG_MUTEX);
+			release_mutex(REG_MUTEX, group_index + 1);
 			continue;
 		}
 		hapara_thread_curr = hapara_thread_base + htdt_off;
@@ -91,7 +91,7 @@ int main() {
 		cur_group_id.id0 = hapara_thread_curr->cur_group_id.id0;
 		if (cur_group_id.id0 >= group_num.id0) {
 			hapara_thread_curr->isValid = 0;
-			release_mutex(REG_MUTEX);
+			release_mutex(REG_MUTEX, group_index + 1);
 			continue;
 		}
 		cur_group_id.id1 = hapara_thread_curr->cur_group_id.id1;
@@ -99,7 +99,7 @@ int main() {
 
 		hapara_thread_curr->cur_group_id.id0 += (cur_group_id.id1 + 1) / group_num.id1;
 		hapara_thread_curr->cur_group_id.id1 = (cur_group_id.id1 + 1) % group_num.id1;
-		release_mutex(REG_MUTEX);
+		release_mutex(REG_MUTEX, group_index + 1);
 		struct hapara_id_pair group_size = {
 				.id0 = hapara_thread_curr->group_size.id0,
 				.id1 = hapara_thread_curr->group_size.id1,
@@ -118,16 +118,6 @@ int main() {
 				Xil_Out32((SCHEDULER_DMA_BASE + 0x28), hapara_thread_curr->elf_info.DMA_size);	//bytes to transfer
 				// while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
 			}
-			// if (num_of_hw_slave != 0) {
-			// 	// unsigned int ddr_addr;
-   //  			// unsigned int num_pr_file;
-   //  			// unsigned int each_size;
-			// 	int pr_size = hapara_thread_curr->pr_info.each_size;
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x18), hapara_thread_curr->pr_info.ddr_addr + pr_offset * pr_size);	//source
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x20), SCHEDULER_ICAP);												//destination
-			// 	Xil_Out32((SCHEDULER_DMA_BASE + 0x28), pr_size * num_of_hw_slave);									//bytes to transfer
-			// 	while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);							//not idle: bit == 0	
-			// }
 			int pr_size = hapara_thread_curr->pr_info.each_size;
 			if (pr_size != -1) {
 				for (i = 0; i < num_of_hw_slave; i++) {
