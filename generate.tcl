@@ -1748,10 +1748,7 @@ set num_of_slave [lindex $argv 2]
 set max_hw_slave [lindex $argv 3]
 set current_dir [pwd]
 set maximum_hw 8
-if {$max_hw_slave > $maximum_hw} {
-    puts "ERROR: Number of hardware slaves:$max_hw_slave cannot exceed the maximum:$maximum_hw"
-    return 0
-}
+
 set hw_name "vector_add"
 set ip_repo_path "$current_dir/hardware/ip_repo"
 set resource_hls "$current_dir/resources/hls_project"
@@ -1763,6 +1760,13 @@ if {$argc >= 5} {
     set hw_name [lindex $argv 4]
     set existPR 0
 }
+
+if {$max_hw_slave > $maximum_hw && $existPR == 1} {
+
+    puts "ERROR: Number of hardware slaves:$max_hw_slave cannot exceed the maximum:$maximum_hw"
+    return 0
+}
+
 if {$argc >= 6} {
     set ip_repo_path [lindex $argv 5]
 }
