@@ -1,22 +1,50 @@
 #define SCHE_SLAVE_ARGV_BASE      0x30000020    //0xC0000080
 #define SCHE_SLAVE_TRIGGER_BASE   0x30000040    //0xC0000100
 
-void kernel(unsigned int arg0, unsigned int arg1, unsigned int arg2, 
-            unsigned int id0, unsigned int id1, 
-            int *data) {
-    unsigned int index0 = arg0 >> 2;
-    unsigned int index1 = arg1 >> 2;
-    unsigned int index2 = arg2 >> 2;
-    data[index2 + id0 + id1] = data[index0 + id0 + id1] - data[index1 + id0 + id1];
+#define PRIVATE_MEM
+
+#ifdef PRIVATE_MEM
+#include "string.h"
+#define N 32
+int a_buffer[N];
+int b_buffer[N];
+int c_buffer[N];
+#endif
+
+void kernel(unsigned int a_addr,
+            unsigned int b_addr,
+            unsigned int c_addr,
+            unsigned int id0,
+            unsigned int id1,
+            volatile int *data) {
+    unsigned int a = a_addr >> 2;
+    unsigned int b = b_addr >> 2;
+    unsigned int c = c_addr >> 2;
+#ifdef PRIVATE_MEM
+    unsigned int off = id1 * N;
+    int *ina = &(data[a + off]);
+    int *inb = &(data[b + off]);
+    int *inc = &(data[c + off]);
+    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * N);
+    memcpy((int *)b_buffer, (const int *)inb, sizeof(int) * N);
+    int i;
+    for (i = 0; i < N; i++) {
+#pragma HLS PIPELINE II=1
+        c_buffer[i] = a_buffer[i] - b_buffer[i];
+    }
+    memcpy((const int *)inc, (int *)c_buffer, sizeof(int) * N);
+#else
+    data[c + id1 + id0] = data[a + id1 + id0] - data[b + id1 + id0];
+#endif
 }
 
-void vector_sub(volatile unsigned int *id,
+void vector_add(volatile unsigned int *id,
                 volatile unsigned int *barrier,
                 volatile int *data,
                 char htID) {
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
-#pragma HLS INTERFACE m_axi port=data
+#pragma HLS INTERFACE m_axi depth=16 port=data
 #pragma HLS INTERFACE axis port=id
 #pragma HLS INTERFACE axis port=barrier
     unsigned int internal_id;
