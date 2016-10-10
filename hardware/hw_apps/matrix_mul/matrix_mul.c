@@ -29,7 +29,7 @@ void kernel(unsigned int a_addr,
     unsigned int b = b_addr >> 2;
     unsigned int c = c_addr >> 2;
 #ifdef PRIVATE_MEM
-    int i, j, m, n;
+    int i, j, jj, jjj, m, n;
     // This is global index;
     unsigned int raw_index = id0 * RAW_BUF_LENGTH;
     unsigned int col_index = id1 * RAW_BUF_LENGTH;
@@ -41,27 +41,26 @@ void kernel(unsigned int a_addr,
             unsigned int raw_off = (chunk_off + j) * raw_length;
             int *inb = &(data[b + raw_off + col_off]);
             memcpy((int *)b_buffer[j], (const int *)inb, sizeof(int) * RAW_BUF_LENGTH);
-        }
-        // Travel RAW of Matrix A
-        for (j = 0; j < RAW_BUF_LENGTH; j++) {
-            // Transfer Matrix A to a_buffer
-            unsigned int raw_off = (raw_index + j) * col_length;
-            unsigned int col_off = chunk_off;
-            int *ina = &(data[a + raw_off + col_off]);
-            memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * COL_BUF_LENGTH);
-            // Do the calculation
-            // Travel COL of Matrix B
-            for (m = 0; m < RAW_BUF_LENGTH; m++) {
-#pragma HLS PIPELINE
-                for (n = 0; n < COL_BUF_LENGTH; n++) {
-                    c_buffer[j][m] += a_buffer[n] * b_buffer[n][m];
+            if (j == COL_BUF_LENGTH - 1) {
+                // Travel RAW of Matrix A
+                for (jj = 0; jj < RAW_BUF_LENGTH; jj++) {
+                    // Transfer Matrix A to a_buffer
+                    unsigned int raw_off = (raw_index + jj) * col_length;
+                    unsigned int col_off = chunk_off;
+                    int *ina = &(data[a + raw_off + col_off]);
+                    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * COL_BUF_LENGTH);
+                    // Do the calculation
+                    // Travel COL of Matrix B
+                    for (m = 0; m < RAW_BUF_LENGTH; m++) {
+                        for (n = 0; n < COL_BUF_LENGTH; n++) {
+                            c_buffer[jj][m] += a_buffer[n] * b_buffer[n][m];
+                        }
+                    }
                 }
-            }
-        }
-        if (i == col_buf_num - 1) {
-            for (j = 0; j < RAW_BUF_LENGTH; j++) {
-                int *inc = &(data[c + (raw_index + j) * RAW_BUF_LENGTH + col_index]);
-                memcpy((int *)inc, (const int *)c_buffer[i], sizeof(int) * RAW_BUF_LENGTH);
+                for (jjj = 0; jjj < RAW_BUF_LENGTH; jjj++) {
+                    int *inc = &(data[c + (raw_index + jjj) * RAW_BUF_LENGTH + col_index]);
+                    memcpy((int *)inc, (const int *)c_buffer[i], sizeof(int) * RAW_BUF_LENGTH);
+                }              
             }
         }
     }
