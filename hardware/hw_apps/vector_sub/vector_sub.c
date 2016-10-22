@@ -38,7 +38,7 @@ void kernel(unsigned int a_addr,
 #endif
 }
 
-void vector_add(volatile unsigned int *id,
+void vector_sub(volatile unsigned int *id,
                 volatile unsigned int *barrier,
                 volatile int *data,
                 char htID) {
