@@ -979,10 +979,11 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     #####################################################################
 
     # Create instance: processing_system7_0, and set properties
-    # CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {150}
+    # CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100}
     set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:* processing_system7_0 ]
     set_property -dict [ list \
         CONFIG.preset {ZC706} \
+        CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
     ] $processing_system7_0
 
     # Create instance: intercon_zynq, and set properties

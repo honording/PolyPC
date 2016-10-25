@@ -46,33 +46,33 @@ int main(int argc, char *argv[])
 
     int MEM_SIZE = atoi(argv[2]) * 1024;
     int num_group = atoi(argv[1]);
-    printf("MEM_SIZE: %d\n", MEM_SIZE);
-    printf("Number of Groups: %d\n", num_group);
+    // printf("MEM_SIZE: %d\n", MEM_SIZE);
+    // printf("Number of Groups: %d\n", num_group);
 
     int a_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (a_addr < 0) {
-        printf("apptest: ddr_malloc error a\n");
+        // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
     int b_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (b_addr < 0) {
-        printf("apptest: ddr_malloc error b\n");
+        // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
     int c_addr = ddr_malloc(MEM_SIZE * sizeof(int));
     if (c_addr < 0) {
-        printf("apptest: ddr_malloc error c\n");
+        // printf("apptest: ddr_malloc error c\n");
         return 0;
     }
-    printf("a addr:0x%08X\n", a_addr);
-    printf("b addr:0x%08X\n", b_addr);
-    printf("c addr:0x%08X\n", c_addr);
+    // printf("a addr:0x%08X\n", a_addr);
+    // printf("b addr:0x%08X\n", b_addr);
+    // printf("c addr:0x%08X\n", c_addr);
     int devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
-        printf("apptest: devmem open failed.\n");
+        // printf("apptest: devmem open failed.\n");
         return -1;
     }
-    printf("begin to map a, b, and c.\n");
+    // printf("begin to map a, b, and c.\n");
     int *a = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
     int *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
     int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
         b[i] = 0;
         c[i] = 0;
     }
-    printf("Initialize finished.\n");
+    // printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
 
     int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
@@ -95,30 +95,30 @@ int main(int argc, char *argv[])
     sp.group_num.id0 = 1;
     sp.group_num.id1 = num_group;
     sp.elf_info.elf_magic = 'v';
-    printf("apptest: begin to elf_loader.\n");
+    // printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
-        printf("apptest: elf_loader error\n");
+        // printf("apptest: elf_loader error\n");
         return 0;
     }
 
-    printf("apptest: begin to load PR bitstream into memory.\n");
+    // printf("apptest: begin to load PR bitstream into memory.\n");
     ret = pr_loader(PR_FILE_PATH, &sp.pr_info);
     if (ret < 0) {
-        printf("apptes: pr_loader error\n");
+        // printf("apptes: pr_loader error\n");
         return 0;
     }
 
     // if (argc == 2) {
-        printf("Disable MB Pr flow.\n");
+        // printf("Disable MB Pr flow.\n");
         disable_mb_pr(&sp.pr_info);
     // }
 
 
-    print_struct(&sp);
+    // print_struct(&sp);
     devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
-        printf("apptest: devmem open failed.\n");
+        // printf("apptest: devmem open failed.\n");
         return -1;
     }    
     volatile struct hapara_thread_struct *htdt = mmap(NULL, 
@@ -133,15 +133,15 @@ int main(int argc, char *argv[])
     struct timeval t1, t2;
     double timeuse;
 
-    printf("Add htdt struct...\n");
+    // printf("Add htdt struct...\n");
     ret = reg_add(&sp);
     if (ret == -1) {
-        printf("apptest: Reg add error 0.\n");
+        // printf("apptest: Reg add error 0.\n");
         return 0;
     }
 
     // if (htdt[ret].elf_info.elf_magic != 'v') {
-    //     printf("HDDT addr error.\n");
+    //     // printf("HDDT addr error.\n");
     //     return 0;
     // }
     // print_struct(&htdt[ret]);
@@ -151,64 +151,65 @@ int main(int argc, char *argv[])
     gettimeofday(&t2, NULL);
     timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) / 1000000.0;
     
-    printf("Slaves terminated: %f.\n", timeuse);
-    printf("apptest: add location:%d\n", ret);
-    print_struct(&htdt[ret]);
+    // printf("Slaves terminated: %f.\n", timeuse);
+    printf("%f\n", timeuse);
+    // printf("apptest: add location:%d\n", ret);
+    // print_struct(&htdt[ret]);
 
     ret = reg_del(ret);
     if (ret == -1) {
-        printf("apptest: Reg del error 0.\n");
+        // printf("apptest: Reg del error 0.\n");
         return 0;
     } 
     int error = 0;
     int filter[TAP] = {3,2,1,2,3};
     int j;
-    for (i = TAP - 1; i < MEM_SIZE; i++) {
-        int sum = 0;
-        for (j = 0; j < TAP; j++) {
-            sum += filter[j] * a[i + (j - TAP + 1)];
-        }
-        if (b[i] != sum) {
-            // printf("%d:%d\n", i, b[i]);
-            error++;
-            // if (error > 4) {
-            //     break;
-            // }
-        }
-    }
+    // for (i = TAP - 1; i < MEM_SIZE; i++) {
+    //     int sum = 0;
+    //     for (j = 0; j < TAP; j++) {
+    //         sum += filter[j] * a[i + (j - TAP + 1)];
+    //     }
+    //     if (b[i] != sum) {
+    //         // // printf("%d:%d\n", i, b[i]);
+    //         error++;
+    //         // if (error > 4) {
+    //         //     break;
+    //         // }
+    //     }
+    // }
     munmap(htdt, 1024);
     munmap(a, MEM_SIZE * sizeof(int));
     munmap(b, MEM_SIZE * sizeof(int));
     munmap(c, MEM_SIZE * sizeof(int));
     close(devmemfd);
 
-    printf("Number of Error: %d\n", error);
+    // printf("Number of Error: %d\n", error);
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
-        printf("apptest: ddr_free error: elf.\n");
+        // printf("apptest: ddr_free error: elf.\n");
         return 0;
     }
     ret = ddr_free(sp.pr_info.ddr_addr);
     if (ret < 0) {
-        printf("apptest: ddr_free error: pr.\n");
+        // printf("apptest: ddr_free error: pr.\n");
         return 0;
     }
     ret = ddr_free(a_addr);
     if (ret < 0) {
-        printf("apptest: ddr_free error: a.\n");
+        // printf("apptest: ddr_free error: a.\n");
         return 0;
     }   
     ret = ddr_free(b_addr);
     if (ret < 0) {
-        printf("apptest: ddr_free error: b.\n");
+        // printf("apptest: ddr_free error: b.\n");
         return 0;
     }  
     ret = ddr_free(c_addr);
     if (ret < 0) {
-        printf("apptest: ddr_free error: c.\n");
+        // printf("apptest: ddr_free error: c.\n");
         return 0;
     }   
-    printf("apptest end!\n");
+    // printf("apptest end!\n");
 	return 0;
 }
 
