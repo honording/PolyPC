@@ -33,6 +33,6 @@ struct hapara_ddr_malloc_list
     struct list_head list;
 };
 
- LIST_HEAD(dummy);
+LIST_HEAD(dummy);
 
 #endif

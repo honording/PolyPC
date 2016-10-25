@@ -5,6 +5,8 @@
 #define ARM_HTDT_BASE                       0x40000000
 #define ARM_DDR_BASE                        0x60000000
 #define ARM_ICAP                            0x42000000
+#define ARM_TIMER_BASE                      0x42800000
+#define ARM_TRACE_BASE                      0x44000000
 
 #define DMA_LOCAL_MEM_BASE                  0xC0000000
 #define DMA_INST_MEM_BASE                   0xC2000000
@@ -16,6 +18,8 @@
 #define SCHEDULER_LOCAL_MEM_BASE            0xC0000000
 #define SCHEDULER_ID_GENERATOR_BASE         0x44A00000
 #define SCHEDULER_ICAP						0x42000000
+#define SCHEDULER_TIMER_BASE                0x42800000
+#define SCHEDULER_TRACE_BASE                0x44000000
 
 #define SLAVE_LOCAL_MEM_BASE                0xC0000000
 #define SLAVE_INST_MEM_BASE                 0x00008000

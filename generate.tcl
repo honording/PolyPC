@@ -302,15 +302,17 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     }
     #1
     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M00_AXI_data_ddr
-    #3 intercon_mutex_manager
+    #2 intercon_mutex_manager
     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M00_AXI_sche
-    #4 intercon_htdt
+    #3 intercon_htdt
     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M01_AXI_sche
-    #5 intercon_mdm
+    #4 intercon_mdm
     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M02_AXI_sche
-    #4 intercon_prc
+    #5 intercon_timer
+    create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M03_AXI_sche
+    #6 intercon_prc
     if {$total_hw_slave > 0 && $existPR == 1} {
-        create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M03_AXI_sche
+        create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M04_AXI_sche
     }
 
     # Create pins
@@ -416,12 +418,12 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     if {$total_hw_slave > 0 && $existPR == 1} {
         set scheduler_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* scheduler_axi_periph ]
         set_property -dict [ list \
-            CONFIG.NUM_MI {7} \
+            CONFIG.NUM_MI {8} \
         ] $scheduler_axi_periph        
     } else {
         set scheduler_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* scheduler_axi_periph ]
         set_property -dict [ list \
-            CONFIG.NUM_MI {6} \
+            CONFIG.NUM_MI {7} \
         ] $scheduler_axi_periph
     }
 
@@ -524,8 +526,9 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     connect_bd_intf_net [get_bd_intf_pins M00_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M03_AXI]
     connect_bd_intf_net [get_bd_intf_pins M01_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M04_AXI]
     connect_bd_intf_net [get_bd_intf_pins M02_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M05_AXI]
+    connect_bd_intf_net [get_bd_intf_pins M03_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M06_AXI]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        connect_bd_intf_net [get_bd_intf_pins M03_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M06_AXI]
+        connect_bd_intf_net [get_bd_intf_pins M04_AXI_sche] [get_bd_intf_pins scheduler_axi_periph/M07_AXI]
     }
     
 
@@ -663,8 +666,9 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     lappend clk [get_bd_pins scheduler_axi_periph/M03_ACLK]
     lappend clk [get_bd_pins scheduler_axi_periph/M04_ACLK]
     lappend clk [get_bd_pins scheduler_axi_periph/M05_ACLK]
+    lappend clk [get_bd_pins scheduler_axi_periph/M06_ACLK]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        lappend clk [get_bd_pins scheduler_axi_periph/M06_ACLK]
+        lappend clk [get_bd_pins scheduler_axi_periph/M07_ACLK]
     }
     lappend clk [get_bd_pins scheduler_axi_periph/S00_ACLK]
     lappend clk [get_bd_pins scheduler_local_memory/LMB_Clk]
@@ -678,8 +682,9 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     lappend rst [get_bd_pins scheduler_axi_periph/M03_ARESETN]
     lappend rst [get_bd_pins scheduler_axi_periph/M04_ARESETN]
     lappend rst [get_bd_pins scheduler_axi_periph/M05_ARESETN]
+    lappend rst [get_bd_pins scheduler_axi_periph/M06_ARESETN]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        lappend rst [get_bd_pins scheduler_axi_periph/M06_ARESETN]
+        lappend rst [get_bd_pins scheduler_axi_periph/M07_ARESETN]
     }
     lappend rst [get_bd_pins scheduler_axi_periph/S00_ARESETN]
     for {set i 0} {$i < $numOfSlave} {incr i} {
@@ -838,6 +843,36 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         CONFIG.NUM_SI [expr "1+$numOfGroup"] \
     ] $intercon_htdt
 
+    # Create instance: axi_timer_0, and set properties
+    set axi_timer_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_timer:2.0 axi_timer_0 ]
+        set_property -dict [ list \
+        CONFIG.enable_timer2 {0} \
+    ] $axi_timer_0
+
+    # Create instance: intercon_timer, and set properties
+    set intercon_timer [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_timer ]
+    set_property -dict [ list \
+        CONFIG.NUM_MI {2} \
+        CONFIG.NUM_SI [expr "1+$numOfGroup"] \
+    ] $intercon_timer
+
+    # Create instance: trace_ctrl, and set properties
+    set trace_ctrl [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:* trace_ctrl ]
+    set_property -dict [ list \
+        CONFIG.SINGLE_PORT_BRAM {1} \
+    ] $trace_ctrl
+
+    # Create instance: trace_ctrl_bram, and set properties
+    set trace_ctrl_bram [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:* trace_ctrl_bram ]
+    set_property -dict [ list \
+        CONFIG.Enable_B {Always_Enabled} \
+        CONFIG.Memory_Type {Single_Port_RAM} \
+        CONFIG.Port_B_Clock {0} \
+        CONFIG.Port_B_Enable_Rate {0} \
+        CONFIG.Port_B_Write_Rate {0} \
+        CONFIG.Use_RSTB_Pin {false} \
+    ] $trace_ctrl_bram
+
     if {$total_hw_slave > 0 && $existPR == 1} {
         # Create instance: intercon_prc, and set properties
         set intercon_prc [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_prc ]
@@ -990,12 +1025,12 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     if {$total_hw_slave > 0 && $existPR == 1} {
         set intercon_zynq [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_zynq ]
         set_property -dict [ list \
-            CONFIG.NUM_MI {4} \
+            CONFIG.NUM_MI {5} \
         ] $intercon_zynq        
     } else {
         set intercon_zynq [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_zynq ]
         set_property -dict [ list \
-            CONFIG.NUM_MI {3} \
+            CONFIG.NUM_MI {4} \
         ] $intercon_zynq              
     }
 
@@ -1070,24 +1105,32 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     connect_bd_intf_net [get_bd_intf_pins mutex_manager_ctrl/BRAM_PORTA] [get_bd_intf_pins mutex_manager_ctrl_bram/BRAM_PORTA]
     connect_bd_intf_net [get_bd_intf_pins htdt_ctrl/BRAM_PORTA] [get_bd_intf_pins htdt_ctrl_bram/BRAM_PORTA]
     connect_bd_intf_net [get_bd_intf_pins htdt_ctrl/S_AXI] [get_bd_intf_pins intercon_htdt/M00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins trace_ctrl/BRAM_PORTA] [get_bd_intf_pins trace_ctrl_bram/BRAM_PORTA]
+    connect_bd_intf_net [get_bd_intf_pins trace_ctrl/S_AXI] [get_bd_intf_pins intercon_timer/M00_AXI]    
+
+    connect_bd_intf_net [get_bd_intf_pins axi_timer_0/S_AXI] [get_bd_intf_pins intercon_timer/M01_AXI]
+
     for {set i 0} {$i < $numOfGroup} {incr i} {
         set group_name "group$i"
         set intercon_mutex_manager_slave_name "intercon_mutex_manager/S[format "%02d" $i]_AXI"
         set intercon_htdt_slave_name "intercon_htdt/S[format "%02d" $i]_AXI"
+        set intercon_timer_slave_name "intercon_timer/S[format "%02d" $i]_AXI"
         if {$total_hw_slave > 0 && $existPR == 1} {
             set intercon_prc_slave_name "intercon_prc/S[format "%02d" $i]_AXI"
         }
         connect_bd_intf_net [get_bd_intf_pins "$group_name/M00_AXI_sche"] [get_bd_intf_pins $intercon_mutex_manager_slave_name]
         connect_bd_intf_net [get_bd_intf_pins "$group_name/M01_AXI_sche"] [get_bd_intf_pins $intercon_htdt_slave_name]
+        connect_bd_intf_net [get_bd_intf_pins "$group_name/M03_AXI_sche"] [get_bd_intf_pins $intercon_timer_slave_name]
         if {$total_hw_slave > 0 && $existPR == 1} {
-            connect_bd_intf_net [get_bd_intf_pins "$group_name/M03_AXI_sche"] [get_bd_intf_pins $intercon_prc_slave_name]
+            connect_bd_intf_net [get_bd_intf_pins "$group_name/M04_AXI_sche"] [get_bd_intf_pins $intercon_prc_slave_name]
         }
     }
     connect_bd_intf_net [get_bd_intf_pins "intercon_mutex_manager/S[format "%02d" $numOfGroup]_AXI"] [get_bd_intf_pins intercon_zynq/M01_AXI]
     connect_bd_intf_net [get_bd_intf_pins "intercon_mutex_manager/S[format "%02d" [expr "$numOfGroup+1"]]_AXI"] [get_bd_intf_pins mutex_manager/M_AXI_DP]
     connect_bd_intf_net [get_bd_intf_pins "intercon_htdt/S[format "%02d" $numOfGroup]_AXI"] [get_bd_intf_pins intercon_zynq/M02_AXI]
+    connect_bd_intf_net [get_bd_intf_pins "intercon_timer/S[format "%02d" $numOfGroup]_AXI"] [get_bd_intf_pins intercon_zynq/M03_AXI]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        connect_bd_intf_net [get_bd_intf_pins "intercon_prc/S[format "%02d" $numOfGroup]_AXI"] [get_bd_intf_pins intercon_zynq/M03_AXI]
+        connect_bd_intf_net [get_bd_intf_pins "intercon_prc/S[format "%02d" $numOfGroup]_AXI"] [get_bd_intf_pins intercon_zynq/M04_AXI]
     }
 
     # Connect mutex_manager related local memory bus
@@ -1152,13 +1195,16 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     lappend slowest_sync_clk [get_bd_pins mutex_manager_ctrl/s_axi_aclk]
     lappend slowest_sync_clk [get_bd_pins mutex_manager_local_memory/LMB_Clk]
     lappend slowest_sync_clk [get_bd_pins htdt_ctrl/s_axi_aclk]
+    lappend slowest_sync_clk [get_bd_pins trace_ctrl/s_axi_aclk]
+    lappend slowest_sync_clk [get_bd_pins axi_timer_0/s_axi_aclk]
     lappend slowest_sync_clk [get_bd_pins intercon_zynq/ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_zynq/S00_ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_zynq/M00_ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_zynq/M01_ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_zynq/M02_ACLK]
+    lappend slowest_sync_clk [get_bd_pins intercon_zynq/M03_ACLK]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        lappend slowest_sync_clk [get_bd_pins intercon_zynq/M03_ACLK]
+        lappend slowest_sync_clk [get_bd_pins intercon_zynq/M04_ACLK]
     }
     lappend slowest_sync_clk [get_bd_pins intercon_mutex_manager/ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_mutex_manager/M00_ACLK]
@@ -1166,6 +1212,9 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     lappend slowest_sync_clk [get_bd_pins intercon_mdm/M00_ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_htdt/ACLK]
     lappend slowest_sync_clk [get_bd_pins intercon_htdt/M00_ACLK]
+    lappend slowest_sync_clk [get_bd_pins intercon_timer/ACLK]
+    lappend slowest_sync_clk [get_bd_pins intercon_timer/M00_ACLK]
+    lappend slowest_sync_clk [get_bd_pins intercon_timer/M01_ACLK]
     if {$total_hw_slave > 0 && $existPR == 1} {
         lappend slowest_sync_clk [get_bd_pins intercon_prc/ACLK]
         lappend slowest_sync_clk [get_bd_pins intercon_prc/M00_ACLK]        
@@ -1179,6 +1228,8 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         lappend slowest_sync_clk [get_bd_pins $intercon_pre_ddr_slave_clk]
         set intercon_htdt_slave_clk "intercon_htdt/S[format "%02d" $i]_ACLK"
         lappend slowest_sync_clk [get_bd_pins $intercon_htdt_slave_clk]
+        set intercon_timer_slave_clk "intercon_timer/S[format "%02d" $i]_ACLK"
+        lappend slowest_sync_clk [get_bd_pins $intercon_timer_slave_clk]
         if {$total_hw_slave > 0 && $existPR == 1} {
             set intercon_prc_slave_clk "intercon_prc/S[format "%02d" $i]_ACLK"
             lappend slowest_sync_clk [get_bd_pins $intercon_prc_slave_clk]            
@@ -1195,6 +1246,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         lappend slowest_sync_clk [get_bd_pins "intercon_ddr/S01_ACLK"]
     }
     lappend slowest_sync_clk [get_bd_pins "intercon_htdt/S[format "%02d" $numOfGroup]_ACLK"]
+    lappend slowest_sync_clk [get_bd_pins "intercon_timer/S[format "%02d" $numOfGroup]_ACLK"]
     if {$total_hw_slave > 0 && $existPR == 1} {
         lappend slowest_sync_clk [get_bd_pins "intercon_prc/S[format "%02d" $numOfGroup]_ACLK"]        
     }
@@ -1208,6 +1260,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     lappend interconnect_aresetn [get_bd_pins intercon_ddr/ARESETN]
     lappend interconnect_aresetn [get_bd_pins intercon_pre_ddr/ARESETN]
     lappend interconnect_aresetn [get_bd_pins intercon_htdt/ARESETN]
+    lappend interconnect_aresetn [get_bd_pins intercon_timer/ARESETN]
     if {$total_hw_slave > 0 && $existPR == 1} {
         lappend interconnect_aresetn [get_bd_pins intercon_prc/ARESETN]        
     }
@@ -1230,16 +1283,21 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     lappend peripheral_aresetn [get_bd_pins mutex_manager_ctrl/s_axi_aresetn]
     lappend peripheral_aresetn [get_bd_pins mdm/S_AXI_ARESETN]
     lappend peripheral_aresetn [get_bd_pins htdt_ctrl/s_axi_aresetn]
+    lappend peripheral_aresetn [get_bd_pins trace_ctrl/s_axi_aresetn]
+    lappend peripheral_aresetn [get_bd_pins axi_timer_0/s_axi_aresetn]
     lappend peripheral_aresetn [get_bd_pins intercon_zynq/S00_ARESETN]
     lappend peripheral_aresetn [get_bd_pins intercon_zynq/M00_ARESETN]
     lappend peripheral_aresetn [get_bd_pins intercon_zynq/M01_ARESETN]
     lappend peripheral_aresetn [get_bd_pins intercon_zynq/M02_ARESETN]
+    lappend peripheral_aresetn [get_bd_pins intercon_zynq/M03_ARESETN]
     if {$total_hw_slave > 0 && $existPR == 1} {
-        lappend peripheral_aresetn [get_bd_pins intercon_zynq/M03_ARESETN]
+        lappend peripheral_aresetn [get_bd_pins intercon_zynq/M04_ARESETN]
     }
     lappend peripheral_aresetn [get_bd_pins intercon_mutex_manager/M00_ARESETN]
     lappend peripheral_aresetn [get_bd_pins intercon_mdm/M00_ARESETN]
     lappend peripheral_aresetn [get_bd_pins intercon_htdt/M00_ARESETN]
+    lappend peripheral_aresetn [get_bd_pins intercon_timer/M00_ARESETN]
+    lappend peripheral_aresetn [get_bd_pins intercon_timer/M01_ARESETN]
     if {$total_hw_slave > 0 && $existPR == 1} {
         lappend peripheral_aresetn [get_bd_pins intercon_prc/M00_ARESETN]        
     }
@@ -1250,6 +1308,8 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         lappend peripheral_aresetn [get_bd_pins $intercon_pre_ddr_slave_rst]
         set intercon_htdt_slave_rst "intercon_htdt/S[format "%02d" $i]_ARESETN"
         lappend peripheral_aresetn [get_bd_pins $intercon_htdt_slave_rst]
+        set intercon_timer_slave_rst "intercon_timer/S[format "%02d" $i]_ARESETN"
+        lappend peripheral_aresetn [get_bd_pins $intercon_timer_slave_rst]
         if {$total_hw_slave > 0 && $existPR == 1} {
             set intercon_prc_slave_rst "intercon_prc/S[format "%02d" $i]_ARESETN"
             lappend peripheral_aresetn [get_bd_pins $intercon_prc_slave_rst]            
@@ -1266,6 +1326,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         lappend peripheral_aresetn [get_bd_pins "intercon_ddr/S01_ARESETN"]
     }
     lappend peripheral_aresetn [get_bd_pins "intercon_htdt/S[format "%02d" $numOfGroup]_ARESETN"]
+    lappend peripheral_aresetn [get_bd_pins "intercon_timer/S[format "%02d" $numOfGroup]_ARESETN"]
     if {$total_hw_slave > 0 && $existPR == 1} {
         lappend peripheral_aresetn [get_bd_pins "intercon_prc/S[format "%02d" $numOfGroup]_ARESETN"]        
     }
@@ -1281,6 +1342,8 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     set local_mem_base      "0xC0000000"
     set dma_elf_base        "0xC2000000"
     set prc_base            "0x42000000"
+    set timer_base          "0x42800000"
+    set trace_base          "0x44000000"
 
     set sch_dma_base        "0x44A10000"
     set sch_gen_base        "0x44A00000"
@@ -1294,6 +1357,9 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
     create_bd_addr_seg -range 0x8000 -offset $htdt_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs htdt_ctrl/S_AXI/Mem0] SEG_htdt_ctrl_Mem0
     create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
     create_bd_addr_seg -range 0x8000 -offset $mutex_manager_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs mutex_manager_ctrl/S_AXI/Mem0] SEG_mutex_manager_ctrl_Mem0
+    create_bd_addr_seg -range 0x10000 -offset $timer_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_timer_0/S_AXI/Reg] SEG_axi_timer_0_Reg
+    create_bd_addr_seg -range 0x10000 -offset $trace_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs trace_ctrl/S_AXI/Mem0] SEG_trace_ctrl_Mem0
+
     if {$total_hw_slave > 0 && $existPR == 1} {
         create_bd_addr_seg -range 0x10000 -offset $prc_base [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs prc_0/s_axi_reg/Reg] SEG_prc_0_Reg
     }
@@ -1320,6 +1386,9 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         create_bd_addr_seg -range 0x1000 -offset $sch_mdm_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mdm/S_AXI/Reg] SEG_mdm_Reg
         create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
         create_bd_addr_seg -range 0x8000 -offset $mutex_manager_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs mutex_manager_ctrl/S_AXI/Mem0] SEG_mutex_manager_ctrl_Mem0
+        create_bd_addr_seg -range 0x10000 -offset $timer_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs axi_timer_0/S_AXI/Reg] SEG_axi_timer_0_Reg
+        create_bd_addr_seg -range 0x10000 -offset $trace_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs trace_ctrl/S_AXI/Mem0] SEG_trace_ctrl_Mem0
+
         if {$total_hw_slave > 0 && $existPR == 1} {
             create_bd_addr_seg -range 0x10000 -offset $prc_base [get_bd_addr_spaces "$group_name/scheduler/Data"] [get_bd_addr_segs prc_0/s_axi_reg/Reg] SEG_prc_0_Reg
         }
