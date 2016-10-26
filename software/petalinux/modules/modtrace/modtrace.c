@@ -23,12 +23,6 @@ unsigned int off_array[MAX_TRACE_SLOT];
 unsigned int total_num = 0;
 unsigned int total_off = 0;
 
-static const struct file_operations trace_fops = {
-    .owner = THIS_MODULE,
-    .open = trace_open,
-    .release = trace_release,
-    .unlocked_ioctl = trace_ioctl,
-};
 
 static int trace_open(struct inode *inode, struct file *filp)
 {
@@ -50,6 +44,13 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     struct hapara_timer_struct *timer = 
         (struct hapara_timer_struct *)(dev->mmio_timer);
     unsigned int *trace_ram = (unsigned int *)(dev->mmio_trace);
+
+    unsigned int num_group;
+    unsigned int off;
+    unsigned int conf;
+    unsigned int time;
+    unsigned int *user_buf = NULL;
+
     switch (cmd) {
         case HTRACE_TRACE_CLEAR:
             total_num = 0;
@@ -57,7 +58,6 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             ret = 0;
             break;
         case HTRACE_TRACE_ALLOC:
-            unsigned int num_group;
             if (get_user(num_group, (unsigned int *)arg)) {
                 return -EINVAL;
             }             
@@ -73,14 +73,13 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             return total_off;
             break;
         case HTRACE_TRACE_GETTOTALCON:
-            unsigned int *user_buf = (unsigned int *)arg
+            user_buf = (unsigned int *)arg;
             if (copy_to_user(user_buf, trace_ram, total_off)) {
                 return -EFAULT;
             }
             ret = 0;
             break;
         case HTRACE_TRACE_GETEACHSIZE:
-            unsigned int off;
             if (get_user(off, (unsigned int *)arg)) {
                 return -EINVAL;
             }
@@ -88,24 +87,24 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             break;
         case HTRACE_TIMER_RESET:
             timer->tlr  = 0;
-            unsigned int conf = timer->tcsr;
+            conf = timer->tcsr;
             timer->tcsr = conf | XTC_CSR_LOAD_MASK;
             timer->tcsr = conf;
             ret = 0;
             break;
         case HTRACE_TIMER_START:
-            unsigned int conf = timer->tcsr;
+            conf = timer->tcsr;
             timer->tcsr = conf | XTC_CSR_ENABLE_TMR_MASK;
             ret = 0;
             break;
         case HTRACE_TIMER_STOP:
-            unsigned int conf = timer->tcsr;
+            conf = timer->tcsr;
             conf &= ~(XTC_CSR_ENABLE_TMR_MASK);
             timer->tcsr = conf;
             ret = 0;
             break;
         case HTRACE_TIMER_GETTIME:
-            unsigned int time = timer->tcr;
+            time = timer->tcr;
             if (put_user(time, (unsigned int *)arg)) {
                 return -EINVAL;
             }            
@@ -117,6 +116,13 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
     }
     return ret;
 }
+
+static const struct file_operations trace_fops = {
+    .owner = THIS_MODULE,
+    .open = trace_open,
+    .release = trace_release,
+    .unlocked_ioctl = trace_ioctl,
+};
 
 static int __init trace_init(void)
 {

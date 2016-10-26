@@ -6,6 +6,15 @@
 
 #define FILEPATH    "/dev/hapara_trace"
 
-
+void trace_clr();
+int trace_alloc(struct hapara_id_pair id);
+int trace_gettotalnum();
+int trace_gettotalsize();
+int trace_gettotalcon(unsigned int *buf);
+int trace_geteachsize(unsigned int index);
+void timer_reset();
+void timer_start();
+void timer_stop();
+void timer_gettime(unsigned int *time);
 
 #endif

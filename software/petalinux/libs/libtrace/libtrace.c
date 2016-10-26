@@ -11,7 +11,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#include <libtrace.h>
+#include "libtrace.h"
 
 void trace_clr()
 {

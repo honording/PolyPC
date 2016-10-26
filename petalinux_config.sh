@@ -48,6 +48,8 @@ cp -r $repo_dir/libs/* $petalinux_dir/components/libs/
 cp -r $repo_dir/modules/* $petalinux_dir/components/modules/
 cp -r $repo_dir/../generic/* $petalinux_dir/components/generic/
 
+echo "Copy Finished."
+
 # Copy psinit files
 cp $petalinux_dir/subsystems/linux/hw-description/psinit/* $petalinux_dir/subsystems/linux/hw-description/
 

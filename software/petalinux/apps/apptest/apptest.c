@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     }
 
     reg_clr();
+    trace_clr();
 
     int MEM_SIZE = atoi(argv[2]) * 1024;
     int num_group = atoi(argv[1]);
@@ -95,6 +96,8 @@ int main(int argc, char *argv[])
     sp.group_num.id0 = 1;
     sp.group_num.id1 = num_group;
     sp.elf_info.elf_magic = 'v';
+    // Allocate trace space
+    int trace_off = trace_alloc(sp.group_num);
     // printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
@@ -133,6 +136,8 @@ int main(int argc, char *argv[])
     struct timeval t1, t2;
     double timeuse;
 
+    timer_reset();
+    timer_start();
     // printf("Add htdt struct...\n");
     ret = reg_add(&sp);
     if (ret == -1) {
@@ -145,6 +150,8 @@ int main(int argc, char *argv[])
     //     return 0;
     // }
     // print_struct(&htdt[ret]);
+    unsigned int timer0;
+    timer_gettime(&timer0);
 
     gettimeofday(&t1, NULL);
     while (htdt[ret].isValid != 0);
