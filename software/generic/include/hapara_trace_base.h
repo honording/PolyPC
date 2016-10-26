@@ -8,5 +8,10 @@
 #define XTC_CSR_LOAD_MASK           0x00000020
 #define XTC_CSR_ENABLE_TMR_MASK     0x00000080
 
+struct hapara_timer_struct {
+    volatile unsigned int tcsr;
+    volatile unsigned int tlr;
+    volatile unsigned int tcr;
+};
 
 #endif
