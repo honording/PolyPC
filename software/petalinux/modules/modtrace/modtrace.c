@@ -62,7 +62,7 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
                 return -EINVAL;
             }             
             total_num++;
-            total_off += num_group * 12;
+            total_off += num_group * sizeof(struct hapara_trace_struct);
             off_array[total_num] = total_off; 
             return off_array[total_num - 1];
             break;
@@ -85,16 +85,25 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             }
             return off_array[off + 1] - off_array[off];
             break;
+        case HTRACE_TRACE_GETEACHOFF:
+            if (get_user(off, (unsigned int *)arg)) {
+                return -EINVAL;
+            }
+            return off_array[off];
+            break;
         case HTRACE_TIMER_RESET:
             timer->tlr  = 0;
-            conf = timer->tcsr;
-            timer->tcsr = conf | XTC_CSR_LOAD_MASK;
-            timer->tcsr = conf;
+            // conf = timer->tcsr;
+            // timer->tcsr = conf | XTC_CSR_LOAD_MASK;
+            // timer->tcsr = conf;
+            timer->tcsr = 0x120;
+            timer->tcsr = 0;
             ret = 0;
             break;
         case HTRACE_TIMER_START:
-            conf = timer->tcsr;
-            timer->tcsr = conf | XTC_CSR_ENABLE_TMR_MASK;
+            // conf = timer->tcsr;
+            // timer->tcsr = conf | XTC_CSR_ENABLE_TMR_MASK;
+            timer->tcsr = 0x80;
             ret = 0;
             break;
         case HTRACE_TIMER_STOP:
@@ -107,8 +116,9 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
             time = timer->tcr;
             if (put_user(time, (unsigned int *)arg)) {
                 return -EINVAL;
-            }            
-            ret = 0;
+            }
+            // printk(KERN_ALERT "Timer: %X\n", time);
+            return 0;
             break;
         default:
             ret = -EINVAL;

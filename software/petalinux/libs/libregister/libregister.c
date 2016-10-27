@@ -242,5 +242,6 @@ void print_struct(struct hapara_thread_struct *thread_info)
     for (i = 0; i < 4; i++) {
         printf("argv:%d    = 0x%08X\n", i, thread_info->argv[i]);  
     }
+    printf("trace_ram_off        = %d\n", thread_info->trace_ram_off);
     printf("---------------------------------------\n");
 }

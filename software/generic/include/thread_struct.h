@@ -10,7 +10,7 @@
 #include "elf_loader.h"
 #include "pr_loader.h"
 
-#define ARGC    16
+#define ARGC    15
 
 struct hapara_id_pair {
     uint32_t id0;
@@ -44,6 +44,7 @@ struct hapara_thread_struct {
     elf_info_t elf_info;
     pr_info_t  pr_info;
     uint32_t argv[ARGC];
+    uint32_t trace_ram_off;
 }__attribute__((aligned(4)));
 
 #endif

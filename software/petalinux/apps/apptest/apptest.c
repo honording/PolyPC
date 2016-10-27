@@ -15,6 +15,7 @@
 #include "../../libs/libpr/libpr.h"
 #include "../../libs/libregister/libregister.h"
 #include "../../libs/libddrmalloc/libddrmalloc.h"
+#include "../../libs/libtrace/libtrace.h"
 
 #include "../../../generic/include/elf_loader.h"
 #include "../../../generic/include/pr_loader.h"
@@ -41,9 +42,19 @@ int main(int argc, char *argv[])
         printf("Input: %s [Number of Groups] [Input Data Size]\n", argv[0]);
         return 0;
     }
-
+    int i;
     reg_clr();
     trace_clr();
+
+    // for (i = 1; i <= 10; i++) {
+    //     printf("alloc: %d, off: %d\n", i, trace_alloc_single(i));
+    // }
+
+    // printf("Total num: %d\n", trace_gettotalnum());
+    // printf("Total size: %d\n", trace_gettotalsize());
+    // for (i = 0; i < 10; i++) {
+    //     printf("alloc: %d, off: %d, size: %d\n", i, trace_geteachoff(i), trace_geteachsize(i));
+    // }
 
     int MEM_SIZE = atoi(argv[2]) * 1024;
     int num_group = atoi(argv[1]);
@@ -77,7 +88,7 @@ int main(int argc, char *argv[])
     int *a = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
     int *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
     int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
-    int i;
+
     for (i = 0; i < MEM_SIZE; i++) {
         a[i] = i + i;
         b[i] = 0;
@@ -98,6 +109,7 @@ int main(int argc, char *argv[])
     sp.elf_info.elf_magic = 'v';
     // Allocate trace space
     int trace_off = trace_alloc(sp.group_num);
+    sp.trace_ram_off = trace_off / sizeof(struct hapara_trace_struct);
     // printf("apptest: begin to elf_loader.\n");
     int ret = elf_loader(ELF_FILE_NAME, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {
@@ -151,15 +163,21 @@ int main(int argc, char *argv[])
     // }
     // print_struct(&htdt[ret]);
     unsigned int timer0;
-    timer_gettime(&timer0);
+    unsigned int timer1;
 
-    gettimeofday(&t1, NULL);
+    timer_gettime(&timer0);
+    // gettimeofday(&t1, NULL);
     while (htdt[ret].isValid != 0);
-    gettimeofday(&t2, NULL);
-    timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) / 1000000.0;
+    // gettimeofday(&t2, NULL);
+    timer_gettime(&timer1);
+
+    // timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) / 1000000.0;
+
+
+    printf("%f\n", (timer1 - timer0) / 100000000.0);
     
     // printf("Slaves terminated: %f.\n", timeuse);
-    printf("%f\n", timeuse);
+    // printf("%f\n", timeuse);
     // printf("apptest: add location:%d\n", ret);
     // print_struct(&htdt[ret]);
 

@@ -21,6 +21,7 @@
 #include "../../generic/include/base_addr.h"
 #include "../../generic/include/register.h"
 #include "../../generic/include/prc_addr_mapping.h"
+#include "../../generic/include/hapara_trace_base.h"
 //#include "../../generic/include/hw_config.h"
 
 #define STATUS  			(VS_STATUS + SCHEDULER_ICAP)
@@ -45,22 +46,27 @@ int main() {
 	unsigned int pvr2 = 0;
 	getpvr(0, pvr1);
 	getpvr(1, pvr2);
-	int num_of_slave	= pvr2 >> 16;
-	int num_of_mb_slave = pvr2 & 0x0000FFFF;
-	int num_of_hw_slave = num_of_slave - num_of_mb_slave;
-	int group_index = pvr1 & 0x000000FF;
-	int pr_offset = group_index * num_of_slave;
+	unsigned int num_of_slave	= pvr2 >> 16;
+	unsigned int num_of_mb_slave = pvr2 & 0x0000FFFF;
+	unsigned int num_of_hw_slave = num_of_slave - num_of_mb_slave;
+	unsigned int group_index = pvr1 & 0x000000FF;
+	unsigned int pr_offset = group_index * num_of_slave;
 	int i;
 
 
 	struct hapara_thread_struct *hapara_thread;
 	struct hapara_thread_struct *hapara_thread_curr;
+	struct hapara_trace_struct *trace_curr;
 	struct hapara_thread_struct *hapara_thread_base =
 			(struct hapara_thread_struct *)SCHEDULER_HTDT_BASE;
 	struct hapara_gen_struct *hapara_gen =
 			(struct hapara_gen_struct *)SCHEDULER_ID_GENERATOR_BASE;
 	struct elf_info_struct *elf_info =
 			(struct elf_info_struct *)SCHEDULER_LOCAL_MEM_BASE;
+	struct hapara_timer_struct *timer =
+			(struct hapara_timer_struct *)SCHEDULER_TIMER_BASE;
+	struct hapara_trace_struct *trace = 
+			(struct hapara_trace_struct *)SCHEDULER_TRACE_BASE;
 	int *trigger = (int *)SCHE_SLAVE_TRIGGER_BASE;
 	while (1) {
 		int max_priority = -1;
@@ -104,6 +110,13 @@ int main() {
 				.id0 = hapara_thread_curr->group_size.id0,
 				.id1 = hapara_thread_curr->group_size.id1,
 		};
+		// Get timer information
+		unsigned int trace_off = hapara_thread_curr->trace_ram_off + 
+								 (cur_group_id.id0 * group_num.id1 + cur_group_id.id1);
+		trace_curr = trace + trace_off;
+		trace_curr->group_index = group_index;
+		trace_curr->before_loading = timer->tcr;
+
 		hapara_gen->org = ((cur_group_id.id0 * group_size.id0) << 16) | (cur_group_id.id1 * group_size.id1);
 		hapara_gen->numOfSlvs = num_of_slave;
 		hapara_gen->len = (group_size.id0 << 16) | (group_size.id1);
@@ -160,11 +173,12 @@ int main() {
 				}				
 			}
 		}
-
+		trace_curr->before_triggle = timer->tcr;
 		for (i = 0; i < num_of_slave; i++) {
 			trigger[i] = 1;
 		}
 		while (hapara_gen->isFinished != 1);
+		trace_curr->after_finish = timer->tcr;
 	}
 	return 0;
 }

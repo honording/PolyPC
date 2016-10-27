@@ -36,6 +36,17 @@ int trace_alloc(struct hapara_id_pair id)
     return ioctl_ret;
 }
 
+int trace_alloc_single(unsigned int num)
+{
+    int fd;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    int ioctl_ret = ioctl(fd, HTRACE_TRACE_ALLOC, &num);
+    close(fd);
+    return ioctl_ret;
+}
+
 int trace_gettotalnum()
 {
     int fd;
@@ -76,6 +87,17 @@ int trace_geteachsize(unsigned int index)
     if (fd == -1)
         return -1;
     int ioctl_ret = ioctl(fd, HTRACE_TRACE_GETEACHSIZE, &index);
+    close(fd);
+    return ioctl_ret;
+}
+
+int trace_geteachoff(unsigned int index)
+{
+    int fd;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    int ioctl_ret = ioctl(fd, HTRACE_TRACE_GETEACHOFF, &index);
     close(fd);
     return ioctl_ret;
 }
