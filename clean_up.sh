@@ -4,3 +4,5 @@ rm vivado*
 rm updatemem*
 rm *.log
 rm -r .Xil
+rm *webtalk*
+

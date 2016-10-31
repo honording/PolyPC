@@ -17,6 +17,7 @@ echo "╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝
 
 if [ -d ./$1 ]; then
 	echo "Warning: Project $1 exists."
+	exit
 fi
 
 echo "██╗  ██╗██╗     ███████╗     ██████╗ ███████╗███╗   ██╗"

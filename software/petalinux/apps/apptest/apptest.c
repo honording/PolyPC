@@ -25,21 +25,23 @@
 #define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
 #define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
 
+#define TRACE_FILE      "/mnt/testscript/trace.txt"
+
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
 // #define MEM_SIZE        4096
 #define DEVMEM          "/dev/mem"
 
-#define BUF_LEN     32
+// #define BUF_LEN     32
 // #define ID_NUM      (MEM_SIZE / BUF_LEN)
 #define TAP         5
 
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
-        printf("Input: %s [Number of Groups] [Input Data Size]\n", argv[0]);
+    if (argc != 4) {
+        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size]\n", argv[0]);
         return 0;
     }
     int i;
@@ -57,6 +59,7 @@ int main(int argc, char *argv[])
     // }
 
     int MEM_SIZE = atoi(argv[2]) * 1024;
+    int BUF_LEN = atoi(argv[3]);
     int num_group = atoi(argv[1]);
     // printf("MEM_SIZE: %d\n", MEM_SIZE);
     // printf("Number of Groups: %d\n", num_group);
@@ -151,21 +154,24 @@ int main(int argc, char *argv[])
     timer_reset();
     timer_start();
     // printf("Add htdt struct...\n");
+    
+    unsigned int timer0;
+    unsigned int timer1;
+
+    timer_gettime(&timer0);
+
     ret = reg_add(&sp);
-    if (ret == -1) {
-        // printf("apptest: Reg add error 0.\n");
-        return 0;
-    }
+    // if (ret == -1) {
+    //     // printf("apptest: Reg add error 0.\n");
+    //     return 0;
+    // }
 
     // if (htdt[ret].elf_info.elf_magic != 'v') {
     //     // printf("HDDT addr error.\n");
     //     return 0;
     // }
     // print_struct(&htdt[ret]);
-    unsigned int timer0;
-    unsigned int timer1;
 
-    timer_gettime(&timer0);
     // gettimeofday(&t1, NULL);
     while (htdt[ret].isValid != 0);
     // gettimeofday(&t2, NULL);
@@ -175,6 +181,23 @@ int main(int argc, char *argv[])
 
 
     printf("%f\n", (timer1 - timer0) / 100000000.0);
+    sleep(1);
+
+    // Read trace information into a file
+    FILE *trace_f = fopen(TRACE_FILE, "a");
+    unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
+    unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+    trace_gettotalcon(trace_ram);
+    fprintf(trace_f, "\n%d %d\n", num_group, MEM_SIZE);
+    fprintf(trace_f, "%08X\n", timer0);
+    fprintf(trace_f, "%08X\n", timer1);
+    for (i = 0; i < curr_trace_num; i++) {
+        // printf("%08X\n", trace_ram[i]);
+        fprintf(trace_f, "%08X\n", trace_ram[i]);
+    }
+
+    free(trace_ram);
+    fclose(trace_f);
     
     // printf("Slaves terminated: %f.\n", timeuse);
     // printf("%f\n", timeuse);
