@@ -27,7 +27,7 @@
 
 #define TRACE_FILE      "/mnt/testscript/trace.txt"
 
-#define	ELF_LOAD_ADDR	ARM_DDR_BASE
+#define ELF_LOAD_ADDR   ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
 // #define MEM_SIZE        4096
@@ -35,12 +35,12 @@
 
 // #define BUF_LEN     32
 // #define ID_NUM      (MEM_SIZE / BUF_LEN)
-#define TAP         5
+#define SIZE_PER_PE     2
 
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
+    if (argc != 3) {
         printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size]\n", argv[0]);
         return 0;
     }
@@ -48,21 +48,21 @@ int main(int argc, char *argv[])
     reg_clr();
     trace_clr();
 
-    int MEM_SIZE = atoi(argv[2]) * 1024;
-    int BUF_LEN = atoi(argv[3]);
-    int num_group = atoi(argv[1]);
+    int num_group   = atoi(argv[1]);
+    int MEM_SIZE    = atoi(argv[2]);
+    int BUF_LEN     = atoi(argv[3]);
 
-    int a_addr = ddr_malloc(MEM_SIZE * sizeof(int));
+    float a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
     if (a_addr < 0) {
         // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(MEM_SIZE * sizeof(int));
+    float b_addr = ddr_malloc(MEM_SIZE * sizeof(float));
     if (b_addr < 0) {
         // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(MEM_SIZE * sizeof(int));
+    float c_addr = ddr_malloc(MEM_SIZE * sizeof(float));
     if (c_addr < 0) {
         // printf("apptest: ddr_malloc error c\n");
         return 0;
@@ -76,26 +76,28 @@ int main(int argc, char *argv[])
         return -1;
     }
     // printf("begin to map a, b, and c.\n");
-    int *a = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    int *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    float *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+    float *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    float *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
 
+    for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
+        a[i] = i + 3.3f;
+
+    }
     for (i = 0; i < MEM_SIZE; i++) {
-        a[i] = i + i;
-        b[i] = 0;
-        c[i] = 0;
+        b[i] = 1.0 / MEM_SIZE;
+        c[i] = 0.0;        
     }
     // printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
 
-    int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
+    int ID_NUM  = MEM_SIZE / num_group / SIZE_PER_PE;
 
     sp.argv[0] = a_addr;
-    sp.argv[1] = BUF_LEN;
-    // sp.argv[1] = b_addr;
-    sp.argv[2] = BUF_LEN;
-    // sp.argv[2] = c_addr;
-    sp.argv[3] = BUF_LEN;
+    sp.argv[1] = b_addr;
+    sp.argv[2] = c_addr;
+    sp.argv[3] = MEM_SIZE;
+    sp.argv[4] = BUF_LEN;
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;
@@ -137,11 +139,6 @@ int main(int argc, char *argv[])
                                              devmemfd,
                                              ARM_HTDT_BASE);    
 
-
-
-    struct timeval t1, t2;
-    double timeuse;
-
     timer_reset();
     timer_start();
     // printf("Add htdt struct...\n");
@@ -163,13 +160,10 @@ int main(int argc, char *argv[])
     // }
     // print_struct(&htdt[ret]);
 
-    // gettimeofday(&t1, NULL);
     while (htdt[ret].isValid != 0);
-    // gettimeofday(&t2, NULL);
+
+
     timer_gettime(&timer1);
-
-    // timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) / 1000000.0;
-
 
     printf("%f\n", (timer1 - timer0) / 100000000.0);
     sleep(1);
@@ -249,7 +243,7 @@ int main(int argc, char *argv[])
         return 0;
     }   
     // printf("apptest end!\n");
-	return 0;
+    return 0;
 }
 
 
