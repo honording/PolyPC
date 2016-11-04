@@ -5,19 +5,20 @@
 
 #ifdef PRIVATE_MEM
 #include "string.h"
-#define N   32
+#define N   128
 int a_buffer[N];
 #endif
 
 void kernel(unsigned int a_addr,
+			unsigned int buf_size,
             unsigned int id0,
             unsigned int id1,
             volatile int *data) {
     unsigned int a = a_addr >> 2;
 #ifdef PRIVATE_MEM
-    unsigned int off = id1 * N;
+    unsigned int off = id1 * buf_size;
     int *ina = &(data[a + off]);
-    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * N);
+    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * buf_size);
 #else
 
 #endif
@@ -38,13 +39,15 @@ void mem_r(volatile unsigned int *id,
         if (data[SCHE_SLAVE_TRIGGER_BASE + htID] == 1) {
             data[SCHE_SLAVE_TRIGGER_BASE + htID] = 0;
             unsigned int arg0 = data[SCHE_SLAVE_ARGV_BASE];
+            unsigned int arg1 = data[SCHE_SLAVE_ARGV_BASE + 1];
             internal_id = *id;
             while (internal_id != 0xFFFFFFFF) {
                 id0 = internal_id >> 16;
                 id1 = internal_id & 0x0000FFFF;
-                kernel(arg0, id0, id1, data);
+                kernel(arg0, arg1, id0, id1, data);
                 internal_id = *id;
             }
         }
     }
 }
+

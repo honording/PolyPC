@@ -103,8 +103,11 @@ int main(int argc, char *argv[])
     int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
 
     sp.argv[0] = a_addr;
-    sp.argv[1] = b_addr;
-    sp.argv[2] = c_addr;
+    sp.argv[1] = BUF_LEN;
+    // sp.argv[1] = b_addr;
+    sp.argv[2] = BUF_LEN;
+    // sp.argv[2] = c_addr;
+    sp.argv[3] = BUF_LEN;
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;

@@ -5,7 +5,7 @@
 
 #ifdef PRIVATE_MEM
 #include "string.h"
-#define N 32
+#define N 128
 int a_buffer[N];
 int b_buffer[N];
 int c_buffer[N];
@@ -14,6 +14,7 @@ int c_buffer[N];
 void kernel(unsigned int a_addr,
 			unsigned int b_addr,
 			unsigned int c_addr,
+            unsigned int buf_size,
             unsigned int id0,
 			unsigned int id1,
             volatile int *data) {
@@ -21,18 +22,18 @@ void kernel(unsigned int a_addr,
     unsigned int b = b_addr >> 2;
     unsigned int c = c_addr >> 2;
 #ifdef PRIVATE_MEM
-    unsigned int off = id1 * N;
+    unsigned int off = id1 * buf_size;
     int *ina = &(data[a + off]);
     int *inb = &(data[b + off]);
     int *inc = &(data[c + off]);
-    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * N);
-    memcpy((int *)b_buffer, (const int *)inb, sizeof(int) * N);
+    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * buf_size);
+    memcpy((int *)b_buffer, (const int *)inb, sizeof(int) * buf_size);
     int i;
-	for (i = 0; i < N; i++) {
+	for (i = 0; i < buf_size; i++) {
 #pragma HLS PIPELINE II=1
 		c_buffer[i] = a_buffer[i] * b_buffer[i];
 	}
-	memcpy((const int *)inc, (int *)c_buffer, sizeof(int) * N);
+	memcpy((const int *)inc, (int *)c_buffer, sizeof(int) * buf_size);
 #else
 	data[c + id1 + id0] = data[a + id1 + id0] * data[b + id1 + id0];
 #endif
@@ -55,11 +56,12 @@ void vector_mul(volatile unsigned int *id,
             unsigned int arg0 = data[SCHE_SLAVE_ARGV_BASE];
             unsigned int arg1 = data[SCHE_SLAVE_ARGV_BASE + 1];
             unsigned int arg2 = data[SCHE_SLAVE_ARGV_BASE + 2];
+            unsigned int arg3 = data[SCHE_SLAVE_ARGV_BASE + 3];
             internal_id = *id;
             while (internal_id != 0xFFFFFFFF) {
                 id0 = internal_id >> 16;
                 id1 = internal_id & 0x0000FFFF;
-                kernel(arg0, arg1, arg2, id0, id1, data);
+                kernel(arg0, arg1, arg2, arg3, id0, id1, data);
                 internal_id = *id;
             }
         }

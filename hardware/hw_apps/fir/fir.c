@@ -5,7 +5,7 @@
 
 #ifdef PRIVATE_MEM
 #include "string.h"
-#define N 	32
+#define N 	128
 #define TAP	5
 int a_buffer[N + (TAP - 1)];
 int b_buffer[N];
@@ -14,18 +14,19 @@ int filter[TAP] = {3,2,1,2,3};
 
 void kernel(unsigned int a_addr,
 			unsigned int b_addr,
+			unsigned int buf_size,
             unsigned int id0,
 			unsigned int id1,
             volatile int *data) {
     unsigned int a = a_addr >> 2;
     unsigned int b = b_addr >> 2;
 #ifdef PRIVATE_MEM
-    unsigned int off = id1 * N;
+    unsigned int off = id1 * buf_size;
     int *ina = &(data[a + off - (TAP - 1)]);
     int *inb = &(data[b + off]);
-    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * (N + (TAP - 1)));
+    memcpy((int *)a_buffer, (const int *)ina, sizeof(int) * (buf_size + (TAP - 1)));
     int i,j;
-    for (i = 0; i < N; i++) {
+    for (i = 0; i < buf_size; i++) {
 #pragma HLS PIPELINE
     	int sum = 0;
     	for (j = 0; j < TAP; j++) {
@@ -35,13 +36,13 @@ void kernel(unsigned int a_addr,
     		}
     	}
     }
-	memcpy((const int *)inb, (int *)b_buffer, sizeof(int) * N);
+	memcpy((const int *)inb, (int *)b_buffer, sizeof(int) * buf_size);
 #else
 //	data[c + id1 + id0] = data[a + id1 + id0] * data[b + id1 + id0];
 #endif
 }
 
-void fir32buf(volatile unsigned int *id,
+void fir(volatile unsigned int *id,
                 volatile unsigned int *barrier,
                 volatile int *data,
                 char htID) {
@@ -62,7 +63,7 @@ void fir32buf(volatile unsigned int *id,
             while (internal_id != 0xFFFFFFFF) {
                 id0 = internal_id >> 16;
                 id1 = internal_id & 0x0000FFFF;
-                kernel(arg0, arg1, id0, id1, data);
+                kernel(arg0, arg1, arg2, id0, id1, data);
                 internal_id = *id;
             }
         }
