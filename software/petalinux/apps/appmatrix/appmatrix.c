@@ -40,7 +40,7 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
+    if (argc != 4) {
         printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size]\n", argv[0]);
         return 0;
     }
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
         return 0;
     } 
     int error = 0;
-    int filter[TAP] = {3,2,1,2,3};
+    // int filter[TAP] = {3,2,1,2,3};
     int j;
     // for (i = TAP - 1; i < MEM_SIZE; i++) {
     //     int sum = 0;
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
     //     }
     // }
     munmap(htdt, 1024);
-    munmap(a, MEM_SIZE * sizeof(int));
+    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(int));
     munmap(b, MEM_SIZE * sizeof(int));
     munmap(c, MEM_SIZE * sizeof(int));
     close(devmemfd);
