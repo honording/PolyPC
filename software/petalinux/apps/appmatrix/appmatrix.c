@@ -51,6 +51,9 @@ int main(int argc, char *argv[])
     int num_group   = atoi(argv[1]);
     int MEM_SIZE    = atoi(argv[2]);
     int BUF_LEN     = atoi(argv[3]);
+    if (BUF_LEN > MEM_SIZE) {
+        BUF_LEN = MEM_SIZE;
+    }
 
     float a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
     if (a_addr < 0) {
@@ -76,9 +79,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     // printf("begin to map a, b, and c.\n");
-    float *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    float *b = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    float *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    float *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+    float *b = mmap(NULL, MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    float *c = mmap(NULL, MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
 
     for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
         a[i] = i + 3.3f;
@@ -211,9 +214,9 @@ int main(int argc, char *argv[])
     //     }
     // }
     munmap(htdt, 1024);
-    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(int));
-    munmap(b, MEM_SIZE * sizeof(int));
-    munmap(c, MEM_SIZE * sizeof(int));
+    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(float));
+    munmap(b, MEM_SIZE * sizeof(float));
+    munmap(c, MEM_SIZE * sizeof(float));
     close(devmemfd);
 
     // printf("Number of Error: %d\n", error);
