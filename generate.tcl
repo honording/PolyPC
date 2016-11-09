@@ -350,11 +350,10 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         ] $intercon_dma
     }
 
-
     # Create instance: hapara_axis_barrier, and set properties
     set hapara_axis_barrier [ create_bd_cell -type ip -vlnv user.org:user:hapara_axis_barrier:* hapara_axis_barrier ]
     set_property -dict [ list \
-        CONFIG.NUM_SLAVES [expr "$numOfSlave"] \
+        CONFIG.NUM_SLAVES [expr "1+$numOfSlave"] \
     ] $hapara_axis_barrier
 
     # Create instance: hapara_axis_id_dispatcher, and set properties
@@ -403,6 +402,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     set pvr2 [expr "($numOfSlave<<16) | $numOfMBSlave"]
     set_property -dict [ list \
         CONFIG.C_DEBUG_ENABLED {1} \
+        CONFIG.C_FSL_LINKS {1} \
         CONFIG.C_D_AXI {1} \
         CONFIG.C_D_LMB {1} \
         CONFIG.C_PVR {2} \
@@ -454,7 +454,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
                     HAS_SIGNAL_STATUS 0 \
                     INTF { \
                           id {ID 0 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave} \
-                          barrier {ID 1 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave } \
+                          barrier {ID 1 VLNV xilinx.com:interface:axis_rtl:1.0 MODE master } \
                           master {ID 2 VLNV xilinx.com:interface:aximm_rtl:1.0 MODE master} \
                          } \
                 } \
@@ -563,11 +563,13 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         }
         
     }
+    connect_bd_intf_net [get_bd_intf_pins hapara_axis_barrier/M[format "%02d" $numOfSlave]_AXIS] [get_bd_intf_pins scheduler/M0_AXIS]
+
     # Connect barrier master axi-stream to MicroBlaze slave
     for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" [expr $i+$numOfHWSlave]]_AXIS"
         set slave_name "slave_s$i"
-        connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$slave_name/S0_AXIS"]
+        connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$slave_name/M0_AXIS"]
     }
     # Connect dispatcher master axi-stream to hardware slave
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
@@ -688,10 +690,10 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     }
     lappend rst [get_bd_pins scheduler_axi_periph/S00_ARESETN]
     for {set i 0} {$i < $numOfSlave} {incr i} {
-        set barrier_master_clk "hapara_axis_barrier/m[format "%02d" $i]_axis_aclk"
-        set barrier_master_rst "hapara_axis_barrier/m[format "%02d" $i]_axis_aresetn"
-        lappend clk [get_bd_pins $barrier_master_clk]
-        lappend rst [get_bd_pins $barrier_master_rst]
+        # set barrier_master_clk "hapara_axis_barrier/m[format "%02d" $i]_axis_aclk"
+        # set barrier_master_rst "hapara_axis_barrier/m[format "%02d" $i]_axis_aresetn"
+        # lappend clk [get_bd_pins $barrier_master_clk]
+        # lappend rst [get_bd_pins $barrier_master_rst]
         set dispatcher_master_clk "hapara_axis_id_dispatcher/m[format "%02d" $i]_axis_aclk"
         set dispatcher_master_rst "hapara_axis_id_dispatcher/m[format "%02d" $i]_axis_aresetn"
         lappend clk [get_bd_pins $dispatcher_master_clk]
@@ -701,6 +703,9 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         lappend clk [get_bd_pins $intercon_data_slave_clk]
         lappend rst [get_bd_pins $intercon_data_slave_rst]
     }
+    lappend clk [get_bd_pins hapara_axis_barrier/aclk]
+    lappend rst [get_bd_pins hapara_axis_barrier/aresetn]
+
     for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set slave_name "slave_s$i"
         lappend clk [get_bd_pins "$slave_name/Clk"]

@@ -85,6 +85,7 @@ static int ddr_allocate(struct hapara_ddr_malloc *dev, int size)
 
 static int ddr_free(struct hapara_ddr_malloc *dev, int addr)
 {
+    // printk(KERN_DEBUG "Free: %x\n", addr);
     struct hapara_ddr_malloc_list *curr_node;
     struct hapara_ddr_malloc_list *left_node;
     struct hapara_ddr_malloc_list *right_node;
@@ -130,6 +131,7 @@ static int ddr_malloc_ioctl(struct file *filp, unsigned int cmd, unsigned long a
     case DDRMALLOC_FREE:
         if (get_user(kernel_arg, (int *)arg))
             return ret;
+        // printk(KERN_DEBUG "IOCTL Free: %x\n", kernel_arg);
         ret = ddr_free(dev, kernel_arg);
         break;
     case DDRMALLOC_PRINT:

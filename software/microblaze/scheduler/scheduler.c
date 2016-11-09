@@ -15,6 +15,7 @@
 #include <xstatus.h>
 #include <xil_io.h>
 #include <string.h>
+#include "fsl.h"
 
 #include "../../generic/include/thread_struct.h"
 #include "../../generic/CL/cl.h"
@@ -120,7 +121,7 @@ int main() {
 		hapara_gen->org = ((cur_group_id.id0 * group_size.id0) << 16) | (cur_group_id.id1 * group_size.id1);
 		hapara_gen->numOfSlvs = num_of_slave;
 		hapara_gen->len = (group_size.id0 << 16) | (group_size.id1);
-		memcpy((char *)SCHE_SLAVE_ARGV_BASE, (char *)(&(hapara_thread_curr->argv[0])), ARGC);
+		memcpy((unsigned int *)SCHE_SLAVE_ARGV_BASE, (unsigned int *)(&(hapara_thread_curr->argv[0])), ARGC * sizeof(unsigned int));
 		if (hapara_thread_curr->elf_info.elf_magic != elf_info->elf_magic) {
 			elf_info->elf_magic = hapara_thread_curr->elf_info.elf_magic;
 			if (num_of_mb_slave != 0) {
@@ -177,7 +178,8 @@ int main() {
 		for (i = 0; i < num_of_slave; i++) {
 			trigger[i] = 1;
 		}
-		while (hapara_gen->isFinished != 1);
+		// while (hapara_gen->isFinished != 1);
+		putfslx(1, 0, FSL_DEFAULT);
 		trace_curr->after_finish = timer->tcr;
 	}
 	return 0;

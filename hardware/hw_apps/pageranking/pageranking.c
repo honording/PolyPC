@@ -69,6 +69,7 @@ void pageranking(volatile unsigned int *id,
     while (1) {
         trigger_d_type = data[SCHE_SLAVE_TRIGGER_BASE + htID];
         trigger = *((unsigned int *)&trigger_d_type);
+        if (trigger == 2) *barrier = 2;
         if (trigger == 1) {
         	data[SCHE_SLAVE_TRIGGER_BASE + htID] = *((d_type *)&zero);
         	d_type arg0_d_type = data[SCHE_SLAVE_ARGV_BASE];
@@ -87,6 +88,9 @@ void pageranking(volatile unsigned int *id,
                 id1 = internal_id & 0x0000FFFF;
                 kernel(arg0, arg1, arg2, arg3, arg4, id0, id1, data);
                 internal_id = *id;
+                if (internal_id == 0xFFFFFFFF) {
+                	*barrier = 1;
+                }
             }
         }
     }

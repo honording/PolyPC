@@ -55,17 +55,17 @@ int main(int argc, char *argv[])
         BUF_LEN = MEM_SIZE;
     }
 
-    float a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
+    int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
     if (a_addr < 0) {
         // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    float b_addr = ddr_malloc(MEM_SIZE * sizeof(float));
+    int b_addr = ddr_malloc(MEM_SIZE * sizeof(float));
     if (b_addr < 0) {
         // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    float c_addr = ddr_malloc(MEM_SIZE * sizeof(float));
+    int c_addr = ddr_malloc(MEM_SIZE * sizeof(float));
     if (c_addr < 0) {
         // printf("apptest: ddr_malloc error c\n");
         return 0;
@@ -194,57 +194,61 @@ int main(int argc, char *argv[])
 
     ret = reg_del(ret);
     if (ret == -1) {
-        // printf("apptest: Reg del error 0.\n");
+        printf("apptest: Reg del error 0.\n");
         return 0;
     } 
     int error = 0;
     // int filter[TAP] = {3,2,1,2,3};
     int j;
-    // for (i = TAP - 1; i < MEM_SIZE; i++) {
-    //     int sum = 0;
-    //     for (j = 0; j < TAP; j++) {
-    //         sum += filter[j] * a[i + (j - TAP + 1)];
-    //     }
-    //     if (b[i] != sum) {
-    //         // // printf("%d:%d\n", i, b[i]);
-    //         error++;
-    //         // if (error > 4) {
-    //         //     break;
-    //         // }
-    //     }
-    // }
+    for (i = 0; i < MEM_SIZE; i++) {
+        float sum = 0;
+        for (j = 0; j < MEM_SIZE; j++) {
+            sum += a[i * MEM_SIZE + j] * b[j];
+        }
+        if (*((unsigned *)&sum) != *((unsigned *)&c[i])) {
+            error++;
+            printf("%d: 0x%08X, 0x%08X\n", i, *((unsigned *)&sum), *((unsigned *)&c[i]));
+        }
+        // printf("0x%08X, 0x%08X\n", *((unsigned *)&sum), *((unsigned *)&c[i]));
+    }
     munmap(htdt, 1024);
     munmap(a, MEM_SIZE * MEM_SIZE * sizeof(float));
     munmap(b, MEM_SIZE * sizeof(float));
     munmap(c, MEM_SIZE * sizeof(float));
     close(devmemfd);
 
-    // printf("Number of Error: %d\n", error);
+    printf("Number of Error: %d\n", error);
+    // ddr_list_print();
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
-        // printf("apptest: ddr_free error: elf.\n");
+        printf("apptest: ddr_free error: elf.\n");
         return 0;
     }
+    // ddr_list_print();
     ret = ddr_free(sp.pr_info.ddr_addr);
     if (ret < 0) {
-        // printf("apptest: ddr_free error: pr.\n");
+        printf("apptest: ddr_free error: pr.\n");
         return 0;
     }
+    // ddr_list_print();
     ret = ddr_free(a_addr);
     if (ret < 0) {
-        // printf("apptest: ddr_free error: a.\n");
+        printf("apptest: ddr_free error: a.\n");
         return 0;
-    }   
+    }
+    // ddr_list_print();  
     ret = ddr_free(b_addr);
     if (ret < 0) {
-        // printf("apptest: ddr_free error: b.\n");
+        printf("apptest: ddr_free error: b.\n");
         return 0;
-    }  
+    }
+    // ddr_list_print();
     ret = ddr_free(c_addr);
     if (ret < 0) {
-        // printf("apptest: ddr_free error: c.\n");
+        printf("apptest: ddr_free error: c.\n");
         return 0;
-    }   
+    }
+    // ddr_list_print();
     // printf("apptest end!\n");
     return 0;
 }
