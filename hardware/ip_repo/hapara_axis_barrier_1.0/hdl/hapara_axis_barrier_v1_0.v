@@ -116,11 +116,16 @@
         assign syn = m00_axis_tvalid;
         assign m00_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -146,11 +151,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -165,11 +172,18 @@
         assign m00_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m01_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -195,11 +209,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -215,11 +231,20 @@
         assign m01_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m02_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd1;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -245,11 +270,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -268,11 +295,22 @@
         assign m02_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m03_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;                
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -298,11 +336,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -323,11 +363,24 @@
         assign m03_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m04_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;   
+        assign s04_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;                
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+        assign s04_axis_tdata  = 32'd4;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -353,11 +406,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -379,11 +434,26 @@
         assign m04_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m05_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;   
+        assign s04_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s05_axis_tvalid = (curr_state == releasing)?1'b1:1'b0; 
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+        assign s04_axis_tdata  = 32'd4;
+        assign s05_axis_tdata  = 32'd5;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -409,11 +479,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -438,11 +510,28 @@
         assign m05_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m06_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;   
+        assign s04_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s05_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s06_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+        assign s04_axis_tdata  = 32'd4;
+        assign s05_axis_tdata  = 32'd5;
+        assign s06_axis_tdata  = 32'd6;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -468,11 +557,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -498,11 +589,30 @@
         assign m06_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m07_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s04_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s05_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s06_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s07_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+        assign s04_axis_tdata  = 32'd4;
+        assign s05_axis_tdata  = 32'd5;
+        assign s06_axis_tdata  = 32'd6;
+        assign s07_axis_tdata  = 32'd7;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -528,11 +638,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase
@@ -560,11 +672,32 @@
         assign m07_axis_tready = (curr_state == locking)?1'b1:1'b0;
         assign m08_axis_tready = (curr_state == locking)?1'b1:1'b0;
 
+        assign s00_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s01_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s02_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s03_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;   
+        assign s04_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s05_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s06_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s07_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+        assign s08_axis_tvalid = (curr_state == releasing)?1'b1:1'b0;
+
+        assign s00_axis_tdata  = 32'd0;
+        assign s01_axis_tdata  = 32'd1;
+        assign s02_axis_tdata  = 32'd2;
+        assign s03_axis_tdata  = 32'd3;
+        assign s04_axis_tdata  = 32'd4;
+        assign s05_axis_tdata  = 32'd5;
+        assign s06_axis_tdata  = 32'd6;
+        assign s07_axis_tdata  = 32'd7;
+        assign s08_axis_tdata  = 32'd7;
+
         // wire notRelease;
         // wire syn;
 
-        localparam waiting = 2'b01;
-        localparam locking = 2'b10;
+        localparam waiting      = 2'b01;
+        localparam locking      = 2'b10;
+        localparam releasing    = 2'b11;
 
         reg [1 : 0] curr_state;
         reg [1 : 0] next_state;
@@ -590,11 +723,13 @@
                     end
                 locking:
                     if (!notRelease) begin
-                        next_state = waiting;
+                        next_state = releasing;
                     end
                     else begin
                         next_state = locking;
                     end
+                releasing:
+                    next_state = waiting;
                 default:
                     next_state = 2'bxx;    
             endcase

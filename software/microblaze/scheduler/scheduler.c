@@ -179,7 +179,9 @@ int main() {
 			trigger[i] = 1;
 		}
 		// while (hapara_gen->isFinished != 1);
+		volatile unsigned int rel = 0;
 		putfslx(1, 0, FSL_DEFAULT);
+		getfslx(rel, 0, FSL_DEFAULT);
 		trace_curr->after_finish = timer->tcr;
 	}
 	return 0;

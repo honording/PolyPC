@@ -54,6 +54,7 @@ void kernel(unsigned int a_addr,
 
 void pageranking(volatile unsigned int *id,
                  volatile unsigned int *barrier,
+                 volatile unsigned int *barrier_rel,
                  d_type *data,
                  char htID) {
 
@@ -61,6 +62,7 @@ void pageranking(volatile unsigned int *id,
 #pragma HLS INTERFACE m_axi depth=16 port=data
 #pragma HLS INTERFACE axis port=id
 #pragma HLS INTERFACE axis port=barrier
+#pragma HLS INTERFACE axis port=barrier_rel
     unsigned int internal_id;
     unsigned int id0, id1;
     unsigned int trigger;
@@ -71,8 +73,8 @@ void pageranking(volatile unsigned int *id,
         trigger = *((unsigned int *)&trigger_d_type);
         if (trigger == 2) *barrier = 2;
         if (trigger == 1) {
-        	data[SCHE_SLAVE_TRIGGER_BASE + htID] = *((d_type *)&zero);
-        	d_type arg0_d_type = data[SCHE_SLAVE_ARGV_BASE];
+            data[SCHE_SLAVE_TRIGGER_BASE + htID] = *((d_type *)&zero);
+            d_type arg0_d_type = data[SCHE_SLAVE_ARGV_BASE];
             unsigned int arg0 = *((unsigned int *)&arg0_d_type);
             d_type arg1_d_type = data[SCHE_SLAVE_ARGV_BASE + 1];
             unsigned int arg1 = *((unsigned int *)&arg1_d_type);
@@ -89,10 +91,9 @@ void pageranking(volatile unsigned int *id,
                 kernel(arg0, arg1, arg2, arg3, arg4, id0, id1, data);
                 internal_id = *id;
                 if (internal_id == 0xFFFFFFFF) {
-                	*barrier = 1;
+                    *barrier = 1;
                 }
             }
         }
     }
 }
-
