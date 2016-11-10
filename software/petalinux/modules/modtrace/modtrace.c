@@ -8,7 +8,8 @@
 #include <linux/kernel.h> 
 #include <linux/ioctl.h>
 #include <linux/sched.h>
- 
+
+#include <linux/string.h>
 
 #include <asm/uaccess.h> 
 #include <asm/io.h>
@@ -55,6 +56,7 @@ static int trace_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         case HTRACE_TRACE_CLEAR:
             total_num = 0;
             total_off = 0;
+            memset(trace_ram, 0, TRACE_SPAN);
             ret = 0;
             break;
         case HTRACE_TRACE_ALLOC:

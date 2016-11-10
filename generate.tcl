@@ -455,7 +455,8 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
                     INTF { \
                           id {ID 0 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave} \
                           barrier {ID 1 VLNV xilinx.com:interface:axis_rtl:1.0 MODE master } \
-                          master {ID 2 VLNV xilinx.com:interface:aximm_rtl:1.0 MODE master} \
+                          barrier_rel {ID 2 VLNV xilinx.com:interface:axis_rtl:1.0 MODE slave } \
+                          master {ID 3 VLNV xilinx.com:interface:aximm_rtl:1.0 MODE master} \
                          } \
                 } \
             ] $pr_decoupler
@@ -468,6 +469,7 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
             connect_bd_intf_net [get_bd_intf_pins "axis_register_slice_$i/M_AXIS"] [get_bd_intf_pins "pr_decoupler_$i/s_id"]
             connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_id"] [get_bd_intf_pins "$hw_ip_name/id"]
             connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_barrier"] [get_bd_intf_pins "$hw_ip_name/barrier"]
+            connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_barrier_rel"] [get_bd_intf_pins "$hw_ip_name/barrier_rel"]
             # connect_bd_intf_net [get_bd_intf_pins "pr_decoupler_$i/rp_master"] [get_bd_intf_pins "$hw_ip_name/m_axi_data"]
             connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_ARVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_ARVALID"]
             connect_bd_net [get_bd_pins "pr_decoupler_$i/rp_master_AWVALID"] [get_bd_pins "$hw_ip_name/m_axi_data_AWVALID"]
@@ -554,22 +556,28 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Connect barrier master axi-stream to Hardware slave
     for {set i 0} {$i < $numOfHWSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" $i]_AXIS"
+        set barrier_slave_name "hapara_axis_barrier/S[format "%02d" $i]_AXIS"
         set hw_ip_name "${hw_name}_s$i"
         set barrier_name "pr_decoupler_$i"
         if {$existPR == 1} {
             connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$barrier_name/s_barrier"]
+            connect_bd_intf_net [get_bd_intf_pins $barrier_slave_name] [get_bd_intf_pins "$barrier_name/s_barrier_rel"]
         } else {
             connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$hw_ip_name/barrier"]
+            connect_bd_intf_net [get_bd_intf_pins $barrier_slave_name] [get_bd_intf_pins "$hw_ip_name/barrier_rel"]
         }
         
     }
     connect_bd_intf_net [get_bd_intf_pins hapara_axis_barrier/M[format "%02d" $numOfSlave]_AXIS] [get_bd_intf_pins scheduler/M0_AXIS]
+    connect_bd_intf_net [get_bd_intf_pins hapara_axis_barrier/S[format "%02d" $numOfSlave]_AXIS] [get_bd_intf_pins scheduler/S0_AXIS]
 
     # Connect barrier master axi-stream to MicroBlaze slave
     for {set i 0} {$i < $numOfMBSlave} {incr i} {
         set barrier_master_name "hapara_axis_barrier/M[format "%02d" [expr $i+$numOfHWSlave]]_AXIS"
+        set barrier_slave_name "hapara_axis_barrier/S[format "%02d" [expr $i+$numOfHWSlave]]_AXIS"
         set slave_name "slave_s$i"
         connect_bd_intf_net [get_bd_intf_pins $barrier_master_name] [get_bd_intf_pins "$slave_name/M0_AXIS"]
+        connect_bd_intf_net [get_bd_intf_pins $barrier_slave_name] [get_bd_intf_pins "$slave_name/S0_AXIS"]
     }
     # Connect dispatcher master axi-stream to hardware slave
     for {set i 0} {$i < $numOfHWSlave} {incr i} {

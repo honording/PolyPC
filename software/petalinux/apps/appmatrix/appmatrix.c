@@ -36,6 +36,7 @@
 // #define BUF_LEN     32
 // #define ID_NUM      (MEM_SIZE / BUF_LEN)
 #define SIZE_PER_PE     2
+#define PE_PER_GROUP    4
 
 
 int main(int argc, char *argv[])
@@ -54,7 +55,28 @@ int main(int argc, char *argv[])
     if (BUF_LEN > MEM_SIZE) {
         BUF_LEN = MEM_SIZE;
     }
+    int ID_NUM  = MEM_SIZE / num_group / SIZE_PER_PE;
+    if (ID_NUM < SIZE_PER_PE * PE_PER_GROUP) {
+        printf("%f\n", 0.0);
+        int trace_off = trace_alloc_single(num_group);
+        // Read trace information into a file
+        FILE *trace_f = fopen(TRACE_FILE, "a");
+        unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
+        unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+        trace_gettotalcon(trace_ram);
+        fprintf(trace_f, "\n%d %d\n", num_group, MEM_SIZE);
+        fprintf(trace_f, "%08X\n", 0.0);
+        fprintf(trace_f, "%08X\n", 0.0);
+        for (i = 0; i < curr_trace_num; i++) {
+            // printf("%08X\n", trace_ram[i]);
+            fprintf(trace_f, "%08X\n", trace_ram[i]);
+        }
 
+        free(trace_ram);
+        fclose(trace_f);
+        return 0;
+    }
+    
     int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
     if (a_addr < 0) {
         // printf("apptest: ddr_malloc error a\n");
@@ -93,8 +115,6 @@ int main(int argc, char *argv[])
     }
     // printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
-
-    int ID_NUM  = MEM_SIZE / num_group / SIZE_PER_PE;
 
     sp.argv[0] = a_addr;
     sp.argv[1] = b_addr;
@@ -200,24 +220,24 @@ int main(int argc, char *argv[])
     int error = 0;
     // int filter[TAP] = {3,2,1,2,3};
     int j;
-    for (i = 0; i < MEM_SIZE; i++) {
-        float sum = 0;
-        for (j = 0; j < MEM_SIZE; j++) {
-            sum += a[i * MEM_SIZE + j] * b[j];
-        }
-        if (*((unsigned *)&sum) != *((unsigned *)&c[i])) {
-            error++;
-            printf("%d: 0x%08X, 0x%08X\n", i, *((unsigned *)&sum), *((unsigned *)&c[i]));
-        }
-        // printf("0x%08X, 0x%08X\n", *((unsigned *)&sum), *((unsigned *)&c[i]));
-    }
+    // for (i = 0; i < MEM_SIZE; i++) {
+    //     float sum = 0;
+    //     for (j = 0; j < MEM_SIZE; j++) {
+    //         sum += a[i * MEM_SIZE + j] * b[j];
+    //     }
+    //     if (*((unsigned *)&sum) != *((unsigned *)&c[i])) {
+    //         error++;
+    //         printf("%d: 0x%08X, 0x%08X\n", i, *((unsigned *)&sum), *((unsigned *)&c[i]));
+    //     }
+    //     // printf("0x%08X, 0x%08X\n", *((unsigned *)&sum), *((unsigned *)&c[i]));
+    // }
     munmap(htdt, 1024);
     munmap(a, MEM_SIZE * MEM_SIZE * sizeof(float));
     munmap(b, MEM_SIZE * sizeof(float));
     munmap(c, MEM_SIZE * sizeof(float));
     close(devmemfd);
 
-    printf("Number of Error: %d\n", error);
+    // printf("Number of Error: %d\n", error);
     // ddr_list_print();
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
