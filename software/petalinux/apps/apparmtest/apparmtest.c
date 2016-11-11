@@ -11,7 +11,7 @@
 
 #define NUM_THREADS     2
 #define FIR_TAP         5
-#define PR_ITERATION    20
+#define PR_ITERATION    1
 typedef int     bench_type;
 typedef float   pr_bench_type;
 
@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
     // PageRanking
     if (benchmark == 4) {
         printf("PageRanking:\n");
-        for (j = 32; j <= 512; j = j * 2) {
+        for (j = 32; j <= 1024; j = j * 2) {
             for (i = 0; i < NUM_THREADS; i++) {
                 if (i == 0) {
                     thread_info[0].a = (bench_type *)malloc(sizeof(bench_type) * j * j);
