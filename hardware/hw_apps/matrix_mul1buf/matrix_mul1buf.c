@@ -3,20 +3,19 @@
 
 typedef int d_type;
 
-#define PRIVATE_MEM
+//#define PRIVATE_MEM
 
 #ifdef PRIVATE_MEM
+#define BUF_LENGTH 8
 #include "string.h"
-#define N 128
-d_type a_buffer[N];
-d_type b_buffer[N];
-d_type c_buffer[N];
+d_type a_buffer[BUF_LENGTH][BUF_LENGTH];
+d_type b_buffer[BUF_LENGTH][BUF_LENGTH];
 #endif
 
 void kernel(unsigned int a_addr,
             unsigned int b_addr,
             unsigned int c_addr,
-            unsigned int buf_size,
+            unsigned int length,
             unsigned int id0,
             unsigned int id1,
             d_type *data) {
@@ -24,24 +23,55 @@ void kernel(unsigned int a_addr,
     unsigned int b = b_addr >> 2;
     unsigned int c = c_addr >> 2;
 #ifdef PRIVATE_MEM
-    unsigned int off = id1 * buf_size;
-    d_type *ina = &(data[a + off]);
-    d_type *inb = &(data[b + off]);
-    d_type *inc = &(data[c + off]);
-    memcpy((d_type *)a_buffer, (const d_type *)ina, sizeof(d_type) * buf_size);
-    memcpy((d_type *)b_buffer, (const d_type *)inb, sizeof(d_type) * buf_size);
-    int i;
-    for (i = 0; i < buf_size; i++) {
+    unsigned int raw_off = id0 * BUF_LENGTH * length;
+    unsigned int col_off = id1 * BUF_LENGTH;
+    unsigned int start_off = raw_off + col_off;
+
+    unsigned int num_of_chunk = length / BUF_LENGTH;
+    int i, j;
+    int m, n, k;
+    volatile int vi = 0;
+    volatile int vj = 0;
+    d_type c_buffer[BUF_LENGTH][BUF_LENGTH] = {0};
+    for (i = 0; i < num_of_chunk; vi = ++i) {
+        for (j = 0; j < BUF_LENGTH; vj = ++j) {
+            d_type *ina = &(data[a + raw_off + j * length + i * BUF_LENGTH]);
+            d_type *inb = &(data[b + col_off + (i * BUF_LENGTH + j) * length]);
+            memcpy((d_type *)a_buffer[j], (const d_type *)ina, sizeof(d_type) * BUF_LENGTH);
+            memcpy((d_type *)b_buffer[j], (const d_type *)inb, sizeof(d_type) * BUF_LENGTH);
+        }
+        if (vj == BUF_LENGTH) {
+            for (m = 0; m < BUF_LENGTH; m++) {          // raw
+                for (n = 0; n < BUF_LENGTH; n++) {      // col
+                    for (k = 0; k < BUF_LENGTH; k++) {
 #pragma HLS PIPELINE II=1
-        c_buffer[i] = a_buffer[i] + b_buffer[i];
+                        c_buffer[m][n] += a_buffer[m][k] * b_buffer[k][n];
+                    }
+                }
+            }
+        }
     }
-    memcpy((const d_type *)inc, (d_type *)c_buffer, sizeof(d_type) * buf_size);
+    if (vi == num_of_chunk) {
+        for (i = 0; i < BUF_LENGTH; i++) {
+            d_type *inc = &(data[c + start_off + i * length]);
+            memcpy((const d_type *)inc, (d_type *)c_buffer[i], sizeof(d_type) * BUF_LENGTH);
+        }
+    }
 #else
-    data[c + id1 + id0] = data[a + id1 + id0] + data[b + id1 + id0];
+    int i;
+    volatile int vi;
+    d_type sum = 0;
+    for (i = 0; i < length; vi = ++i) {
+#pragma HLS PIPELINE
+        sum += data[a + id0 * length + i] * data[b + i * length + id1];
+    }
+    if (vi == length) {
+        data[c + id0 * length + id1] = sum;
+    }
 #endif
 }
 
-void vector_add(volatile unsigned int *id,
+void matrix_mul1buf(volatile unsigned int *id,
                 volatile unsigned int *barrier,
                 volatile unsigned int *barrier_rel,
                 d_type *data,
@@ -84,3 +114,4 @@ void vector_add(volatile unsigned int *id,
         }
     }
 }
+

@@ -4,10 +4,10 @@
 typedef float d_type;
 
 #define PRIVATE_MEM
+#ifdef PRIVATE_MEM
 #define N               128
 #define SIZE_PER_PE     2
 
-#ifdef PRIVATE_MEM
 #include "string.h"
 d_type a_buffer0[N];
 d_type a_buffer1[N];

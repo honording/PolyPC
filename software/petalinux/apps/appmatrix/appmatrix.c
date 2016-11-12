@@ -35,8 +35,10 @@
 
 // #define BUF_LEN     32
 // #define ID_NUM      (MEM_SIZE / BUF_LEN)
-#define SIZE_PER_PE     2
+#define SIZE_PER_PE     16
 #define PE_PER_GROUP    4
+
+
 
 
 int main(int argc, char *argv[])
@@ -55,8 +57,8 @@ int main(int argc, char *argv[])
     if (BUF_LEN > MEM_SIZE) {
         BUF_LEN = MEM_SIZE;
     }
-    int ID_NUM  = MEM_SIZE / num_group / SIZE_PER_PE;
-    if (ID_NUM < SIZE_PER_PE * PE_PER_GROUP) {
+    int ID_NUM  = MEM_SIZE / num_group / BUF_LEN;
+    if (ID_NUM * ID_NUM < 2 * PE_PER_GROUP) {
         printf("%f\n", 0.0);
         int trace_off = trace_alloc_single(num_group);
         // Read trace information into a file
@@ -77,17 +79,17 @@ int main(int argc, char *argv[])
         return 0;
     }
     
-    int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(float));
+    int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
     if (a_addr < 0) {
         // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(MEM_SIZE * sizeof(float));
+    int b_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
     if (b_addr < 0) {
         // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(MEM_SIZE * sizeof(float));
+    int c_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
     if (c_addr < 0) {
         // printf("apptest: ddr_malloc error c\n");
         return 0;
@@ -101,17 +103,14 @@ int main(int argc, char *argv[])
         return -1;
     }
     // printf("begin to map a, b, and c.\n");
-    float *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    float *b = mmap(NULL, MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    float *c = mmap(NULL, MEM_SIZE * sizeof(float), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    int *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+    int *b = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    int *c = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
 
     for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
-        a[i] = i + 3.3f;
-
-    }
-    for (i = 0; i < MEM_SIZE; i++) {
-        b[i] = 1.0 / MEM_SIZE;
-        c[i] = 0.0;        
+        a[i] = i + 2;
+        b[i] = i + 1;
+        c[i] = 0;
     }
     // printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
@@ -121,9 +120,9 @@ int main(int argc, char *argv[])
     sp.argv[2] = c_addr;
     sp.argv[3] = MEM_SIZE;
     sp.argv[4] = BUF_LEN;
-    sp.group_size.id0 = 1;
+    sp.group_size.id0 = ID_NUM;
     sp.group_size.id1 = ID_NUM;
-    sp.group_num.id0 = 1;
+    sp.group_num.id0 = num_group;
     sp.group_num.id1 = num_group;
     sp.elf_info.elf_magic = 'v';
     // Allocate trace space
@@ -219,22 +218,23 @@ int main(int argc, char *argv[])
     } 
     int error = 0;
     // int filter[TAP] = {3,2,1,2,3};
-    int j;
+    // int j, k;
     // for (i = 0; i < MEM_SIZE; i++) {
-    //     float sum = 0;
     //     for (j = 0; j < MEM_SIZE; j++) {
-    //         sum += a[i * MEM_SIZE + j] * b[j];
+    //         int sum = 0;
+    //         for (k = 0; k < MEM_SIZE; k++) {
+    //             sum += a[i * MEM_SIZE + k] * b[k * MEM_SIZE + j];
+    //         }
+    //         if (sum != c[i * MEM_SIZE + j]) {
+    //             error++;
+    //         }
+    //         // printf("%d, %d: %d: %d\n", i, j, sum, c[i * MEM_SIZE + j]);
     //     }
-    //     if (*((unsigned *)&sum) != *((unsigned *)&c[i])) {
-    //         error++;
-    //         printf("%d: 0x%08X, 0x%08X\n", i, *((unsigned *)&sum), *((unsigned *)&c[i]));
-    //     }
-    //     // printf("0x%08X, 0x%08X\n", *((unsigned *)&sum), *((unsigned *)&c[i]));
     // }
     munmap(htdt, 1024);
-    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(float));
-    munmap(b, MEM_SIZE * sizeof(float));
-    munmap(c, MEM_SIZE * sizeof(float));
+    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(int));
+    munmap(b, MEM_SIZE * MEM_SIZE * sizeof(int));
+    munmap(c, MEM_SIZE * MEM_SIZE * sizeof(int));
     close(devmemfd);
 
     // printf("Number of Error: %d\n", error);

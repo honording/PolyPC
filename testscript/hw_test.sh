@@ -8,8 +8,8 @@ then
     exit
 fi
 
-buf_size=(8 16 32 64 128)
-# buf_size=(1)
+# buf_size=(8 16 32 64 128)
+buf_size=(16)
 
 group_size=(1 2 3 4 5 6 7 8)
 # group_size=1
@@ -19,7 +19,7 @@ pe_per_group=$1
 # data_size=(4 8 16 32 64 128 256)
 # data_size=(2 4 8 16 32 64 128 256)
 # data_size=(4 8 16 63)
-data_size=(32 64 128 256 512 1024)
+data_size=(64 128 256 512 1024 2048)
 
 dir_name="/mnt/sys_bit"
 output_file="/mnt/testscript/performance.txt"
