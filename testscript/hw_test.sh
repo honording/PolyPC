@@ -19,7 +19,7 @@ pe_per_group=$1
 # data_size=(4 8 16 32 64 128 256)
 # data_size=(2 4 8 16 32 64 128 256)
 # data_size=(4 8 16 63)
-data_size=(64 128 256 512 1024 2048)
+data_size=(64 128 256 512 1024)
 
 dir_name="/mnt/sys_bit"
 output_file="/mnt/testscript/performance.txt"

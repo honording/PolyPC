@@ -188,13 +188,19 @@ int main(int argc, char *argv[])
     timer_gettime(&timer1);
 
     printf("%f\n", (timer1 - timer0) / 100000000.0);
-    sleep(1);
+    // sleep(1);
 
     // Read trace information into a file
     FILE *trace_f = fopen(TRACE_FILE, "a");
     unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
     unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+    
     trace_gettotalcon(trace_ram);
+    while (trace_ram[curr_trace_num - 1] == 0) {
+        // printf("Re-read\n");
+        trace_gettotalcon(trace_ram);
+    }
+
     fprintf(trace_f, "\n%d %d\n", num_group, MEM_SIZE);
     fprintf(trace_f, "%08X\n", timer0);
     fprintf(trace_f, "%08X\n", timer1);
