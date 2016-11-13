@@ -30,15 +30,14 @@
 #define ELF_LOAD_ADDR   ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
-// #define MEM_SIZE        4096
 #define DEVMEM          "/dev/mem"
 
-// #define BUF_LEN     32
-// #define ID_NUM      (MEM_SIZE / BUF_LEN)
-#define SIZE_PER_PE     16
+#define SIZE_PER_PE     2
 #define PE_PER_GROUP    4
 
+typedef float d_type;
 
+// #define MM
 
 
 int main(int argc, char *argv[])
@@ -57,10 +56,17 @@ int main(int argc, char *argv[])
     if (BUF_LEN > MEM_SIZE) {
         BUF_LEN = MEM_SIZE;
     }
+#ifdef MM
     int ID_NUM  = MEM_SIZE / num_group / BUF_LEN;
     if (ID_NUM * ID_NUM < 2 * PE_PER_GROUP) {
         printf("%f\n", 0.0);
+        int trace_off = trace_alloc_single(num_group * num_group);
+#else
+    int ID_NUM = MEM_SIZE / num_group / SIZE_PER_PE;
+    if (ID_NUM < SIZE_PER_PE * PE_PER_GROUP) {
+        printf("%f\n", 0.0);
         int trace_off = trace_alloc_single(num_group);
+#endif
         // Read trace information into a file
         FILE *trace_f = fopen(TRACE_FILE, "a");
         unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
@@ -79,21 +85,35 @@ int main(int argc, char *argv[])
         return 0;
     }
     
-    int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
+    int a_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(d_type));
     if (a_addr < 0) {
         // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
+#ifdef MM
+    int b_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(d_type));
     if (b_addr < 0) {
         // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(int));
+    int c_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(d_type));
     if (c_addr < 0) {
         // printf("apptest: ddr_malloc error c\n");
         return 0;
     }
+#else
+    int b_addr = ddr_malloc(MEM_SIZE * sizeof(d_type));
+    if (b_addr < 0) {
+        // printf("apptest: ddr_malloc error b\n");
+        return 0;
+    }
+    int c_addr = ddr_malloc(MEM_SIZE * sizeof(d_type));
+    if (c_addr < 0) {
+        // printf("apptest: ddr_malloc error c\n");
+        return 0;
+    }    
+#endif
+
     // printf("a addr:0x%08X\n", a_addr);
     // printf("b addr:0x%08X\n", b_addr);
     // printf("c addr:0x%08X\n", c_addr);
@@ -103,15 +123,28 @@ int main(int argc, char *argv[])
         return -1;
     }
     // printf("begin to map a, b, and c.\n");
-    int *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    int *b = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    int *c = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
-
+    d_type *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
+#ifdef MM
+    d_type *b = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    d_type *c = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
     for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
         a[i] = i + 2;
         b[i] = i + 1;
         c[i] = 0;
     }
+#else
+    d_type *b = mmap(NULL, MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    d_type *c = mmap(NULL, MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
+        a[i] = i + 1.3f;
+    }
+    for (i = 0; i < MEM_SIZE; i++) {
+        b[i] = 1.0f / MEM_SIZE;
+        c[i] = 0.0;
+    }    
+#endif
+
+
     // printf("Initialize finished.\n");
     struct hapara_thread_struct sp;
 
@@ -120,10 +153,18 @@ int main(int argc, char *argv[])
     sp.argv[2] = c_addr;
     sp.argv[3] = MEM_SIZE;
     sp.argv[4] = BUF_LEN;
+#ifdef MM
     sp.group_size.id0 = ID_NUM;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = num_group;
+    sp.group_num.id1 = num_group;    
+#else
+    sp.group_size.id0 = 1;
+    sp.group_size.id1 = ID_NUM;
+    sp.group_num.id0 = 1;
     sp.group_num.id1 = num_group;
+#endif    
+
     sp.elf_info.elf_magic = 'v';
     // Allocate trace space
     int trace_off = trace_alloc(sp.group_num);
@@ -238,9 +279,14 @@ int main(int argc, char *argv[])
     //     }
     // }
     munmap(htdt, 1024);
-    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(int));
-    munmap(b, MEM_SIZE * MEM_SIZE * sizeof(int));
-    munmap(c, MEM_SIZE * MEM_SIZE * sizeof(int));
+    munmap(a, MEM_SIZE * MEM_SIZE * sizeof(d_type));
+#ifdef MM
+    munmap(b, MEM_SIZE * MEM_SIZE * sizeof(d_type));
+    munmap(c, MEM_SIZE * MEM_SIZE * sizeof(d_type));
+#else
+    munmap(b, MEM_SIZE * sizeof(d_type));
+    munmap(c, MEM_SIZE * sizeof(d_type));
+#endif
     close(devmemfd);
 
     // printf("Number of Error: %d\n", error);
