@@ -23,7 +23,9 @@
 #include "../../../generic/include/thread_struct.h"
 
 #define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
-#define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
+// #define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
+
+#define PR_ROOT_PATH    "/mnt/pr_files/"
 
 #define TRACE_FILE      "/mnt/testscript/trace.txt"
 
@@ -38,10 +40,95 @@
 #define TAP         5
 
 
+#define XPAR_PRC_0_BASEADDR         0x42000000
+#define PRC_ICAP_SPAN               0xFFFF    //64KB
+#define     rm_math_STATUS        0X00000
+#define     rm_math_CONTROL       0X00000
+#define     rm_math_SW_TRIGGER    0X00004
+#define     rm_math_TRIGGER0      0X00020
+#define     rm_math_RM_ADDRESS0   0X00040
+#define     rm_math_RM_CONTROL0   0X00044
+#define     rm_math_BS_ID0        0X00060
+#define     rm_math_BS_ADDRESS0   0X00064
+#define     rm_math_BS_SIZE0      0X00068
+
+void Xil_Out32(unsigned int *icap, unsigned int off, unsigned int val) { 
+    icap[off >> 2] = val;
+}
+
+unsigned int Xil_In32(unsigned int *icap, unsigned int off) {
+    return icap[off >> 2];
+}
+
+int do_pr(int pr_size, unsigned int pr_begin_addr, unsigned int vsm) {
+    unsigned int vsm_off = vsm << 7;
+    printf("PR DDR address:0x%X; pr_size: %d; vsm: %d\n", pr_begin_addr, pr_size, vsm);
+    int devmemfd = open(DEVMEM, O_RDWR | O_SYNC);
+    if (devmemfd < 1) {
+        printf("apploadpr: devmem open failed.\n");
+        return 0;
+    }
+    unsigned int *icap = mmap(NULL, PRC_ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, XPAR_PRC_0_BASEADDR);
+
+    unsigned int Status;
+    unsigned int loading_done=0;
+
+    Xil_Out32(icap,vsm_off | rm_math_CONTROL,0);
+    while(!(Xil_In32(icap,vsm_off | rm_math_STATUS)&0x80));
+    Xil_Out32(icap,vsm_off | rm_math_BS_ADDRESS0,  pr_begin_addr + vsm * pr_size);
+    Xil_Out32(icap,vsm_off | rm_math_BS_SIZE0,   pr_size);
+    Xil_Out32(icap,vsm_off | rm_math_TRIGGER0,0);
+    Xil_Out32(icap,vsm_off | rm_math_RM_ADDRESS0,0);
+    Xil_Out32(icap,vsm_off | rm_math_RM_CONTROL0,0x1FF0);
+
+    printf("Adder RM address  = %x\n",Xil_In32(icap,vsm_off | rm_math_BS_ADDRESS0));
+    printf("Adder RM size     = %d Bytes\n",Xil_In32(icap,vsm_off | rm_math_BS_SIZE0));
+    Xil_Out32(icap,vsm_off | rm_math_CONTROL,2);
+    Status=Xil_In32(icap,vsm_off | rm_math_SW_TRIGGER);
+    if(!(Status&0x8000)) {
+      Xil_Out32(icap,vsm_off | rm_math_SW_TRIGGER,0);
+    }
+    loading_done = 0;
+    while(!loading_done) {
+        Status=Xil_In32(icap,vsm_off | rm_math_STATUS)&0x07;
+        switch(Status) {
+            case 7 : 
+                printf("RM loaded\n"); 
+                loading_done=1; 
+                break;
+            case 6 : 
+                printf("RM is being reset\n"); 
+                break;
+            case 5 : 
+                printf("Software start-up step\n"); 
+                break;
+            case 4 : 
+                // printf("."); 
+                break;
+            case 2 : 
+                printf("Software shutdown\n"); 
+                break;
+            case 1 : 
+                printf("Hardware shutdown\n"); 
+                break;
+            default:
+                break;
+        }
+    }
+    printf("VADD Reconfiguration Completed!\n\n");
+
+pr_exit:
+    munmap(icap, PRC_ICAP_SPAN);
+    close(devmemfd);
+    return 1;
+}
+
+
+
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
-        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size]\n", argv[0]);
+    if (argc != 5) {
+        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size] [Benchmark]\n", argv[0]);
         return 0;
     }
     int i;
@@ -81,8 +168,8 @@ int main(int argc, char *argv[])
     int *c = mmap(NULL, MEM_SIZE * sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
 
     for (i = 0; i < MEM_SIZE; i++) {
-        a[i] = i + i;
-        b[i] = 0;
+        a[i] = i + 3;
+        b[i] = i;
         c[i] = 0;
     }
     // printf("Initialize finished.\n");
@@ -91,10 +178,10 @@ int main(int argc, char *argv[])
     int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
 
     sp.argv[0] = a_addr;
-    sp.argv[1] = BUF_LEN;
-    // sp.argv[1] = b_addr;
-    sp.argv[2] = BUF_LEN;
-    // sp.argv[2] = c_addr;
+    // sp.argv[1] = BUF_LEN;
+    sp.argv[1] = b_addr;
+    // sp.argv[2] = BUF_LEN;
+    sp.argv[2] = c_addr;
     sp.argv[3] = BUF_LEN;
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
@@ -112,19 +199,28 @@ int main(int argc, char *argv[])
     }
 
     // printf("apptest: begin to load PR bitstream into memory.\n");
-    ret = pr_loader(PR_FILE_PATH, &sp.pr_info);
+    char pr_file_path[128];
+    strcpy(pr_file_path, PR_ROOT_PATH);
+    strcat(pr_file_path, argv[4]);
+    ret = pr_loader(pr_file_path, &sp.pr_info);
+    printf("PR FILE PATH: %s\n", pr_file_path);
     if (ret < 0) {
-        // printf("apptes: pr_loader error\n");
+        printf("apptes: pr_loader error\n");
         return 0;
     }
 
+    printf("Do PR.\n");
+    for (i = 0; i < 4; i++) {
+        // do_pr(sp.pr_info.each_size, sp.pr_info.ddr_addr, i);
+    }    
+
     // if (argc == 2) {
         // printf("Disable MB Pr flow.\n");
-        disable_mb_pr(&sp.pr_info);
+        // disable_mb_pr(&sp.pr_info);
     // }
 
 
-    // print_struct(&sp);
+    print_struct(&sp);
     devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
         // printf("apptest: devmem open failed.\n");
@@ -152,6 +248,9 @@ int main(int argc, char *argv[])
     timer_gettime(&timer0);
 
     ret = reg_add(&sp);
+
+    // goto go_exit;
+
     // if (ret == -1) {
     //     // printf("apptest: Reg add error 0.\n");
     //     return 0;
@@ -216,13 +315,30 @@ int main(int argc, char *argv[])
     //         // }
     //     }
     // }
+    if (strcmp(argv[4], "vector_add") == 0) {
+        printf("Vector Add:\n");
+        for (i = 0; i < MEM_SIZE; i++) {
+            if (a[i] + b[i] != c[i]) {
+                error++;
+            }
+        }        
+    } else if (strcmp(argv[4], "vector_sub") == 0) {
+        printf("Vector Sub:\n");
+        for (i = 0; i < MEM_SIZE; i++) {
+            if (a[i] - b[i] != c[i]) {
+                error++;
+            }
+        }          
+    }
+
+go_exit:
     munmap(htdt, 1024);
     munmap(a, MEM_SIZE * sizeof(int));
     munmap(b, MEM_SIZE * sizeof(int));
     munmap(c, MEM_SIZE * sizeof(int));
     close(devmemfd);
 
-    // printf("Number of Error: %d\n", error);
+    printf("Number of Error: %d\n", error);
     ret = ddr_free(sp.elf_info.ddr_addr);
     if (ret < 0) {
         // printf("apptest: ddr_free error: elf.\n");

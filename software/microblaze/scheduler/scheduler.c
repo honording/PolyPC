@@ -159,6 +159,7 @@ int main() {
 					//  xil_printf("Starting VADD Reconfiguration\n\r");
 						Xil_Out32(VSM_OFFSET | SW_TRIGGER, 0);
 					}
+					while((Xil_In32(VSM_OFFSET | STATUS) & 0x07) != 7);
 				}				
 			}
 
@@ -166,12 +167,6 @@ int main() {
 			// Wait for ELF and PR BIN files to finish transferring
 			if (num_of_mb_slave != 0) {
 				while((Xil_In32((SCHEDULER_DMA_BASE + 0x4)) & 0x00000002) == 0x00000000);		//not idle: bit == 0
-			}
-			if (pr_size != -1) {
-				for (i = 0; i < num_of_hw_slave; i++) {
-					unsigned int VSM_OFFSET = (pr_offset + i) << 7;
-					while((Xil_In32(VSM_OFFSET | STATUS) & 0x07) != 7);
-				}				
 			}
 		}
 		trace_curr->before_triggle = timer->tcr;

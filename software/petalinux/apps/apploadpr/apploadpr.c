@@ -20,9 +20,13 @@
 #include "../../../generic/include/base_addr.h"
 #include "../../../generic/include/thread_struct.h"
 
-#define PR_FILE_PATH    "/mnt/pr_files/vector_xxx/pr0x.bin"
-#define PR_COMB_PATH    "/mnt/pr_files/vector_xxx"
-#define PR_INFO_PATH    "/mnt/pr_files/vector_xxx/info"
+#define PR_FILE_BIN     "/pr0x.bin"
+//                       012345678
+#define PR_ROOT_PATH    "/mnt/pr_files/"
+
+// #define PR_FILE_PATH    "/mnt/pr_files/vector_xxx/pr0x.bin"
+// #define PR_COMB_PATH    "/mnt/pr_files/vector_xxx"
+// #define PR_INFO_PATH    "/mnt/pr_files/vector_xxx/info"
 //                       012345678901234567890123456789012
 
 // #include "pr_add.h"
@@ -34,9 +38,6 @@
 #define PRC_ICAP_SPAN                   0xFFFF    //64KB
 
 #define DEVMEM          "/dev/mem"
-#define PR_MAX_SIZE     0x100000
-// #define PR_SIZE         580532
-#define PR_SIZE         __vector_add_pr_add_bin_len
 
 #define     rm_math_STATUS        0X00000
 #define     rm_math_CONTROL       0X00000
@@ -60,44 +61,44 @@ unsigned int Xil_In32(unsigned int *icap, unsigned int off) {
 
 
 
-int do_pr(int pr_size, unsigned char *pr_data, unsigned int vsm) {
+int do_pr(int pr_size, unsigned int pr_begin_addr, unsigned int vsm) {
     unsigned int vsm_off = vsm << 7;
-    int pr_ddr_addr = ddr_malloc(PR_MAX_SIZE);
-    if (pr_ddr_addr < 0) {
-        printf("apploadpr: ddr_malloc error a\n");
-        return 0;
-    }
-    printf("PR DDR address:0x%X\n", pr_ddr_addr);
-    printf("Begin to open devmem.\n");
+    // int pr_ddr_addr = ddr_malloc(PR_MAX_SIZE);
+    // if (pr_ddr_addr < 0) {
+    //     printf("apploadpr: ddr_malloc error a\n");
+    //     return 0;
+    // }
+    printf("PR DDR address:0x%X; pr_size: %d; vsm: %d\n", pr_begin_addr, pr_size, vsm);
+    // printf("Begin to open devmem.\n");
     int devmemfd = open(DEVMEM, O_RDWR | O_SYNC);
     if (devmemfd < 1) {
         printf("apploadpr: devmem open failed.\n");
         return 0;
     }
-    printf("Begin to map icap space.\n");
+    // printf("Begin to map icap space.\n");
     unsigned int *icap          = mmap(NULL, PRC_ICAP_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, XPAR_PRC_0_BASEADDR);
-    printf("Begin to map pr_ddr_pt space.\n");
-    unsigned int *pr_ddr_pt    = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
-    memcpy(pr_ddr_pt, pr_data, pr_size);
-    printf("Copy Sub.\n");
+    // printf("Begin to map pr_ddr_pt space.\n");
+    // unsigned int *pr_ddr_pt    = mmap(NULL, PR_MAX_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, pr_ddr_addr);
+    // memcpy(pr_ddr_pt, pr_data, pr_size);
+    // printf("Copy Sub.\n");
 
     unsigned int Status;
     unsigned int loading_done=0;
 
-    printf("Putting the PRC core's Math RP in Shutdown mode\n");
+    // printf("Putting the PRC core's Math RP in Shutdown mode\n");
     Xil_Out32(icap,vsm_off | rm_math_CONTROL,0);
-    printf("Waiting for the shutdown to occur\n");
+    // printf("Waiting for the shutdown to occur\n");
     while(!(Xil_In32(icap,vsm_off | rm_math_STATUS)&0x80));
-    printf("Math RP is shutdown\n");
+    // printf("Math RP is shutdown\n");
 
-    printf("Initializing RM bitstream address and size registers for Math and Shift RMs\n");
-    Xil_Out32(icap,vsm_off | rm_math_BS_ADDRESS0,  pr_ddr_addr);
+    // printf("Initializing RM bitstream address and size registers for Math and Shift RMs\n");
+    Xil_Out32(icap,vsm_off | rm_math_BS_ADDRESS0,  pr_begin_addr + vsm * pr_size);
     Xil_Out32(icap,vsm_off | rm_math_BS_SIZE0,   pr_size);
 
-    printf("Initializing RM trigger ID registers for Math and Shift RMs\n");
+    // printf("Initializing RM trigger ID registers for Math and Shift RMs\n");
     Xil_Out32(icap,vsm_off | rm_math_TRIGGER0,0);
 
-    printf("Initializing RM address and control registers for Math and Shift RMs\n");
+    // printf("Initializing RM address and control registers for Math and Shift RMs\n");
     Xil_Out32(icap,vsm_off | rm_math_RM_ADDRESS0,0);
     Xil_Out32(icap,vsm_off | rm_math_RM_CONTROL0,0x1FF0);
 
@@ -105,20 +106,20 @@ int do_pr(int pr_size, unsigned char *pr_data, unsigned int vsm) {
     printf("Adder RM address  = %x\n",Xil_In32(icap,vsm_off | rm_math_BS_ADDRESS0));
     printf("Adder RM size     = %d Bytes\n",Xil_In32(icap,vsm_off | rm_math_BS_SIZE0));
 
-    printf("Reading RM Trigger and address registers for Math and Shift RMs\n");
-    printf("Adder RM Trigger0 = %x\n",Xil_In32(icap,vsm_off | rm_math_TRIGGER0));
-    printf("Adder RM Address0 = %x\n",Xil_In32(icap,vsm_off | rm_math_RM_ADDRESS0));
+    // printf("Reading RM Trigger and address registers for Math and Shift RMs\n");
+    // printf("Adder RM Trigger0 = %x\n",Xil_In32(icap,vsm_off | rm_math_TRIGGER0));
+    // printf("Adder RM Address0 = %x\n",Xil_In32(icap,vsm_off | rm_math_RM_ADDRESS0));
 
-    printf("Putting the PRC core's Math RP in Restart with Status mode\n");
+    // printf("Putting the PRC core's Math RP in Restart with Status mode\n");
     Xil_Out32(icap,vsm_off | rm_math_CONTROL,2);
-    printf("Reading the Math RP status=%x\n",Xil_In32(icap,vsm_off | rm_math_STATUS));
+    // printf("Reading the Math RP status=%x\n",Xil_In32(icap,vsm_off | rm_math_STATUS));
 
-    printf("\n");
+    // printf("\n");
 
-    printf("Generating software trigger for VADD reconfiguration\n");
+    // printf("Generating software trigger for VADD reconfiguration\n");
     Status=Xil_In32(icap,vsm_off | rm_math_SW_TRIGGER);
     if(!(Status&0x8000)) {
-      printf("Starting VADD Reconfiguration\n");
+      // printf("Starting VADD Reconfiguration\n");
       Xil_Out32(icap,vsm_off | rm_math_SW_TRIGGER,0);
     }
     loading_done = 0;
@@ -149,16 +150,16 @@ int do_pr(int pr_size, unsigned char *pr_data, unsigned int vsm) {
                 break;
         }
     }
-    int ret = ddr_free(pr_ddr_addr);
-    if (ret < 0) {
-        printf("apploadpr: ddr_free error: pr_ddr_addr.\n");
-        return 0;
-    }
-    printf("\nVADD Reconfiguration Completed!\n");
+    // int ret = ddr_free(pr_ddr_addr);
+    // if (ret < 0) {
+    //     printf("apploadpr: ddr_free error: pr_ddr_addr.\n");
+    //     return 0;
+    // }
+    printf("VADD Reconfiguration Completed!\n\n");
 
 pr_exit:
     munmap(icap, PRC_ICAP_SPAN);
-    munmap(pr_ddr_pt, PR_MAX_SIZE);
+    // munmap(pr_ddr_pt, PR_MAX_SIZE);
     close(devmemfd);
     return 1;
 }
@@ -175,14 +176,16 @@ int main(int argc, char *argv[])
     int ret = 0;
     unsigned char* pr_content = NULL;
     int i, j;
-    char pr_file_name[] = PR_FILE_PATH;
-    char pr_info_name[] = PR_INFO_PATH;
-    char pr_comb_name[] = PR_COMB_PATH;
+    char pr_file_name[128];
+    char pr_info_name[128];
+    char pr_comb_name[128];
+    strcpy(pr_file_name, PR_ROOT_PATH);
+    strcpy(pr_info_name, PR_ROOT_PATH);
+    strcpy(pr_comb_name, PR_ROOT_PATH);
     // printf("file name: %s\n info name: %s\n", pr_file_name, pr_info_name);
     FILE *fp = NULL;
-    for (j = 0; j < 3; j++) {
-        pr_info_name[21 + j] = argv[1][j];
-    }
+    strcat(pr_info_name, argv[1]);
+    strcat(pr_info_name, "/info");
     printf("PR info name:%s\n", pr_info_name);
     fp = fopen(pr_info_name, "r");
     fscanf(fp, "%d", &numPR);
@@ -200,36 +203,34 @@ int main(int argc, char *argv[])
         printf("Combine User number of PR files: %d\n", numPR);
     }
     struct hapara_thread_struct sp;
-    for (j = 0; j < 3; j++) {
-        pr_comb_name[21 + j] = argv[1][j];
-    }
+    strcat(pr_comb_name, argv[1]);
     printf("apploadpr: begin to load PR bitstream into memory.\n");
     ret = pr_loader(pr_comb_name, &sp.pr_info);
     if (ret < 0) {
         printf("apploadpr: pr_loader error\n");
         return 0;
     }
-    int devmemfd = open(DEVMEM, O_RDWR);
-    if (devmemfd < 1) {
-        printf("apploadpr: devmem open failed.\n");
-        return -1;
-    }
-    printf("begin to map a.\n");
-    unsigned char *a = mmap(NULL, sizePR * 4 * sizeof(unsigned char), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, sp.pr_info.ddr_addr);
+    // int devmemfd = open(DEVMEM, O_RDWR);
+    // if (devmemfd < 1) {
+    //     printf("apploadpr: devmem open failed.\n");
+    //     return -1;
+    // }
+    // printf("begin to map a.\n");
+    // unsigned char *a = mmap(NULL, sizePR * 4 * sizeof(unsigned char), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, sp.pr_info.ddr_addr);
     for (i = 0; i < numPR; i++) {
         if (argc == 4) {
             printf("Do Combined PR files.\n");
-            if (do_pr(sizePR, a + i * sizePR, i) != 1) {
+            if (do_pr(sp.pr_info.each_size, sp.pr_info.ddr_addr, i) != 1) {
                 printf("do_pr error.\n");
                 fclose(fp);
                 return 0;
             }            
         } else {
             printf("Do seperate PR files.\n");
-            for (j = 0; j < 3; j++) {
-                pr_file_name[21 + j] = argv[1][j];
-            }
-            pr_file_name[28] = '0' + i;
+            strcat(pr_file_name, argv[1]);
+            char pr_file_bin[] = PR_FILE_BIN;
+            pr_file_bin[4] = '0' + i;
+            strcat(pr_file_name, pr_file_bin);
             printf("PR file name: %s\n", pr_file_name);
             fp = fopen(pr_file_name, "r");
 

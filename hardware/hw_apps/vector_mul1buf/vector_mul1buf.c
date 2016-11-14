@@ -41,7 +41,7 @@ void kernel(unsigned int a_addr,
 #endif
 }
 
-void vector_mul(volatile unsigned int *id,
+void vector_mul1buf(volatile unsigned int *id,
                 volatile unsigned int *barrier,
                 volatile unsigned int *barrier_rel,
                 d_type *data,
