@@ -17,7 +17,7 @@
 
 
 #define setArgv(num, member, type) \
-		type *member = (type *)Xil_In32(KERNEL_ARGV_BASE + (num << 2))
+		type member = (type )Xil_In32(KERNEL_ARGV_BASE + (num << 2))
 
 jmp_buf buf;
 
@@ -54,11 +54,14 @@ void release_mutex(int num, int id) {
 
 unsigned int getGlobalID(int d) {
     unsigned int val;
+    volatile unsigned int rel = 0;
     if (id.isIDGet == 0) {
         getfslx(val, 1, FSL_DEFAULT);
         if (val == 0xFFFFFFFF) {
             //error catch
             id.isIDGet = 0;
+            putfslx(1, 0, FSL_DEFAULT);
+            getfslx(rel, 0, FSL_DEFAULT);
             longjmp(buf, 1);
         } else {
             id.isIDGet  = 1;

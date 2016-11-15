@@ -78,6 +78,71 @@ void *do_vector(void *param) {
     pthread_exit(0);
 }
 
+void *do_mem_r(void *param) {
+    thread_info_t *thread_info = param;
+#ifndef MAC
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(thread_info->thread_num, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+#endif
+    int offset = 0;
+    int size = thread_info->size_0;
+    int total_thread_num = thread_info->total_thread_num;
+    offset = thread_info->thread_num * (size / total_thread_num);
+    bench_type *vector_a = (bench_type *)thread_info->a;
+    int i, j;
+    volatile bench_type value;
+    for (i = offset; i < offset + size / total_thread_num; i++) {
+        value = vector_a[i];
+        value++;
+    }
+    pthread_exit(0);
+}
+
+void *do_mem_w(void *param) {
+    thread_info_t *thread_info = param;
+#ifndef MAC
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(thread_info->thread_num, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+#endif
+    int offset = 0;
+    int size = thread_info->size_0;
+    int total_thread_num = thread_info->total_thread_num;
+    offset = thread_info->thread_num * (size / total_thread_num);
+    bench_type *vector_a = (bench_type *)thread_info->a;
+    int i, j;
+    for (i = offset; i < offset + size / total_thread_num; i++) {
+        vector_a[i] = i;
+    }
+    pthread_exit(0);
+}
+
+void *do_mem_rw(void *param) {
+    thread_info_t *thread_info = param;
+#ifndef MAC
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(thread_info->thread_num, &cpuset);
+    sched_setaffinity(0, sizeof(cpuset), &cpuset);
+#endif
+    int offset = 0;
+    int size = thread_info->size_0;
+    int total_thread_num = thread_info->total_thread_num;
+    offset = thread_info->thread_num * (size / total_thread_num);
+    bench_type *vector_a = (bench_type *)thread_info->a;
+    bench_type *vector_b = (bench_type *)thread_info->b;
+    int i, j;
+    volatile bench_type value;
+    for (i = offset; i < offset + size / total_thread_num; i++) {
+        value = vector_a[i];
+        value++;
+        vector_b[i] = i;
+    }
+    pthread_exit(0);
+}
 
 void *do_matrix(void *param) {
     thread_info_t *thread_info = param;
@@ -178,6 +243,9 @@ int main(int argc, char *argv[]) {
         printf("3: Matrix Multiplication.\n");
         printf("4: PageRanking.\n");
         printf("5: Blank Runner.\n");
+        printf("6: Memory Read.\n");
+        printf("7: Memory Write.\n");
+        printf("8: Memory Read and Write.\n");
         return 0;
     }
     int benchmark = atoi(argv[1]);
@@ -343,7 +411,7 @@ int main(int argc, char *argv[]) {
     // Matrix Multiplication
     if (benchmark == 3) {
         printf("Matrix Multiplication:\n");
-        for (j = 32; j <= 512; j = j * 2) {
+        for (j = 64; j <= 1024; j = j * 2) {
             for (i = 0; i < NUM_THREADS; i++) {
                 if (i == 0) {
                     thread_info[0].a = (bench_type *)malloc(sizeof(bench_type) * j * j);
@@ -502,6 +570,190 @@ int main(int argc, char *argv[]) {
             gettimeofday(&t1, NULL);
             timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
             printf("Data Size: %3d * %3d; Time Use: %f s (Number of Cores: %d)\n", j, j, timeuse, NUM_THREADS);
+        }
+        goto terminate;
+    }
+    // Memory Read
+    if (benchmark == 6) {
+        printf("Memory Read:\n");
+        for (j = 2 * 1024; j <= 256 * 1024; j = j * 2) {
+            for (i = 0; i < NUM_THREADS; i++) {
+                if (i == 0) {
+                    thread_info[0].a = (bench_type *)malloc(sizeof(bench_type) * j);
+                    thread_info[0].size_0 = j;                    
+                } else {
+                    thread_info[i].a = thread_info[0].a;
+                    thread_info[i].size_0 = j;                    
+                }
+            }
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < NUM_THREADS; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = NUM_THREADS;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_r, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < NUM_THREADS; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Number of Cores: %d)\n", j / 1024, timeuse, NUM_THREADS);
+
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < 1; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = 1;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_r, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < 1; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Single-core)\n", j / 1024, timeuse);
+
+            free(thread_info[0].a);
+        }
+        goto terminate;
+    }
+    // Memory Write
+    if (benchmark == 7) {
+        printf("Memory Write:\n");
+        for (j = 2 * 1024; j <= 256 * 1024; j = j * 2) {
+            for (i = 0; i < NUM_THREADS; i++) {
+                if (i == 0) {
+                    thread_info[0].a = (bench_type *)malloc(sizeof(bench_type) * j);
+                    thread_info[0].size_0 = j;                    
+                } else {
+                    thread_info[i].a = thread_info[0].a;
+                    thread_info[i].size_0 = j;                    
+                }
+            }
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < NUM_THREADS; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = NUM_THREADS;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_w, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < NUM_THREADS; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Number of Cores: %d)\n", j / 1024, timeuse, NUM_THREADS);
+
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < 1; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = 1;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_w, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < 1; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Single-core)\n", j / 1024, timeuse);
+
+
+            free(thread_info[0].a); 
+        }
+        goto terminate;
+    }
+    // Memory Read and Write
+    if (benchmark == 8) {
+        printf("Memory Read and Write:\n");
+        for (j = 2 * 1024; j <= 256 * 1024; j = j * 2) {
+            for (i = 0; i < NUM_THREADS; i++) {
+                if (i == 0) {
+                    thread_info[0].a = (bench_type *)malloc(sizeof(bench_type) * j);
+                    thread_info[0].b = (bench_type *)malloc(sizeof(bench_type) * j);
+                    thread_info[0].size_0 = j;                    
+                } else {
+                    thread_info[i].a = thread_info[0].a;
+                    thread_info[i].b = thread_info[0].b;
+                    thread_info[i].size_0 = j;                    
+                }
+            }
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+                ((bench_type *)(thread_info[0].b))[i] = (bench_type)(i + 1);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < NUM_THREADS; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = NUM_THREADS;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_rw, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < NUM_THREADS; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Number of Cores: %d)\n", j / 1024, timeuse, NUM_THREADS);
+
+            for (i = 0; i < j; i++) {
+                ((bench_type *)(thread_info[0].a))[i] = (bench_type)(i);
+                ((bench_type *)(thread_info[0].b))[i] = (bench_type)(i + 1);
+            }
+            gettimeofday(&t0, NULL);
+            for (i = 0; i < 1; i++) {
+                thread_info[i].thread_num = i;
+                thread_info[i].total_thread_num = 1;
+                ret = pthread_create(&thread_info[i].tid, &attr, do_mem_rw, &thread_info[i]);
+                if (0 != ret) {
+                    perror("pthread create error.");
+                    free(thread_info);
+                    return 0;
+                }
+            }
+            for (i = 0; i < 1; i++) {
+                pthread_join(thread_info[i].tid, NULL);
+            }
+            gettimeofday(&t1, NULL);
+            timeuse = t1.tv_sec - t0.tv_sec + (t1.tv_usec - t0.tv_usec) / 1000000.0;
+            printf("Data Size: %4dK; Time Use: %f s (Single-core)\n", j / 1024, timeuse);
+
+
+            free(thread_info[0].a);
+            free(thread_info[0].b); 
         }
         goto terminate;
     }

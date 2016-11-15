@@ -1,9 +1,8 @@
-/*
- * opencl_kernel.c
- *
- *  Created on: Apr 15, 2016
- *      Author: hding
- */
+#ifndef __USER_PROGRAMS__
+#define __USER_PROGRAMS__
+#endif
+
+#include "../../generic/CL/cl.h"
 
 
 #ifndef __USER_PROGRAMS__
@@ -23,7 +22,7 @@ void kernel(
     unsigned int off = id1 * buf_size;
     int i;
     for (i = 0; i < buf_size; i++) {
-        C[id0 + off + i] = A[id0 + off + i] - B[id0 + off + i];
+        C[id0 + off + i] = A[id0 + off + i] * B[id0 + off + i];
     }
 }
 

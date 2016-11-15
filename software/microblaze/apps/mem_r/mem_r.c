@@ -1,11 +1,3 @@
-/*
- * opencl_kernel.c
- *
- *  Created on: Apr 15, 2016
- *      Author: hding
- */
-
-
 #ifndef __USER_PROGRAMS__
 #define __USER_PROGRAMS__
 #endif
@@ -15,15 +7,15 @@
 
 void kernel(
             int *A,
-            int *B,
-            int *C,
             int buf_size) {
     unsigned int id0 = getGlobalID(0);
     unsigned int id1 = getGlobalID(1);
     unsigned int off = id1 * buf_size;
     int i;
+    volatile int value;
     for (i = 0; i < buf_size; i++) {
-        C[id0 + off + i] = A[id0 + off + i] - B[id0 + off + i];
+        value = A[id0 + off + i];
+        value++;
     }
 }
 
@@ -34,12 +26,10 @@ int main() {
      * type : data type for each;
      */
     setArgv(0, arg0, int *);
-    setArgv(1, arg1, int *);
-    setArgv(2, arg2, int *);
-    setArgv(3, buf_size, int);
+    setArgv(1, buf_size, int);
     if (!setjmp(buf)) {
         while (1) {
-            kernel(arg0, arg1, arg2, buf_size);
+            kernel(arg0, buf_size);
         }
     }
     clean_up();

@@ -90,7 +90,7 @@ int main() {
 				hapara_thread->priority > max_priority) {
 				htdt_off = hapara_thread - hapara_thread_base;
 				max_priority = hapara_thread->priority;
-				if (elf_info->elf_magic == hapara_thread.elf_info.elf_magic) {
+				if (elf_info->elf_magic == hapara_thread->elf_info.elf_magic) {
 					max_priority_magic = max_priority;
 					htdt_off_magic = htdt_off;
 				}
