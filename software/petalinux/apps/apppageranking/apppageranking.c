@@ -34,10 +34,10 @@
 
 #define DEVMEM          "/dev/mem"
 
-#define SIZE_PER_PE     2
+// #define SIZE_PER_PE     2
 #define PE_PER_GROUP    4
 
-typedef int d_type;
+typedef float d_type;
 
 int main(int argc, char *argv[])
 {
@@ -48,17 +48,20 @@ int main(int argc, char *argv[])
     int i;
     reg_clr();
     trace_clr();
-
+    int SIZE_PER_PE = 2;
     int num_group   = atoi(argv[1]);
     int MEM_SIZE    = atoi(argv[2]);
     int BUF_LEN     = atoi(argv[3]);
     if (BUF_LEN > MEM_SIZE) {
         BUF_LEN = MEM_SIZE;
     }
-    int ID_NUM  = MEM_SIZE / num_group / BUF_LEN;
-    if (ID_NUM * ID_NUM < 2 * PE_PER_GROUP) {
+    if (BUF_LEN == 1) {
+        SIZE_PER_PE = 1;
+    }
+    int ID_NUM = MEM_SIZE / num_group / SIZE_PER_PE;
+    if (ID_NUM < SIZE_PER_PE * PE_PER_GROUP) {
         printf("%f\n", 0.0);
-        int trace_off = trace_alloc_single(num_group * num_group);
+        int trace_off = trace_alloc_single(num_group);
         // Read trace information into a file
         FILE *trace_f = fopen(TRACE_FILE, "a");
         unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
@@ -82,16 +85,16 @@ int main(int argc, char *argv[])
         // printf("apptest: ddr_malloc error a\n");
         return 0;
     }
-    int b_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(d_type));
+    int b_addr = ddr_malloc(MEM_SIZE * sizeof(d_type));
     if (b_addr < 0) {
         // printf("apptest: ddr_malloc error b\n");
         return 0;
     }
-    int c_addr = ddr_malloc(MEM_SIZE * MEM_SIZE * sizeof(d_type));
+    int c_addr = ddr_malloc(MEM_SIZE * sizeof(d_type));
     if (c_addr < 0) {
         // printf("apptest: ddr_malloc error c\n");
         return 0;
-    }
+    }    
 
     // printf("a addr:0x%08X\n", a_addr);
     // printf("b addr:0x%08X\n", b_addr);
@@ -103,13 +106,15 @@ int main(int argc, char *argv[])
     }
     // printf("begin to map a, b, and c.\n");
     d_type *a = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, a_addr);
-    d_type *b = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
-    d_type *c = mmap(NULL, MEM_SIZE * MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
+    d_type *b = mmap(NULL, MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, b_addr);
+    d_type *c = mmap(NULL, MEM_SIZE * sizeof(d_type), PROT_READ | PROT_WRITE, MAP_SHARED, devmemfd, c_addr);
     for (i = 0; i < MEM_SIZE * MEM_SIZE; i++) {
-        a[i] = i + 2;
-        b[i] = i + 1;
-        c[i] = 0;
+        a[i] = i + 1.3f;
     }
+    for (i = 0; i < MEM_SIZE; i++) {
+        b[i] = 1.0f / MEM_SIZE;
+        c[i] = 0.0;
+    }    
 
 
     // printf("Initialize finished.\n");
@@ -120,17 +125,16 @@ int main(int argc, char *argv[])
     sp.argv[2] = c_addr;
     sp.argv[3] = MEM_SIZE;
     sp.argv[4] = BUF_LEN;
-
-    sp.group_size.id0 = ID_NUM;
+    sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
-    sp.group_num.id0 = num_group;
-    sp.group_num.id1 = num_group;     
-
+    sp.group_num.id0 = 1;
+    sp.group_num.id1 = num_group;  
     if (BUF_LEN == 1) {
-        sp.elf_info.elf_magic = 'x';
+        sp.elf_info.elf_magic = 'q';
     } else {
-        sp.elf_info.elf_magic = 'z';
+        sp.elf_info.elf_magic = 'p';
     }
+    
     // Allocate trace space
     int trace_off = trace_alloc(sp.group_num);
     sp.trace_ram_off = trace_off / sizeof(struct hapara_trace_struct);
@@ -144,11 +148,11 @@ int main(int argc, char *argv[])
     // printf("apptest: begin to load PR bitstream into memory.\n");
     char pr_file_path[128];
     if (BUF_LEN == 1) {
-        strcpy(pr_file_path, "/mnt/pr_files/matrix_mul1buf");
+        strcpy(pr_file_path, "/mnt/pr_files/pageranking1buf");
     } else {
-        strcpy(pr_file_path, "/mnt/pr_files/matrix_mul");
+        strcpy(pr_file_path, "/mnt/pr_files/pageranking");
     }
-    ret = pr_loader(pr_file_path, &sp.pr_info);
+    ret = pr_loader(pr_file_path, &sp.pr_info);    
     if (ret < 0) {
         // printf("apptes: pr_loader error\n");
         return 0;
@@ -235,24 +239,20 @@ int main(int argc, char *argv[])
         return 0;
     } 
     int error = 0;
-    // int filter[TAP] = {3,2,1,2,3};
     int j, k;
     for (i = 0; i < MEM_SIZE; i++) {
+        d_type sum = 0;
         for (j = 0; j < MEM_SIZE; j++) {
-            int sum = 0;
-            for (k = 0; k < MEM_SIZE; k++) {
-                sum += a[i * MEM_SIZE + k] * b[k * MEM_SIZE + j];
-            }
-            if (sum != c[i * MEM_SIZE + j]) {
-                error++;
-            }
-            // printf("%d, %d: %d: %d\n", i, j, sum, c[i * MEM_SIZE + j]);
+            sum += a[i * MEM_SIZE + j] * b[j];
+        }
+        if ( *((unsigned *)&sum) != *((unsigned *)&(c[i])) ) {
+            error++;
         }
     }
     munmap(htdt, 1024);
     munmap(a, MEM_SIZE * MEM_SIZE * sizeof(d_type));
-    munmap(b, MEM_SIZE * MEM_SIZE * sizeof(d_type));
-    munmap(c, MEM_SIZE * MEM_SIZE * sizeof(d_type));
+    munmap(b, MEM_SIZE * sizeof(d_type));
+    munmap(c, MEM_SIZE * sizeof(d_type));
     close(devmemfd);
 
     printf("Number of Error: %d\n", error);

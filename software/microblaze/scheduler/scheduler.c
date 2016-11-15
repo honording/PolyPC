@@ -69,9 +69,12 @@ int main() {
 	struct hapara_trace_struct *trace = 
 			(struct hapara_trace_struct *)SCHEDULER_TRACE_BASE;
 	int *trigger = (int *)SCHE_SLAVE_TRIGGER_BASE;
+	elf_info->elf_magic = 0;
 	while (1) {
 		int max_priority = -1;
 		int htdt_off = -1;
+		int max_priority_magic = -1;
+		int htdt_off_magic = -1;
 		struct hapara_id_pair cur_group_id = {
 				.id0 = 0,
 				.id1 = 0,
@@ -87,13 +90,21 @@ int main() {
 				hapara_thread->priority > max_priority) {
 				htdt_off = hapara_thread - hapara_thread_base;
 				max_priority = hapara_thread->priority;
+				if (elf_info->elf_magic == hapara_thread.elf_info.elf_magic) {
+					max_priority_magic = max_priority;
+					htdt_off_magic = htdt_off;
+				}
 			}
 		}
 		if (max_priority == -1) {
 			release_mutex(REG_MUTEX, group_index + 1);
 			continue;
 		}
-		hapara_thread_curr = hapara_thread_base + htdt_off;
+		if (max_priority_magic == max_priority) {
+			hapara_thread_curr = hapara_thread_base + htdt_off_magic;
+		} else {
+			hapara_thread_curr = hapara_thread_base + htdt_off;
+		}
 		group_num.id0 = hapara_thread_curr->group_num.id0;
 		cur_group_id.id0 = hapara_thread_curr->cur_group_id.id0;
 		if (cur_group_id.id0 >= group_num.id0) {

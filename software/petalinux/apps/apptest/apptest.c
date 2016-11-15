@@ -40,8 +40,8 @@
 #define TAP         5
 
 
-#define XPAR_PRC_0_BASEADDR         0x42000000
-#define PRC_ICAP_SPAN               0xFFFF    //64KB
+#define     XPAR_PRC_0_BASEADDR   0x42000000
+#define     PRC_ICAP_SPAN         0xFFFF    //64KB
 #define     rm_math_STATUS        0X00000
 #define     rm_math_CONTROL       0X00000
 #define     rm_math_SW_TRIGGER    0X00004
@@ -177,17 +177,50 @@ int main(int argc, char *argv[])
 
     int ID_NUM  = MEM_SIZE / BUF_LEN / num_group;
 
-    sp.argv[0] = a_addr;
-    // sp.argv[1] = BUF_LEN;
-    sp.argv[1] = b_addr;
-    // sp.argv[2] = BUF_LEN;
-    sp.argv[2] = c_addr;
-    sp.argv[3] = BUF_LEN;
+    if (strcmp(argv[4], "mem_r") == 0 ||
+        strcmp(argv[4], "mem_w") == 0) {
+        sp.argv[0] = a_addr;
+        sp.argv[1] = BUF_LEN;        
+    } else if (strcmp(argv[4], "mem_rw") == 0 ||
+               strcmp(argv[4], "fir") == 0 ||
+               strcmp(argv[4], "fir1buf") == 0) {
+        sp.argv[0] = a_addr;
+        sp.argv[1] = b_addr;
+        sp.argv[2] = BUF_LEN;        
+    } else {
+        sp.argv[0] = a_addr;
+        sp.argv[1] = b_addr;
+        sp.argv[2] = c_addr;
+        sp.argv[3] = BUF_LEN;        
+    }
+
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;
     sp.group_num.id1 = num_group;
-    sp.elf_info.elf_magic = 'v';
+
+    if (strcmp(argv[4], "vector_add") == 0) {
+        sp.elf_info.elf_magic = 'a';
+    } else if (strcmp(argv[4], "vector_sub") == 0) {
+        sp.elf_info.elf_magic = 's';
+    } else if (strcmp(argv[4], "vector_mul") == 0) {
+        sp.elf_info.elf_magic = 'm';
+    } else if (strcmp(argv[4], "vector_mul1buf") == 0) {
+        sp.elf_info.elf_magic = 'n';
+    } else if (strcmp(argv[4], "mem_r") == 0) {
+        sp.elf_info.elf_magic = 'r';
+    } else if (strcmp(argv[4], "mem_w") == 0) {
+        sp.elf_info.elf_magic = 'w';
+    } else if (strcmp(argv[4], "mem_rw") == 0) {
+        sp.elf_info.elf_magic = 't';
+    } else if (strcmp(argv[4], "fir") == 0) {
+        sp.elf_info.elf_magic = 'f';
+    } else if (strcmp(argv[4], "fir1buf") == 0) {
+        sp.elf_info.elf_magic = 'g';
+    } else {
+        printf("Acc Name Error: %s\n", argv[4]);
+        return 0;
+    }
     // Allocate trace space
     int trace_off = trace_alloc(sp.group_num);
     sp.trace_ram_off = trace_off / sizeof(struct hapara_trace_struct);
@@ -302,19 +335,7 @@ int main(int argc, char *argv[])
     int error = 0;
     int filter[TAP] = {3,2,1,2,3};
     int j;
-    // for (i = TAP - 1; i < MEM_SIZE; i++) {
-    //     int sum = 0;
-    //     for (j = 0; j < TAP; j++) {
-    //         sum += filter[j] * a[i + (j - TAP + 1)];
-    //     }
-    //     if (b[i] != sum) {
-    //         // // printf("%d:%d\n", i, b[i]);
-    //         error++;
-    //         // if (error > 4) {
-    //         //     break;
-    //         // }
-    //     }
-    // }
+
     if (strcmp(argv[4], "vector_add") == 0) {
         printf("Vector Add:\n");
         for (i = 0; i < MEM_SIZE; i++) {
@@ -329,6 +350,25 @@ int main(int argc, char *argv[])
                 error++;
             }
         }          
+    } else if (strcmp(argv[4], "vector_mul") == 0 ||
+               strcmp(argv[4], "vector_mul1buf") == 0) {
+        printf("Vector Mul.\n");
+        for (i = 0; i < MEM_SIZE; i++) {
+            if (a[i] * b[i] != c[i]) {
+                error++;
+            }
+        }
+    } else if (strcmp(argv[4], "fir") == 0 ||
+               strcmp(argv[4], "fir1buf") == 0) {
+        for (i = TAP - 1; i < MEM_SIZE; i++) {
+            int sum = 0;
+            for (j = 0; j < TAP; j++) {
+                sum += filter[j] * a[i + (j - TAP + 1)];
+            }
+            if (b[i] != sum) {
+                error++;
+            }
+        }        
     }
 
 go_exit:

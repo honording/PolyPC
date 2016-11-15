@@ -20,11 +20,11 @@ cd $petalinux_dir
 # petalinux-package --prebuilt --fpga $proj_dir/${1}.sdk/system_wrapper_hw_platform_0/download.bit --force
 
 # -------------------
-# petalinux-package --prebuilt --fpga $proj_dir/${1}.sdk/system_wrapper_full_hw_platform_0/download.bit --force
+petalinux-package --prebuilt --fpga $proj_dir/${1}.sdk/system_wrapper_full_hw_platform_0/download.bit --force
 # -------------------
 
-petalinux-package --prebuilt --fpga /home/hding/Projects/HaPara/addsub_1g4s4h/bitstream/download.bit --force
-# petalinux-package --prebuilt --fpga /home/hding/Projects/HaPara/addsub_1g4s4h/addsub_1g4s4h.sdk/system_wrapper_full_hw_platform_0/download.bit --force
+# petalinux-package --prebuilt --fpga /home/hding/Projects/HaPara/addsub_1g4s4h/bitstream/download.bit --force
+# petalinux-package --prebuilt --fpga /home/hding/Projects/HaPara/pr_1g4s4h/pr_1g4s4h.sdk/system_wrapper_full_hw_platform_0/download.bit --force
 
 xsdb "$curr_dir/zynq_rst.tcl"
 petalinux-boot --jtag --prebuilt 3
