@@ -236,13 +236,13 @@ int main(int argc, char *argv[])
     strcpy(pr_file_path, PR_ROOT_PATH);
     strcat(pr_file_path, argv[4]);
     ret = pr_loader(pr_file_path, &sp.pr_info);
-    printf("PR FILE PATH: %s\n", pr_file_path);
+    // printf("PR FILE PATH: %s\n", pr_file_path);
     if (ret < 0) {
         printf("apptes: pr_loader error\n");
         return 0;
     }
 
-    printf("Do PR.\n");
+    // printf("Do PR.\n");
     for (i = 0; i < 4; i++) {
         // do_pr(sp.pr_info.each_size, sp.pr_info.ddr_addr, i);
     }    
@@ -304,13 +304,19 @@ int main(int argc, char *argv[])
 
 
     printf("%f\n", (timer1 - timer0) / 100000000.0);
-    sleep(1);
+    // sleep(1);
 
     // Read trace information into a file
     FILE *trace_f = fopen(TRACE_FILE, "a");
     unsigned int curr_trace_num = trace_geteachsize(0) / sizeof(unsigned int);
     unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+
     trace_gettotalcon(trace_ram);
+    while (trace_ram[curr_trace_num - 1] == 0) {
+        // printf("Re-read\n");
+        trace_gettotalcon(trace_ram);
+    }    
+
     fprintf(trace_f, "\n%d %d\n", num_group, MEM_SIZE);
     fprintf(trace_f, "%08X\n", timer0);
     fprintf(trace_f, "%08X\n", timer1);
@@ -360,6 +366,7 @@ int main(int argc, char *argv[])
         }
     } else if (strcmp(argv[4], "fir") == 0 ||
                strcmp(argv[4], "fir1buf") == 0) {
+        printf("Fir.\n");
         for (i = TAP - 1; i < MEM_SIZE; i++) {
             int sum = 0;
             for (j = 0; j < TAP; j++) {
