@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "../../libs/libelfmb/libelfmb.h"
 #include "../../libs/libpr/libpr.h"
@@ -23,11 +24,80 @@
 #include "../../../generic/include/thread_struct.h"
 
 #define PR_ROOT_PATH    "/mnt/pr_files/"
-
 #define TRACE_FILE      "/mnt/testscript/trace.txt"
-
 #define DEVMEM          "/dev/mem"
 
+struct app_t {
+    char *app_name;
+    unsigned char priority;
+    unsigned int data_size;
+    unsigned int buffer_size;
+};
+#define NUM_APP         16
+#define NUM_APP_TYPE    4
+char app_name[NUM_APP_TYPE][128] = {{"vector_mul"},
+                                    {"pageranking"},
+                                    {"matrix_mul"},
+                                    {"fir"}};
+
+void init_app_seq(struct app_t *app_seq) {
+    int i;
+    for (i = 0; i < NUM_APP; i++) {
+        unsigned int index = i / ( NUM_APP / NUM_APP_TYPE);
+        app_seq[i].app_name = app_name[index];
+        app_seq[i].priority = i % 2;
+        switch (index) {
+            case 0:    // vector_mul
+                app_seq[i].data_size    = 256 * 1024;
+                app_seq[i].buffer_size  = 32;
+                break;
+            case 1:    // pageranking
+                app_seq[i].data_size    = 512;
+                app_seq[i].buffer_size  = 32;
+                break;
+            case 2:    // matrix_mul
+                app_seq[i].data_size    = 128;
+                app_seq[i].buffer_size  = 16;
+                break;
+            case 3:    //fir
+                app_seq[i].data_size    = 256 * 1024;
+                app_seq[i].buffer_size  = 32;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+void random_app(unsigned int *sequence) {
+    int i;
+    srand((unsigned) time(NULL));
+    for(i = 0; i < NUM_APP; i++) {
+        sequence[i] = i;
+    }
+    for(i = NUM_APP - 1; i >= 1; i--) {
+        unsigned int temp;
+        unsigned int ii = rand() % i;
+        temp = sequence[i];
+        sequence[i] = sequence[ii];
+        sequence[ii] = temp;
+    }
+}
+
+void print_seq(unsigned int *sequence, struct app_t *app_seq) {
+    int i;
+    for (i = 0; i < NUM_APP; i++) {
+        printf("%d:\n", i);
+        printf("  app[%2d].name:        %s\n", sequence[i], app_seq[sequence[i]].app_name);
+        printf("  app[%2d].priority:    %d\n", sequence[i], app_seq[sequence[i]].priority);
+        printf("  app[%2d].data_size:   %d\n", sequence[i], app_seq[sequence[i]].data_size);
+        printf("  app[%2d].buffer_size: %d\n", sequence[i], app_seq[sequence[i]].buffer_size);
+    }
+    for (i = 0; i < NUM_APP; i++) {
+        printf("%2d,", sequence[i]);
+    }
+    printf("\n");
+}
 
 void dump_trace(int index) {
     // Read trace information into a file
