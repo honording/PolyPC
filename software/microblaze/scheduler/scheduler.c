@@ -86,13 +86,15 @@ int main() {
 		lock_mutex(REG_MUTEX, group_index + 1);
 		for_each_valid(hapara_thread, SCHEDULER_HTDT_BASE)
 		{
-			if (hapara_thread->isValid == 1 &&
-				hapara_thread->priority > max_priority) {
-				htdt_off = hapara_thread - hapara_thread_base;
-				max_priority = hapara_thread->priority;
-				if (elf_info->elf_magic == hapara_thread->elf_info.elf_magic) {
-					max_priority_magic = max_priority;
-					htdt_off_magic = htdt_off;
+			if (hapara_thread->isValid == 1) {
+				if (hapara_thread->priority > max_priority) {
+					htdt_off = hapara_thread - hapara_thread_base;
+					max_priority = hapara_thread->priority;
+				}
+				if (hapara_thread->priority > max_priority_magic &&
+					elf_info->elf_magic == hapara_thread->elf_info.elf_magic) {
+					htdt_off_magic = hapara_thread - hapara_thread_base;	
+					max_priority_magic = hapara_thread->priority;
 				}
 			}
 		}

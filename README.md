@@ -69,7 +69,7 @@ There are mainly four separate scripts to help you build the project.
 - `petalinux_config.sh`: Create petalinux projects along with modules, libs, and apps.
 
 ## Known Issues and Bugs
-- When you have multiple hardware groups (4g2s8h) with PR enabled, and launch multiple applications with only one software group one by one, one group scheduler may stuck at `for_each_valid` and cannot release the lock causing others cannot request the mutex.
+- When you have multiple hardware groups (i.e. 4g2s8h) with PR enabled, and launch multiple applications with only one software group one by one, one group scheduler may stuck at `for_each_valid` and cannot release the lock causing others cannot request the mutex.
 - The item ID number cannot be equal to the number of PEs within one group, which may cause the PEs cannot get proper item IDs. Multiple numbers would be best.
 
 ## Acknowledgement

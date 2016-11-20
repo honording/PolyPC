@@ -237,22 +237,22 @@ void print_list()
 void print_struct(struct hapara_thread_struct *thread_info)
 {
     printf("----------------------------------------\n");
-    printf("isValid  = %d\n", thread_info->isValid);
+    // printf("isValid  = %d\n", thread_info->isValid);
     printf("priority = %d\n", thread_info->priority);
-    printf("next     = %d\n", thread_info->next);
-    printf("tid      = %d\n", thread_info->tid);
-    printf("cur_group_id 0 = %d\n", thread_info->cur_group_id.id0);
-    printf("cur_group_id 1 = %d\n", thread_info->cur_group_id.id1);
+    // printf("next     = %d\n", thread_info->next);
+    // printf("tid      = %d\n", thread_info->tid);
+    // printf("cur_group_id 0 = %d\n", thread_info->cur_group_id.id0);
+    // printf("cur_group_id 1 = %d\n", thread_info->cur_group_id.id1);
     printf("group_size 0   = %d\n", thread_info->group_size.id0);
     printf("group_size 1   = %d\n", thread_info->group_size.id1);
     printf("group_num 0    = %d\n", thread_info->group_num.id0);
     printf("group_num 1    = %d\n", thread_info->group_num.id1);
     printf("elf_info elf_magic   = 0x%08X\n", thread_info->elf_info.elf_magic);
-    printf("elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
-    printf("elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
-    printf("elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
-    printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
-    printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
+    // printf("elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
+    // printf("elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
+    // printf("elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
+    // printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
+    // printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
     printf("pr_info ddr_addr     = 0x%08X\n", thread_info->pr_info.ddr_addr);
     printf("pr_info num_pr_file  = %d\n", thread_info->pr_info.num_pr_file);
     printf("pr_info each_size    = %d\n", thread_info->pr_info.each_size);
