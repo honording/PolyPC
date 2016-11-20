@@ -23,7 +23,6 @@
 #include "../../../generic/include/thread_struct.h"
 
 #define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
-// #define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
 
 #define PR_ROOT_PATH    "/mnt/pr_files/"
 
@@ -32,11 +31,8 @@
 #define	ELF_LOAD_ADDR	ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
 
-// #define MEM_SIZE        4096
 #define DEVMEM          "/dev/mem"
 
-// #define BUF_LEN     32
-// #define ID_NUM      (MEM_SIZE / BUF_LEN)
 #define TAP         5
 
 
@@ -127,8 +123,11 @@ pr_exit:
 
 int main(int argc, char *argv[])
 {
-    if (argc != 5) {
-        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size] [Benchmark]\n", argv[0]);
+    if (argc != 6) {
+        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size] [Benchmark] [HW Config]\n", argv[0]);
+        printf("HW Config: 1g4s4h\n");
+        printf("HW Config: 2g4s8h\n");
+        printf("HW Config: 4g2s8h\n");        
         return 0;
     }
     int i;
@@ -193,7 +192,8 @@ int main(int argc, char *argv[])
         sp.argv[2] = c_addr;
         sp.argv[3] = BUF_LEN;        
     }
-
+    sp.cur_group_id.id0      = 0;
+    sp.cur_group_id.id1      = 0;    
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;
@@ -234,7 +234,10 @@ int main(int argc, char *argv[])
     // printf("apptest: begin to load PR bitstream into memory.\n");
     char pr_file_path[128];
     strcpy(pr_file_path, PR_ROOT_PATH);
+    strcat(pr_file_path, argv[5]);
+    strcat(pr_file_path, "/");
     strcat(pr_file_path, argv[4]);
+    printf("pr_file_path: %s\n", pr_file_path);
     ret = pr_loader(pr_file_path, &sp.pr_info);
     // printf("PR FILE PATH: %s\n", pr_file_path);
     if (ret < 0) {
@@ -271,14 +274,14 @@ int main(int argc, char *argv[])
     struct timeval t1, t2;
     double timeuse;
 
-    timer_reset();
-    timer_start();
+    hapara_timer_reset();
+    hapara_timer_start();
     // printf("Add htdt struct...\n");
     
     unsigned int timer0;
     unsigned int timer1;
 
-    timer_gettime(&timer0);
+    hapara_timer_gettime(&timer0);
 
     ret = reg_add(&sp);
 
@@ -298,7 +301,7 @@ int main(int argc, char *argv[])
     // gettimeofday(&t1, NULL);
     while (htdt[ret].isValid != 0);
     // gettimeofday(&t2, NULL);
-    timer_gettime(&timer1);
+    hapara_timer_gettime(&timer1);
 
     // timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec) / 1000000.0;
 

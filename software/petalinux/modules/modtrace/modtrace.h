@@ -20,7 +20,7 @@ struct hapara_trace {
 #define TRACE_BASE      ARM_TRACE_BASE
 #define TRACE_SPAN      0x10000          //64KByte
 
-#define MAX_TRACE_SLOT  256
+#define MAX_TRACE_SLOT  4096
 
 
 #endif

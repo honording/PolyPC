@@ -71,10 +71,10 @@ int main() {
 	int *trigger = (int *)SCHE_SLAVE_TRIGGER_BASE;
 	elf_info->elf_magic = 0;
 	while (1) {
-		int max_priority = -1;
-		int htdt_off = -1;
-		int max_priority_magic = -1;
-		int htdt_off_magic = -1;
+		volatile int max_priority = -1;
+		volatile int htdt_off = -1;
+		volatile int max_priority_magic = -1;
+		volatile int htdt_off_magic = -1;
 		struct hapara_id_pair cur_group_id = {
 				.id0 = 0,
 				.id1 = 0,

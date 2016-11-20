@@ -35,13 +35,31 @@ int reg_add(struct hapara_thread_struct *thread_info)
     if (fd == -1)
         return -1;
     ioctl_ret = ioctl(fd, REG_ADD, thread_info);
-    if (ret < 0)
+    if (ioctl_ret < 0)
         ret = -1;
     else
         ret = ioctl_ret;
     close(fd);
     // printf("reg_add@libregister. out\n");
     return ret;
+}
+
+int reg_add_all(struct hapara_thread_struct *thread_info, int *ret_num, int num) {
+    int fd;
+    int ioctl_ret = 0;
+    int ret = 0;
+    int i;
+    fd = open(FILEPATH, O_RDWR);
+    if (fd == -1)
+        return -1;
+    for (i = 0; i < num; i++) {
+        ioctl_ret = ioctl(fd, REG_ADD, &(thread_info[i]));
+        if (ioctl_ret < 0)
+            ret = -1;
+        ret_num[i] = ioctl_ret;
+    }
+    close(fd);
+    return ret;    
 }
 
 int reg_del(int location)
@@ -72,7 +90,7 @@ int reg_search_del(int tid)
     if (fd == -1)
         return -1;
     ioctl_ret = ioctl(fd, REG_SEARCH_DEL, &tid);
-    if (ret < 0)
+    if (ioctl_ret < 0)
         ret = -1;
     else
         ret = ioctl_ret;

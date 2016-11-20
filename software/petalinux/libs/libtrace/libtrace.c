@@ -102,7 +102,7 @@ int trace_geteachoff(unsigned int index)
     return ioctl_ret;
 }
 
-void timer_reset()
+void hapara_timer_reset()
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);
@@ -112,7 +112,7 @@ void timer_reset()
     close(fd);
 }
 
-void timer_start()
+void hapara_timer_start()
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);
@@ -122,7 +122,7 @@ void timer_start()
     close(fd);
 }
 
-void timer_stop()
+void hapara_timer_stop()
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);
@@ -132,7 +132,7 @@ void timer_stop()
     close(fd);
 }
 
-void timer_gettime(unsigned int *time)
+void hapara_timer_gettime(unsigned int *time)
 {
     int fd;
     fd = open(FILEPATH, O_RDWR);

@@ -25,7 +25,7 @@
 #define ELF_FILE_NAME   "/mnt/elf_apps/vector_add.elf"
 // #define PR_FILE_PATH    "/mnt/pr_files/vector_sub"
 
-// #define PR_ROOT_PATH    "/mnt/pr_files/"
+#define PR_ROOT_PATH    "/mnt/pr_files/"
 
 #define TRACE_FILE      "/mnt/testscript/trace.txt"
 
@@ -41,8 +41,11 @@ typedef float d_type;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
-        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size]\n", argv[0]);
+    if (argc != 5) {
+        printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size] [HW Config]\n", argv[0]);
+        printf("HW Config: 1g4s4h\n");
+        printf("HW Config: 2g4s8h\n");
+        printf("HW Config: 4g2s8h\n");
         return 0;
     }
     int i;
@@ -96,9 +99,9 @@ int main(int argc, char *argv[])
         return 0;
     }    
 
-    // printf("a addr:0x%08X\n", a_addr);
-    // printf("b addr:0x%08X\n", b_addr);
-    // printf("c addr:0x%08X\n", c_addr);
+    printf("a addr:0x%08X\n", a_addr);
+    printf("b addr:0x%08X\n", b_addr);
+    printf("c addr:0x%08X\n", c_addr);
     int devmemfd = open(DEVMEM, O_RDWR);
     if (devmemfd < 1) {
         // printf("apptest: devmem open failed.\n");
@@ -125,6 +128,8 @@ int main(int argc, char *argv[])
     sp.argv[2] = c_addr;
     sp.argv[3] = MEM_SIZE;
     sp.argv[4] = BUF_LEN;
+    sp.cur_group_id.id0      = 0;
+    sp.cur_group_id.id1      = 0;    
     sp.group_size.id0 = 1;
     sp.group_size.id1 = ID_NUM;
     sp.group_num.id0 = 1;
@@ -148,10 +153,15 @@ int main(int argc, char *argv[])
     // printf("apptest: begin to load PR bitstream into memory.\n");
     char pr_file_path[128];
     if (BUF_LEN == 1) {
-        strcpy(pr_file_path, "/mnt/pr_files/pageranking1buf");
+        strcpy(pr_file_path, PR_ROOT_PATH);
+        strcat(pr_file_path, argv[4]);
+        strcat(pr_file_path, "/pageranking1buf");
     } else {
-        strcpy(pr_file_path, "/mnt/pr_files/pageranking");
+        strcpy(pr_file_path, PR_ROOT_PATH);
+        strcat(pr_file_path, argv[4]);
+        strcat(pr_file_path, "/pageranking");
     }
+    printf("pr_file_path: %s\n", pr_file_path);
     ret = pr_loader(pr_file_path, &sp.pr_info);    
     if (ret < 0) {
         // printf("apptes: pr_loader error\n");
@@ -177,14 +187,14 @@ int main(int argc, char *argv[])
                                              devmemfd,
                                              ARM_HTDT_BASE);    
 
-    timer_reset();
-    timer_start();
+    hapara_timer_reset();
+    hapara_timer_start();
     // printf("Add htdt struct...\n");
     
     unsigned int timer0;
     unsigned int timer1;
 
-    timer_gettime(&timer0);
+    hapara_timer_gettime(&timer0);
 
     ret = reg_add(&sp);
     // if (ret == -1) {
@@ -201,7 +211,7 @@ int main(int argc, char *argv[])
     while (htdt[ret].isValid != 0);
 
 
-    timer_gettime(&timer1);
+    hapara_timer_gettime(&timer1);
 
     printf("%f\n", (timer1 - timer0) / 100000000.0);
     // sleep(1);

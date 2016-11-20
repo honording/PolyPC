@@ -29,6 +29,7 @@ void print_struct(struct hapara_thread_struct *sp);
 void print_list();
 
 int reg_add(struct hapara_thread_struct *thread_info);
+int reg_add_all(struct hapara_thread_struct *thread_info, int *ret_num, int num);
 //del based on location
 int reg_del(int location);
 //del based on tid

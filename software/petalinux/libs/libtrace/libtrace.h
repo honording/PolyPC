@@ -15,9 +15,9 @@ int trace_gettotalsize();
 int trace_gettotalcon(unsigned int *buf);
 int trace_geteachsize(unsigned int index);
 int trace_geteachoff(unsigned int index);
-void timer_reset();
-void timer_start();
-void timer_stop();
-void timer_gettime(unsigned int *time);
+void hapara_timer_reset();
+void hapara_timer_start();
+void hapara_timer_stop();
+void hapara_timer_gettime(unsigned int *time);
 
 #endif
