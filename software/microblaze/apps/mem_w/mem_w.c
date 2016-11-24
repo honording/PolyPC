@@ -12,7 +12,6 @@ void kernel(
     unsigned int id1 = getGlobalID(1);
     unsigned int off = id1 * buf_size;
     int i;
-    volatile int value;
     for (i = 0; i < buf_size; i++) {
         A[id0 + off + i] = i;
     }

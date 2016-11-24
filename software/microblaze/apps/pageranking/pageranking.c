@@ -17,7 +17,7 @@ void kernel(
     unsigned int off  = id1 * SIZE_PER_PE;
     unsigned int off0 = (off + 0) * num_nodes;
     unsigned int off1 = (off + 1) * num_nodes;
-    int i, j;
+    int j;
     float sum = 0;
     for (j = 0; j < num_nodes; j++) {
         sum += A[id0 + off0 + j] * B[id0 + j];

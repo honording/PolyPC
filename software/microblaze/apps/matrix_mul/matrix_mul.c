@@ -10,7 +10,7 @@ void kernel(
             int *A,
             int *B,
             int *C,
-            int length) {
+            int num_nodes) {
     unsigned int id0 = getGlobalID(0);
     unsigned int id1 = getGlobalID(1);
     unsigned int raw_off = id0 * BUF_LENGTH;
@@ -39,10 +39,10 @@ int main() {
     setArgv(0, arg0, int *);
     setArgv(1, arg1, int *);
     setArgv(2, arg2, int *);
-    setArgv(3, length, int);
+    setArgv(3, num_nodes, int);
     if (!setjmp(buf)) {
         while (1) {
-            kernel(arg0, arg1, arg2, num_nodes, buf_size);
+            kernel(arg0, arg1, arg2, num_nodes);
         }
     }
     clean_up();

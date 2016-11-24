@@ -265,38 +265,14 @@ int main(int argc, char *argv[])
     // -----------------------------------------------------------
     // --------------------Do BaselinePlus------------------------
     // Every entry has the same priority. Magic is good.   
-    // printf("Do Priority.............\n");
-    // hapara_timer_reset();
-    // hapara_timer_start();
-    // ret = reg_add_all(sp, ret_num, NUM_APP);
-    // for (i = 0; i < NUM_APP; i++) {
-    //     printf("Waiting..%d\n", i);
-    //     dump_trace(i, trace_file_name);
-    // }
-    // // Delete htdt register
-    // for (i = 0; i < NUM_APP; i++) {
-    //     ret = reg_del(ret_num[i]);
-    //     if (ret == -1) {
-    //         printf("Reg del error %d.\n", i);
-    //         return 0;
-    //     }
-    // }
-
-    // -----------------------------------------------------------
-    // --------------------Do BaselinePlus------------------------
-    // Every entry has the same priority. Magic is good.
-    printf("Do BaselinePlus.............\n");
-    for (i = 0; i < NUM_APP; i++) {
-        sp[i].priority = 0;
-        print_struct(&sp[i]);
-    }
+    printf("Do Priority.............\n");
     hapara_timer_reset();
     hapara_timer_start();
     ret = reg_add_all(sp, ret_num, NUM_APP);
     for (i = 0; i < NUM_APP; i++) {
         printf("Waiting..%d\n", i);
         dump_trace(i, trace_file_name);
-    }    
+    }
     // Delete htdt register
     for (i = 0; i < NUM_APP; i++) {
         ret = reg_del(ret_num[i]);
@@ -305,6 +281,30 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
+
+    // -----------------------------------------------------------
+    // --------------------Do BaselinePlus------------------------
+    // Every entry has the same priority. Magic is good.
+    // printf("Do BaselinePlus.............\n");
+    // for (i = 0; i < NUM_APP; i++) {
+    //     sp[i].priority = 0;
+    //     print_struct(&sp[i]);
+    // }
+    // hapara_timer_reset();
+    // hapara_timer_start();
+    // ret = reg_add_all(sp, ret_num, NUM_APP);
+    // for (i = 0; i < NUM_APP; i++) {
+    //     printf("Waiting..%d\n", i);
+    //     dump_trace(i, trace_file_name);
+    // }    
+    // // Delete htdt register
+    // for (i = 0; i < NUM_APP; i++) {
+    //     ret = reg_del(ret_num[i]);
+    //     if (ret == -1) {
+    //         printf("Reg del error %d.\n", i);
+    //         return 0;
+    //     }
+    // }
     // -----------------------------------------------------------
     // --------------------Do Baseline------------------------
     // Every entry has the same priority. Magic does not work.
