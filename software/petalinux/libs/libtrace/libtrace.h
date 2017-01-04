@@ -19,5 +19,6 @@ void hapara_timer_reset();
 void hapara_timer_start();
 void hapara_timer_stop();
 void hapara_timer_gettime(unsigned int *time);
+void hapara_dump_trace(int index, char *TRACE_FILE);
 
 #endif

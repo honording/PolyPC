@@ -141,3 +141,23 @@ void hapara_timer_gettime(unsigned int *time)
     ioctl(fd, HTRACE_TIMER_GETTIME, time);
     close(fd);
 }
+
+void hapara_dump_trace(int index, char *TRACE_FILE) {
+    FILE *trace_f = fopen(TRACE_FILE, "a");
+    fprintf(trace_f, "%d\n", index);
+    int i;
+    unsigned int curr_trace_num = trace_gettotalsize() / sizeof(unsigned int);
+    unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+    trace_gettotalcon(trace_ram);
+    int cur_size = trace_geteachsize(index) / sizeof(unsigned int);
+    int cur_off  = trace_geteachoff(index) / sizeof(unsigned int);
+    while (trace_ram[cur_size + cur_off - 1] == 0) {
+        trace_gettotalcon(trace_ram);
+    }
+    for (i = cur_off; i < cur_off + cur_size; i++) {
+        fprintf(trace_f, "%08X\n", trace_ram[i]);
+    }
+
+    free(trace_ram);
+    fclose(trace_f);    
+}
