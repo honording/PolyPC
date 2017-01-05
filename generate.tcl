@@ -2073,6 +2073,10 @@ set bd_design_nm "system"
 
 set existPR 1
 
+if {$max_hw_slave == 0} {
+    set existPR 0
+}
+
 if {$argc >= 5} {
     set hw_name [lindex $argv 4]
     set existPR 0

@@ -248,11 +248,11 @@ void print_struct(struct hapara_thread_struct *thread_info)
     printf("group_num 0    = %d\n", thread_info->group_num.id0);
     printf("group_num 1    = %d\n", thread_info->group_num.id1);
     printf("elf_info elf_magic   = 0x%08X\n", thread_info->elf_info.elf_magic);
-    // printf("elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
-    // printf("elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
-    // printf("elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
-    // printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
-    // printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
+    printf("elf_info main_addr   = 0x%08X\n", thread_info->elf_info.main_addr);
+    printf("elf_info stack_addr  = 0x%08X\n", thread_info->elf_info.stack_addr);
+    printf("elf_info thread_size = 0x%08X\n", thread_info->elf_info.thread_size);
+    printf("elf_info ddr_addr    = 0x%08X\n", thread_info->elf_info.ddr_addr);
+    printf("elf_info DMA_size    = 0x%08X\n", thread_info->elf_info.DMA_size);
     printf("pr_info ddr_addr     = 0x%08X\n", thread_info->pr_info.ddr_addr);
     printf("pr_info num_pr_file  = %d\n", thread_info->pr_info.num_pr_file);
     printf("pr_info each_size    = %d\n", thread_info->pr_info.each_size);

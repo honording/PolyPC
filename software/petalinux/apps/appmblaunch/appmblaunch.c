@@ -35,7 +35,7 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 6) {
+    if (argc != 5) {
         printf("Input: %s [Number of Groups] [Input Data Size] [Buffer Size] [Benchmark]\n", argv[0]);
         printf("Available Benchmarks:\n");
         printf("mem_r, mem_w, mem_rw\n");
@@ -135,9 +135,9 @@ int main(int argc, char *argv[])
     // printf("apptest: begin to elf_loader.\n");
     char elf_file_path[128];
     strcpy(elf_file_path, ELF_FILE_NAME);
-    strcat(pr_file_path, argv[4]);
-    strcat(pr_file_path, ".elf");
-    printf("pr_file_path: %s\n", pr_file_path);
+    strcat(elf_file_path, argv[4]);
+    strcat(elf_file_path, ".elf");
+    printf("elf_file_path: %s\n", elf_file_path);
 
     int ret = elf_loader(elf_file_path, ELF_START_ADDR, &sp.elf_info);
     if (ret < 0) {

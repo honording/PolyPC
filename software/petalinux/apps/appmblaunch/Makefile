@@ -4,7 +4,7 @@ endif
 
 include apps.common.mk
 
-APP = apptest
+APP = appmblaunch
 
 # Add any other object files to this list below
 APP_OBJS = appmblaunch.o
