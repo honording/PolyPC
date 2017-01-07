@@ -261,7 +261,7 @@ proc create_hier_cell_slave_local_memory { parentCell nameHier } {
 # numOfSlave:   The total number of slaves within one group (including MicroBlazes and Hardware IPs)
 # numOfHWSlave: The number of hardware IPs within one group
 # numOfMBSlave: The number of MicroBlaze slaves within one group
-proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNum total_hw_slave existPR hw_name {dma_burst_length 256}} {
+proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNum total_hw_slave existPR hw_name enableDebug {dma_burst_length 256}} {
     if { $parentCell eq "" || $nameHier eq "" } {
         puts "ERROR: create_hier_cell_group() - Empty argument(s)!"
         return 0
@@ -296,10 +296,13 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
 
     # Create interface pins
     create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:mbdebug_rtl:3.0 DEBUG_scheduler
-    for {set i 0} {$i < $numOfMBSlave} {incr i} {
-        set debug_name "DEBUG_s$i"
-        create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:mbdebug_rtl:3.0 $debug_name
+    if {$enableDebug == 1} {
+        for {set i 0} {$i < $numOfMBSlave} {incr i} {
+            set debug_name "DEBUG_s$i"
+            create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:mbdebug_rtl:3.0 $debug_name
+        }
     }
+
     #1
     create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M00_AXI_data_ddr
     #2 intercon_mutex_manager
@@ -497,17 +500,31 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
         # Create instance: slave_s#, and set properties
         set slave_name "slave_s$i"
         set slave [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:* $slave_name ]
-        set_property -dict [ list \
-            CONFIG.C_DEBUG_ENABLED {1} \
-            CONFIG.C_D_AXI {1} \
-            CONFIG.C_D_LMB {1} \
-            CONFIG.C_FSL_LINKS {2} \
-            CONFIG.C_PVR {2} \
-            CONFIG.C_PVR_USER1 {0x00} \
-            CONFIG.C_PVR_USER2 [format "0x%08X" [expr $i+$numOfHWSlave]] \
-            CONFIG.C_I_AXI {0} \
-            CONFIG.C_I_LMB {1} \
-        ] $slave
+        if {$enableDebug == 1} {
+            set_property -dict [ list \
+                CONFIG.C_DEBUG_ENABLED {1} \
+                CONFIG.C_D_AXI {1} \
+                CONFIG.C_D_LMB {1} \
+                CONFIG.C_FSL_LINKS {2} \
+                CONFIG.C_PVR {2} \
+                CONFIG.C_PVR_USER1 {0x00} \
+                CONFIG.C_PVR_USER2 [format "0x%08X" [expr $i+$numOfHWSlave]] \
+                CONFIG.C_I_AXI {0} \
+                CONFIG.C_I_LMB {1} \
+            ] $slave
+        } else {
+            set_property -dict [ list \
+                CONFIG.C_DEBUG_ENABLED {0} \
+                CONFIG.C_D_AXI {1} \
+                CONFIG.C_D_LMB {1} \
+                CONFIG.C_FSL_LINKS {2} \
+                CONFIG.C_PVR {2} \
+                CONFIG.C_PVR_USER1 {0x00} \
+                CONFIG.C_PVR_USER2 [format "0x%08X" [expr $i+$numOfHWSlave]] \
+                CONFIG.C_I_AXI {0} \
+                CONFIG.C_I_LMB {1} \
+            ] $slave
+        }
 
         # Create instance: slave_s#_local_memory
         create_hier_cell_slave_local_memory $hier_obj "${slave_name}_local_memory"
@@ -517,10 +534,12 @@ proc create_hier_cell_group {parentCell nameHier numOfSlave numOfHWSlave groupNu
     # Create interface connections
     connect_bd_intf_net -intf_net debug_sche [get_bd_intf_pins DEBUG_scheduler] [get_bd_intf_pins scheduler/DEBUG]
     # Connect interface DEBUG to slave debug ports
-    for {set i 0} {$i < $numOfMBSlave} {incr i} {
-        set debug_name "DEBUG_s$i"
-        set slave_name "slave_s$i"
-        connect_bd_intf_net [get_bd_intf_pins $debug_name] [get_bd_intf_pins "$slave_name/DEBUG"]
+    if {$enableDebug == 1} {
+        for {set i 0} {$i < $numOfMBSlave} {incr i} {
+            set debug_name "DEBUG_s$i"
+            set slave_name "slave_s$i"
+            connect_bd_intf_net [get_bd_intf_pins $debug_name] [get_bd_intf_pins "$slave_name/DEBUG"]
+        }
     }
 
     # Connect internal interfaces to outside interfaces
@@ -1017,7 +1036,7 @@ proc write_mig_file_system_mig_7series_0_0 { str_mig_prj_filepath } {
 ################################################################################
 # Create top design
 ################################################################################
-proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name existPR} {
+proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name existPR enableDebug} {
     set parentCell "/"
     set parentObj [get_bd_cells $parentCell]
 
@@ -1146,13 +1165,20 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         ] $xlconstant_val0
     }
 
-
     # Create instance: mdm, and set properties
     set mdm [ create_bd_cell -type ip -vlnv xilinx.com:ip:mdm:* mdm ]
-    set_property -dict [ list \
-        CONFIG.C_MB_DBG_PORTS [expr "1+(1+$numOfSlave)*$numOfGroup-$numOfHWSlave"] \
-        CONFIG.C_USE_UART {1} \
-    ] $mdm
+    if {$enableDebug == 1} {
+        set_property -dict [ list \
+            CONFIG.C_MB_DBG_PORTS [expr "1+(1+$numOfSlave)*$numOfGroup-$numOfHWSlave"] \
+            CONFIG.C_USE_UART {1} \
+        ] $mdm
+    } else {
+        set_property -dict [ list \
+            CONFIG.C_MB_DBG_PORTS [expr "1+$numOfGroup"] \
+            CONFIG.C_USE_UART {1} \
+        ] $mdm
+    }
+
 
     # Create instance: intercon_mdm, and set properties
     set intercon_mdm [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* intercon_mdm ]
@@ -1250,7 +1276,7 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         # Create instance: group
         set group_name "group$i"
         set numhw [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
-        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave $numhw $i $total_hw_slave $existPR $hw_name 
+        create_hier_cell_group [current_bd_instance .] $group_name $numOfSlave $numhw $i $total_hw_slave $existPR $hw_name $enableDebug
     }
 
     #####################################################################
@@ -1319,19 +1345,30 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
         set intercon_mdm_slave_name "intercon_mdm/S[format "%02d" $i]_AXI"
         connect_bd_intf_net [get_bd_intf_pins "$group_name/M02_AXI_sche"] [get_bd_intf_pins $intercon_mdm_slave_name]
         # set mdm_debug_sche_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)"]"
-        set mdm_debug_sche_name "mdm/MBDEBUG_$calculative_mb"
-        set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
-        set num_mb_per_group [expr $numOfSlave - $num_hw_per_group]
-        connect_bd_intf_net [get_bd_intf_pins $group_name/DEBUG_scheduler] [get_bd_intf_pins $mdm_debug_sche_name]
-        for {set j 0} {$j < $num_mb_per_group} {incr j} {
-            # set mdm_debug_slave_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)+1+$j"]"
-            set mdm_debug_slave_name "mdm/MBDEBUG_[expr $calculative_mb+$j+1]"
-            set group_slave_debug_name "$group_name/DEBUG_s$j"
-            connect_bd_intf_net [get_bd_intf_pins $group_slave_debug_name] [get_bd_intf_pins $mdm_debug_slave_name]
+        if {$enableDebug == 1} {
+            set mdm_debug_sche_name "mdm/MBDEBUG_$calculative_mb"
+            set num_hw_per_group [hapara_return_hw_number $i $numOfSlave $max_hw_slave]
+            set num_mb_per_group [expr $numOfSlave - $num_hw_per_group]
+            connect_bd_intf_net [get_bd_intf_pins $group_name/DEBUG_scheduler] [get_bd_intf_pins $mdm_debug_sche_name]
+            for {set j 0} {$j < $num_mb_per_group} {incr j} {
+                # set mdm_debug_slave_name "mdm/MBDEBUG_[expr "$i*($numOfSlave+1)+1+$j"]"
+                set mdm_debug_slave_name "mdm/MBDEBUG_[expr $calculative_mb+$j+1]"
+                set group_slave_debug_name "$group_name/DEBUG_s$j"
+                connect_bd_intf_net [get_bd_intf_pins $group_slave_debug_name] [get_bd_intf_pins $mdm_debug_slave_name]
+            }
+            set calculative_mb [expr $calculative_mb+$num_mb_per_group+1]            
+        } else {
+            set mdm_debug_sche_name "mdm/MBDEBUG_$i"
+            connect_bd_intf_net [get_bd_intf_pins $group_name/DEBUG_scheduler] [get_bd_intf_pins $mdm_debug_sche_name]
         }
-        set calculative_mb [expr $calculative_mb+$num_mb_per_group+1]
+
     }
-    connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "($numOfSlave+1)*$numOfGroup-$numOfHWSlave"]"] [get_bd_intf_pins mutex_manager/DEBUG]
+
+    if {$enableDebug == 1} {
+        connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "($numOfSlave+1)*$numOfGroup-$numOfHWSlave"]"] [get_bd_intf_pins mutex_manager/DEBUG]
+    } else {
+        connect_bd_intf_net [get_bd_intf_pins "mdm/MBDEBUG_[expr "$numOfGroup"]"] [get_bd_intf_pins mutex_manager/DEBUG]
+    }
 
     # Connect intercon_ddr and intercon_pre_ddr related interfaces
     connect_bd_intf_net [get_bd_intf_pins intercon_ddr/M00_AXI] [get_bd_intf_pins mig_7series_0/S_AXI]
@@ -1642,10 +1679,10 @@ proc hapara_create_root_design {numOfGroup numOfSlave numOfHWSlave hw_name exist
 
         for {set j 0} {$j < $num_mb_per_group} {incr j} {
             set slave_name "slave_s$j"
-            create_bd_addr_seg -range 0x8000 -offset 0x8000 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr1/SLMB/Mem"] SEG_dlmb_bram_if_cntlr1_Mem
-            create_bd_addr_seg -range 0x8000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr/SLMB/Mem"] SEG_dlmb_bram_if_cntlr_Mem
-            create_bd_addr_seg -range 0x8000 -offset 0x8000 [get_bd_addr_spaces "$group_name/$slave_name/Instruction"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/ilmb_bram_if_cntlr1/SLMB/Mem"] SEG_ilmb_bram_if_cntlr1_Mem
-            create_bd_addr_seg -range 0x8000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Instruction"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/ilmb_bram_if_cntlr/SLMB/Mem"] SEG_ilmb_bram_if_cntlr_Mem
+            create_bd_addr_seg -range 0x4000 -offset 0x8000 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr1/SLMB/Mem"] SEG_dlmb_bram_if_cntlr1_Mem
+            create_bd_addr_seg -range 0x4000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/dlmb_bram_if_cntlr/SLMB/Mem"] SEG_dlmb_bram_if_cntlr_Mem
+            create_bd_addr_seg -range 0x4000 -offset 0x8000 [get_bd_addr_spaces "$group_name/$slave_name/Instruction"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/ilmb_bram_if_cntlr1/SLMB/Mem"] SEG_ilmb_bram_if_cntlr1_Mem
+            create_bd_addr_seg -range 0x4000 -offset 0x0 [get_bd_addr_spaces "$group_name/$slave_name/Instruction"] [get_bd_addr_segs "$group_name/${slave_name}_local_memory/ilmb_bram_if_cntlr/SLMB/Mem"] SEG_ilmb_bram_if_cntlr_Mem
             create_bd_addr_seg -range 0x8000 -offset $local_mem_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs "$group_name/local_mem_ctrl/S_AXI/Mem0"] SEG_local_mem_ctrl_Mem0
             create_bd_addr_seg -range 0x20000000 -offset $ddr_base [get_bd_addr_spaces "$group_name/$slave_name/Data"] [get_bd_addr_segs mig_7series_0/memmap/memaddr] SEG_mig_7series_0_memaddr
         }
@@ -2072,6 +2109,7 @@ set resource_hls "$current_dir/resources/hls_project"
 set bd_design_nm "system"
 
 set existPR 1
+set enableDebug 0
 
 if {$max_hw_slave == 0} {
     set existPR 0
@@ -2111,7 +2149,7 @@ if {[hapara_update_ip_repo $ip_repo_path $resource_hls] == 0} {
     puts "ERROR: When running hapara_update_ip_repo()."
     return 0
 }
-if {[hapara_create_root_design $num_of_group $num_of_slave $max_hw_slave $hw_name $existPR] == 0} {
+if {[hapara_create_root_design $num_of_group $num_of_slave $max_hw_slave $hw_name $existPR $enableDebug] == 0} {
     puts "ERROR: When running hapara_create_root_design()."
     return 0
 }

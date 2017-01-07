@@ -17,8 +17,8 @@ _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x400;
 
 MEMORY
 {
-   local_memory_ilmb_bram_if_cntlr_local_memory_dlmb_bram_if_cntlr : ORIGIN = 0x50, LENGTH = 0x7FB0
-   local_memory_ilmb_bram_if_cntlr1_local_memory_dlmb_bram_if_cntlr1 : ORIGIN = 0x8000, LENGTH = 0x8000
+   local_memory_ilmb_bram_if_cntlr_local_memory_dlmb_bram_if_cntlr : ORIGIN = 0x50, LENGTH = 0x3FB0
+   local_memory_ilmb_bram_if_cntlr1_local_memory_dlmb_bram_if_cntlr1 : ORIGIN = 0x8000, LENGTH = 0x4000
 }
 
 /* Specify the default entry point to the program */
