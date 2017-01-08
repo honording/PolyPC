@@ -4,10 +4,10 @@ endif
 
 include apps.common.mk
 
-APP = appmullaunch
+APP = apphwprmatrix
 
 # Add any other object files to this list below
-APP_OBJS = appmullaunch.o
+APP_OBJS = apphwprmatrix.o
 
 # Add custom libraries
 CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc -ltrace

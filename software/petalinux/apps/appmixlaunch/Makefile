@@ -4,10 +4,10 @@ endif
 
 include apps.common.mk
 
-APP = appmatrix
+APP = appmixlaunch
 
 # Add any other object files to this list below
-APP_OBJS = appmatrix.o
+APP_OBJS = appmixlaunch.o
 
 # Add custom libraries
 CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc -ltrace

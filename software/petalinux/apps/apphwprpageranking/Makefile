@@ -4,10 +4,10 @@ endif
 
 include apps.common.mk
 
-APP = apppageranking
+APP = apphwprpageranking
 
 # Add any other object files to this list below
-APP_OBJS = apppageranking.o
+APP_OBJS = apphwprpageranking.o
 
 # Add custom libraries
 CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc -ltrace

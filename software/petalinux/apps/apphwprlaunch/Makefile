@@ -4,10 +4,10 @@ endif
 
 include apps.common.mk
 
-APP = apptest
+APP = apphwprlaunch
 
 # Add any other object files to this list below
-APP_OBJS = apptest.o
+APP_OBJS = apphwprlaunch.o
 
 # Add custom libraries
 CLDLIBS = -lelfmb -lpr -lregister -lddrmalloc -ltrace
