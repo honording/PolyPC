@@ -4,7 +4,7 @@
 
 #include "../../generic/CL/cl.h"
 
-#define BUF_LENGTH 16
+// #define BUF_LENGTH 16
 
 void kernel(
             int *A,
@@ -13,21 +13,25 @@ void kernel(
             int num_nodes) {
     unsigned int id0 = getGlobalID(0);
     unsigned int id1 = getGlobalID(1);
-    unsigned int raw_off = id0 * BUF_LENGTH;
-    unsigned int col_off = id1 * BUF_LENGTH;
-
-    int i, j;
+    // unsigned int raw_off = id0 * BUF_LENGTH;
+    // unsigned int col_off = id1 * BUF_LENGTH;
+    unsigned int raw_off = id0;
+    unsigned int col_off = id1;
+    // int i, j;
     int m;
-    for (i = 0; i < BUF_LENGTH; i++) {
-        for (j = 0; j < BUF_LENGTH; j++) {
+    // for (i = 0; i < BUF_LENGTH; i++) {
+        // for (j = 0; j < BUF_LENGTH; j++) {
             int sum = 0;
             for (m = 0; m < num_nodes; m++) {
-                sum += A[(raw_off + i) * num_nodes + m] *
-                       B[m * num_nodes + col_off + j];
+                // sum += A[(raw_off + i) * num_nodes + m] *
+                       // B[m * num_nodes + col_off + j];
+                sum += A[(raw_off) * num_nodes + m] *
+                       B[m * num_nodes + col_off];
             }
-            C[(raw_off + i) * num_nodes + col_off + j] = sum;
-        }
-    }
+            // C[(raw_off + i) * num_nodes + col_off + j] = sum;
+            C[(raw_off) * num_nodes + col_off] = sum;
+        // }
+    // }
 }
 
 
