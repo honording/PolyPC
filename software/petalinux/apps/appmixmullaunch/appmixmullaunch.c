@@ -62,19 +62,19 @@ void init_app_seq(struct app_t *app_seq) {
         app_seq[i].priority = i % 2;
         switch (index) {
             case 0:    // vector_mul
-                app_seq[i].data_size    = 256 * 1024;
+                app_seq[i].data_size    = 32 * 1024;
                 app_seq[i].buffer_size  = 1;
                 break;
             case 1:    // pageranking
-                app_seq[i].data_size    = 512;
+                app_seq[i].data_size    = 1024;
                 app_seq[i].buffer_size  = 1;
                 break;
             case 2:    // matrix_mul
-                app_seq[i].data_size    = 32;
+                app_seq[i].data_size    = 256;
                 app_seq[i].buffer_size  = 1;
                 break;
             case 3:    //fir
-                app_seq[i].data_size    = 256 * 1024;
+                app_seq[i].data_size    = 32 * 1024;
                 app_seq[i].buffer_size  = 1;
                 break;
             default:
@@ -119,7 +119,15 @@ void dump_trace(int index, char *TRACE_FILE) {
     fprintf(trace_f, "%d\n", index);
     int i;
     unsigned int curr_trace_num = trace_gettotalsize() / sizeof(unsigned int);
+    if (curr_trace_num * 4 > 64 * 1024) {
+        printf("ERROR: curr_trace_num exceeds 64KByte: %d\n", curr_trace_num);
+        return;
+    }
     unsigned int *trace_ram = (unsigned int *)malloc(curr_trace_num * sizeof(unsigned int));
+    if (trace_ram == NULL) {
+        printf("trace_ram allocation out of memory.\n");
+        return;
+    }
     trace_gettotalcon(trace_ram);
     int cur_size = trace_geteachsize(index) / sizeof(unsigned int);
     int cur_off  = trace_geteachoff(index) / sizeof(unsigned int);
@@ -165,8 +173,9 @@ int main(int argc, char *argv[])
     char sw_group[] = "_0.txt";
     strcpy(trace_file_name, "/mnt/testscript/trace_");
     strcat(trace_file_name, argv[2]);
-    sw_group[1] += num_group;
-    strcat(trace_file_name, sw_group);
+    strcat(trace_file_name, "_");
+    strcat(trace_file_name, argv[1]);
+    strcat(trace_file_name, ".txt");
     printf("%s\n", trace_file_name);
 
     pr_info_t   pr_info[NUM_APP_TYPE];
@@ -188,7 +197,7 @@ int main(int argc, char *argv[])
         printf("  PR Addr: 0x%08X\n", pr_info[i].ddr_addr);
 
         strcpy(elf_file_path, ELF_FILE_NAME);
-        strcat(pr_file_path, spp_name[i]);
+        strcat(elf_file_path, spp_name[i]);
         strcat(elf_file_path, ".elf");
         printf("elf_file_path: %s\n", elf_file_path);
         ret = elf_loader(elf_file_path, ELF_START_ADDR, &(elf_info[i]));
@@ -242,7 +251,7 @@ int main(int argc, char *argv[])
                 sp[i].cur_group_id.id0      = 0;
                 sp[i].cur_group_id.id1      = 0;
                 sp[i].group_size.id0        = 1;
-                sp[i].group_size.id1        = data_size / num_group / 2;
+                sp[i].group_size.id1        = data_size / num_group;
                 sp[i].group_num.id0         = 1;
                 sp[i].group_num.id1         = num_group;
                 sp[i].elf_info.elf_magic    = magic;

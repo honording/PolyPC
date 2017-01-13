@@ -75,7 +75,9 @@ int trace_gettotalcon(unsigned int *buf)
     fd = open(FILEPATH, O_RDWR);
     if (fd == -1) 
         return -1;
+    // printf("enter trace_gettotalcon.\n");
     int ioctl_ret = ioctl(fd, HTRACE_TRACE_GETTOTALCON, buf);
+    // printf("leave trace_gettotalcon.\n");
     close(fd);
     return ioctl_ret;
 }
