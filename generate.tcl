@@ -1973,6 +1973,9 @@ proc hapara_generate_pr {project_name num_of_group num_of_slave num_of_hw existP
 
     lock_design -level routing
 
+    # Report
+    report_utilization -file "$proj_dir/reports/util.rpt"
+    # report_power -file $outputDir/post_route_power.rpt
     # Save checkpoints
     write_checkpoint -force "$proj_dir/checkpoints/route_static.dcp"
     # Generate bitstream without acc
