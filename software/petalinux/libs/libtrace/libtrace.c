@@ -153,9 +153,20 @@ void hapara_dump_trace(int index, char *TRACE_FILE) {
     trace_gettotalcon(trace_ram);
     int cur_size = trace_geteachsize(index) / sizeof(unsigned int);
     int cur_off  = trace_geteachoff(index) / sizeof(unsigned int);
-    while (trace_ram[cur_size + cur_off - 1] == 0) {
-        trace_gettotalcon(trace_ram);
+    trace_gettotalcon(trace_ram);
+    int struct_num = trace_geteachsize(index) / sizeof(struct hapara_trace_struct); 
+    struct hapara_trace_struct *trace_struct = (struct hapara_trace_struct *)(&(trace_ram[cur_off]));
+    for (i = 0; i < struct_num; i++) {
+        int isZero = 1;
+        while (isZero == 1) {
+            if (trace_struct[i].after_finish != 0) {
+                isZero = 0;
+            } else {
+                trace_gettotalcon(trace_ram);
+            }
+        }
     }
+    trace_gettotalcon(trace_ram);
     for (i = cur_off; i < cur_off + cur_size; i++) {
         fprintf(trace_f, "%08X\n", trace_ram[i]);
     }

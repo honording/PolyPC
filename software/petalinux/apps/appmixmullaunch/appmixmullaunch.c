@@ -22,6 +22,7 @@
 #include "../../../generic/include/pr_loader.h"
 #include "../../../generic/include/base_addr.h"
 #include "../../../generic/include/thread_struct.h"
+#include "../../../generic/include/hapara_trace_base.h"
 
 #define ELF_LOAD_ADDR   ARM_DDR_BASE
 #define ELF_START_ADDR  SLAVE_INST_MEM_BASE
@@ -131,9 +132,25 @@ void dump_trace(int index, char *TRACE_FILE) {
     trace_gettotalcon(trace_ram);
     int cur_size = trace_geteachsize(index) / sizeof(unsigned int);
     int cur_off  = trace_geteachoff(index) / sizeof(unsigned int);
-    while (trace_ram[cur_size + cur_off - 1] == 0) {
-        trace_gettotalcon(trace_ram);
+    trace_gettotalcon(trace_ram);
+    int struct_num = trace_geteachsize(index) / sizeof(struct hapara_trace_struct); 
+    printf("struct num: %d\n", struct_num);
+    struct hapara_trace_struct *trace_struct = (struct hapara_trace_struct *)(&(trace_ram[cur_off]));
+    for (i = 0; i < struct_num; i++) {
+        int isZero = 1;
+        while (isZero == 1) {
+            if (trace_struct[i].after_finish != 0) {
+                isZero = 0;
+            } else {
+                trace_gettotalcon(trace_ram);
+            }
+        }
     }
+
+    // while (trace_ram[cur_size + cur_off - 1] == 0) {
+    //     trace_gettotalcon(trace_ram);
+    // }
+    trace_gettotalcon(trace_ram);
     for (i = cur_off; i < cur_off + cur_size; i++) {
         fprintf(trace_f, "%08X\n", trace_ram[i]);
     }
@@ -323,38 +340,14 @@ int main(int argc, char *argv[])
     // -----------------------------------------------------------
     // --------------------Do Priority------------------------
     // Every entry has the same priority. Magic is good.   
-    // printf("Do Priority.............\n");
-    // hapara_timer_reset();
-    // hapara_timer_start();
-    // ret = reg_add_all(sp, ret_num, NUM_APP);
-    // for (i = 0; i < NUM_APP; i++) {
-    //     printf("Waiting..%d\n", i);
-    //     dump_trace(i, trace_file_name);
-    // }
-    // // Delete htdt register
-    // for (i = 0; i < NUM_APP; i++) {
-    //     ret = reg_del(ret_num[i]);
-    //     if (ret == -1) {
-    //         printf("Reg del error %d.\n", i);
-    //         return 0;
-    //     }
-    // }
-
-    // -----------------------------------------------------------
-    // --------------------Do BaselinePlus------------------------
-    // Every entry has the same priority. Magic is good.
-    // printf("Do BaselinePlus.............\n");
-    for (i = 0; i < NUM_APP; i++) {
-        sp[i].priority = 0;
-        print_struct(&sp[i]);
-    }
+    printf("Do Priority.............\n");
     hapara_timer_reset();
     hapara_timer_start();
     ret = reg_add_all(sp, ret_num, NUM_APP);
     for (i = 0; i < NUM_APP; i++) {
         printf("Waiting..%d\n", i);
         dump_trace(i, trace_file_name);
-    }    
+    }
     // Delete htdt register
     for (i = 0; i < NUM_APP; i++) {
         ret = reg_del(ret_num[i]);
@@ -363,10 +356,33 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
+
+    // -----------------------------------------------------------
+    // --------------------Do BaselinePlus------------------------
+    // Every entry has the same priority. Magic is good.
+    // for (i = 0; i < NUM_APP; i++) {
+    //     sp[i].priority = 0;
+    //     print_struct(&sp[i]);
+    // }
+    // hapara_timer_reset();
+    // hapara_timer_start();
+    // ret = reg_add_all(sp, ret_num, NUM_APP);
+    // printf("Do BaselinePlus.............\n");
+    // for (i = 0; i < NUM_APP; i++) {
+    //     printf("Waiting..%d\n", i);
+    //     dump_trace(i, trace_file_name);
+    // }    
+    // // Delete htdt register
+    // for (i = 0; i < NUM_APP; i++) {
+    //     ret = reg_del(ret_num[i]);
+    //     if (ret == -1) {
+    //         printf("Reg del error %d.\n", i);
+    //         return 0;
+    //     }
+    // }
     // -----------------------------------------------------------
     // --------------------Do Baseline------------------------
     // Every entry has the same priority. Magic does not work.
-    // printf("Do Baseline.............\n");
     // for (i = 0; i < NUM_APP; i++) {
     //     sp[i].priority = i + 1;
     //     sp[i].elf_info.elf_magic = i + 1; 
@@ -375,6 +391,7 @@ int main(int argc, char *argv[])
     // hapara_timer_reset();
     // hapara_timer_start();
     // ret = reg_add_all(sp, ret_num, NUM_APP);
+    // printf("Do Baseline.............\n");
     // for (i = 0; i < NUM_APP; i++) {
     //     printf("Waiting..%d\n", i);
     //     dump_trace(i, trace_file_name);
